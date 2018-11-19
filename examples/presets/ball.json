@@ -1,0 +1,15 @@
+{
+  "model": "ball",
+  "sides": [
+    {
+      "width": 400,
+      "height": 400,
+      "roundCorners": 50
+    },
+    {
+      "width": 600,
+      "height": 600,
+      "roundCorners": 50
+    }
+  ]
+}

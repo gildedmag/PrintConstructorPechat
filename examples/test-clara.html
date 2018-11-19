@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+    <meta charset="UTF-8"/>
+    <head>
+        <title>Print Constructor</title>
+    </head>
+    <body>
+        <div id="clara-embed" style="width: 800px; height: 600px;"></div>
+        <script src="claraplayer.js"></script>
+        <script>
+            clara = claraplayer('clara-embed');
+            scene = null;
+            mat = null;
+
+            ['orbit', 'pan', 'zoom', 'home', 'fullscreen', 'configurator'].forEach(name => clara.player.hideTool(name));
+
+            clara.on('loaded', function () {
+                scene = clara.scene;
+                let ids = scene.filter({type: 'Material'});
+                for (let i = 0; i < ids.length; i++) {
+                    let material = scene.get([ids[i]]);
+                    material.plugs.Material[0].baseColor.r = 0;
+                    material.plugs.Material[0].baseColor.g = 1;
+                    material.plugs.Material[0].baseColor.b = 0;
+                    if (material.name === 'white') {
+                        mat = material;
+                        console.log(material);
+                        material.plugs.Material[0].baseColor.r = 0;
+                    }
+                }
+
+            });
+
+            clara.sceneIO.fetchAndUse("7564a850-54c5-46b7-a996-2bc536918f8d");
+        </script>
+    </body>
+</html>

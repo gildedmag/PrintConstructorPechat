@@ -1,0 +1,22 @@
+{
+  "model": "kid_body",
+  "sides": [
+    {
+      "objects": [
+        {
+          "height": 493,
+          "left": 195.85,
+          "opacity": 1,
+          "scaleX": 0.61,
+          "scaleY": 0.61,
+          "src": "https://xn--80aj0aafqej6a4c.xn--80asehdb/image/customer/authorized/365d17770080c807a0e47ae9118d8641/1231718682219b2b7fba6c188064bc12.jpg",
+          "top": 158.73,
+          "type": "image",
+          "width": 500
+        }
+      ],
+      "width": 300,
+      "height": 450
+    }
+  ]
+}

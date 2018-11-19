@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "none",
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "alwaysStrict": true,
+    "outFile": "js/constructor.js",
+    "noEmitOnError": false
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "model": "cup_remastered",
+  "fills": [
+    16749312,
+    16749312,
+    16777215
+  ],
+  "sides": [
+    {
+      "objects": [
+        {
+          "filters": [],
+          "height": 428,
+          "left": 306.27,
+          "opacity": 1,
+          "scaleX": 0.62,
+          "scaleY": 0.62,
+          "src": "https://xn--80aj0aafqej6a4c.xn--80asehdb/image/customer/authorized/1c54985e4f95b7819ca0357c0cb9a09f/d7371d3c6966a1041c2f2add0e0b93f6.png",
+          "top": 156.49,
+          "type": "image",
+          "width": 956
+        },
+        {
+          "fill": "rgba(0,0,0,1)",
+          "fontFamily": "Bad Script",
+          "fontSize": 25,
+          "fontWeight": "bold",
+          "height": 61.02,
+          "left": 354.52,
+          "lineHeight": 1.16,
+          "opacity": 1,
+          "scaleX": 1.27,
+          "scaleY": 1.27,
+          "shadow": {
+            "color": "rgba(0,0,0,0.5)",
+            "blur": "3.2",
+            "offsetX": "3.2",
+            "offsetY": "3.2",
+            "affectStroke": false
+          },
+          "text": "Самая любимая \nвоспитательница!",
+          "textAlign": "left",
+          "top": 67.31,
+          "type": "i-text",
+          "width": 160.22
+        }
+      ],
+      "width": 630,
+      "height": 292.5,
+      "roundCorners": null
+    }
+  ]
+}

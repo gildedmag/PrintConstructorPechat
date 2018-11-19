@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "none",
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "outFile": "./icon.js",
+    "noEmitOnError": false
+  },
+  "include": [
+    "./*.ts"
+  ],
+  "exclude": [
+  ]
+}

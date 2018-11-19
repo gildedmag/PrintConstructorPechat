@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+    <meta charset="UTF-8"/>
+    <head>
+        <title>Print Constructor</title>
+    </head>
+    <body style="padding: 0; margin: 0; border: 0">
+        <input type="button" onclick="c.setMode(Mode.Mode3D)" value="Mode 3D"/>
+        <link rel="stylesheet" href="style.css" type="text/css">
+        <link rel="stylesheet" type="text/css"
+              href="https://fonts.googleapis.com/css?family=Alegreya|Alegreya+Sans|Arsenal|Bad+Script|Caveat|Comfortaa|Cormorant+Infant|Exo+2|Fira+Sans+Extra+Condensed|Forum|Kurale|Lobster|Marck+Script|Marmelad|Montserrat+Alternates|Old+Standard+TT|Oranienbaum|Oswald|PT+Sans+Narrow|Pacifico|Philosopher|Poiret+One|Prata|Roboto+Condensed|Ruslan+Display|Russo+One|Seymour+One|Underdog|Vollkorn|Yanone+Kaffeesatz&subset=latin,cyrillic"/>
+        <script src="constructor.min.js"></script>
+        <div id="container" style="width: 800px;height: 800px;"></div>
+        <script>
+            c = new Constructor('container');
+            let s = new Date().getTime();
+            c.setState('{"model": "ball","sides": [{"width": 800,"height": 800}]}', () => {
+                document.body.innerHTML += new Date().getTime() - s + ' ms';
+                c.setMode(Mode.Mode3D);
+            });
+        </script>
+    </body>
+</html>

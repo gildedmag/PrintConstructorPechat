@@ -1,0 +1,55 @@
+{
+  "model": "t-shirt",
+  "fills": [
+    16777215
+  ],
+  "sides": [
+    {
+      "objects": [
+        {
+          "fill": "rgba(144,51,155,1)",
+          "height": 100,
+          "left": 267.18,
+          "opacity": 1,
+          "scaleX": 1,
+          "scaleY": 1,
+          "top": 139.52,
+          "type": "triangle",
+          "width": 100
+        },
+        {
+          "fill": "rgba(35,5,107,1)",
+          "height": 100,
+          "left": 87.68,
+          "opacity": 1,
+          "scaleX": 1,
+          "scaleY": 1,
+          "top": 211.72,
+          "type": "rect",
+          "width": 100
+        }
+      ],
+      "width": 300,
+      "height": 600,
+      "roundCorners": null
+    },
+    {
+      "objects": [],
+      "width": 300,
+      "height": 600,
+      "roundCorners": null
+    },
+    {
+      "objects": [],
+      "width": 300,
+      "height": 150,
+      "roundCorners": null
+    },
+    {
+      "objects": [],
+      "width": 300,
+      "height": 150,
+      "roundCorners": null
+    }
+  ]
+}

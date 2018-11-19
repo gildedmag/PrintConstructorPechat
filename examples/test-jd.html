@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+    <meta charset="UTF-8"/>
+    <head>
+        <title>Print Constructor</title>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+        <script src="../js/three.js"></script>
+        <script src="./JDLoader.min.js"></script>
+        <script src="../js/OrbitControls.js"></script>
+        <script>
+            let renderer = new THREE.WebGLRenderer();
+            renderer.setClearColor("#ffffff");
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(800, 600);
+            document.body.appendChild(renderer.domElement);
+
+            let loader = new THREE.JDLoader();
+            let camera, scene, controls;
+            let meshes = [];
+
+            scene = new THREE.Scene();
+
+            function createMaterials(data) {
+                var matArray = [];
+                for (var j = 0; j < data.materials.length; ++j) {
+                    var mat = new THREE.MeshPhongMaterial({});
+                    mat.copy(data.materials[j]);
+                    //mat.transparent = true;
+                    matArray.push(mat);
+                }
+                return matArray;
+            }
+
+
+            loader.load(
+                "jar.jd",
+                function (data) {
+                    for (var i = 0; i < data.objects.length; ++i) {
+                        if (data.objects[i].type == "Mesh" || data.objects[i].type == "SkinnedMesh") {
+                            var mesh = null;
+                            var matArray = createMaterials(data);
+                            if (data.objects[i].type == "SkinnedMesh") {
+                                mesh = new THREE.SkinnedMesh(data.objects[i].geometry, matArray);
+                            }
+                            else {
+                                mesh = new THREE.Mesh(data.objects[i].geometry, matArray);
+                            }
+                            meshes.push(mesh);
+                            scene.add(mesh);
+                        }
+                        else if (data.objects[i].type == "Line") {
+                            var jd_color = data.objects[i].jd_object.color;
+                            var color1 = new THREE.Color(jd_color[0] / 255, jd_color[1] / 255,
+                                jd_color[2] / 255);
+                            var material = new THREE.LineBasicMaterial({color: color1});
+                            var line = new THREE.Line(data.objects[i].geometry, material);
+                            scene.add(line);
+                        }
+                        var near = 1, far = 10000 * data.boundingSphere.radius;
+                        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, near, far);
+                        camera.position.z = data.boundingSphere.center.z + 2.5 * data.boundingSphere.radius;
+                        camera.lookAt(data.boundingSphere.center);
+                        camera.add(new THREE.DirectionalLight(0xFFFFFF, 1));
+                        scene.add(camera);
+
+                            controls = new THREE.OrbitControls(camera, renderer.domElement);
+                        controls.target.copy(data.boundingSphere.center);
+
+                        animate();
+                    }
+                });
+
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                render();
+            }
+
+            function render() {
+                renderer.render(scene, camera);
+            }
+        </script>
+    </body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+    <meta charset="UTF-8"/>
+    <head>
+        <title>Print Constructor</title>
+    </head>
+    <body>
+        <link rel="stylesheet" type="text/css"
+              href="https://fonts.googleapis.com/css?family=Alegreya|Alegreya+Sans|Arsenal|Bad+Script|Caveat|Comfortaa|Cormorant+Infant|Exo+2|Fira+Sans+Extra+Condensed|Forum|Kurale|Lobster|Marck+Script|Marmelad|Montserrat+Alternates|Old+Standard+TT|Oranienbaum|Oswald|PT+Sans+Narrow|Pacifico|Philosopher|Poiret+One|Prata|Roboto+Condensed|Ruslan+Display|Russo+One|Seymour+One|Underdog|Vollkorn|Yanone+Kaffeesatz&subset=latin,cyrillic"/>
+        <link rel="stylesheet" href="style.css" type="text/css">
+        <!--<script src="https://raw.githubusercontent.com/AL13/PrintConstructor/master/build/constructor.min.js"></script>-->
+        <script src="../js/three.js" type="application/javascript"></script>
+        <script src="../js/OrbitControls.js" type="application/javascript"></script>
+        <script src="../js/fabric.js" type="application/javascript"></script>
+        <script src="../js/constructor.js" type="application/javascript"></script>
+        <script>
+            let div = document.createElement("div");
+            div.textContent = Constructor.version;
+            div.style.fontFamily = 'Helvetica';
+            document.body.appendChild(div);
+        </script>
+        <div id="container"></div>
+        <script>
+            c = new Constructor(document.getElementById('container'));
+            c.setState('{"model":"mug1","sides":[{"width":600,"height":500}]}');
+            preview = document.getElementById("preview");
+        </script>
+        <div class="panel">
+            <input type="button" onclick="c.setMode(Mode.Mode2D)" value="Mode 2D"/>
+            <input type="button" onclick="c.setMode(Mode.Mode3D)" value="Mode 3D"/>
+            <input type="button" onclick="c.zoomIn()" value="zoom in"/>
+            <input type="button" onclick="c.zoomOut()" value="zoom out"/>
+            <input type="button" onclick="c.zoomToFit()" value="zoom to fit"/>
+            <input type="button" onclick="c.resetZoom()" value="zoom 1:1"/>
+            <input type="button" onclick="c.setActiveSide(0)" value="side 1"/>
+            <input type="button" onclick="c.setActiveSide(1)" value="side 2"/>
+            <input type="button" onclick="c.setActiveSide(2)" value="side 3"/>
+            <input type="button" onclick="c.setActiveSide(3)" value="side 4"/>
+            <input type="button" onclick="c.getActiveSide().clear()" value="clear"/>
+            <input type="button" onclick="c.addSide(800, 600)" value="addSide"/>
+            <input type="button" onclick="c.addElement(ElementType.RECTANGLE)" value="add rectangle"/>
+            <input type="button" onclick="c.addElement(ElementType.CIRCLE)" value="add circle"/>
+            <input type="button" onclick="c.addElement(ElementType.TRIANGLE)" value="add triangle"/>
+            <input type="button" onclick="c.addElement(ElementType.TEXT)" value="add text"/>
+            <input type="button" onclick="c.addImage('images/bug.png')" value="add image"/>
+            <input type="button" onclick="c.addImage('images/duck.jpg')" value="add image 2"/>
+            <input type="button" onclick="c.addImage('images/board.png')" value="add image ext"/>
+            <input type="button" onclick="c.getSelection().toFront()" value="up"/>
+            <input type="button" onclick="c.getSelection().toBack()" value="down"/>
+            <input id="locked" type="button"
+                   onclick="c.getSelection().setLocked(!c.getSelection().isLocked());this.style.background = c.getSelection().isLocked() ? '#bbbbbb' : null"
+                   value="locked">
+            <input id="snap" type="button"
+                   onclick="c.snapToObjects=!c.snapToObjects;this.style.background = c.snapToObjects ? '#bbbbbb' : null"
+                   value="snap to objects">
+            <input id="snapToGrid" type="button"
+                   onclick="c.snapToGrid=!c.snapToGrid;this.style.background = c.snapToGrid ? '#bbbbbb' : null"
+                   value="snap to grid">
+            <input id="color" type="color" onchange="c.getSelection().setColor(this.value)"/>
+            <label>alpha</label><input id="alpha" type="range" min="0.0" max="1.0" step="0.1"
+                                       oninput="c.getSelection().setAlpha(this.value)"/>
+            <label>shadow</label><input id="shadow" type="range" min="0.0" max="100.0" step="1.0"
+                                        oninput="c.getSelection().setShadow(this.value)"/>
+        </div>
+        <div class="panel">
+            <input type="button" onclick="c.applyPreset('cup_remastered', [{width: 400, height: 300}]);" value="cup"/>
+            <input type="button" onclick="c.applyPreset('coffee_cup', [{width: 400, height: 300}]);" value="coffee"/>
+            <input type="button" onclick="c.preview.loadModel('ball')" value="ball"/>
+            <input type="button" onclick="c.getSelection().addFilter(Filter.INVERT)" value="invert"/>
+            <input type="button" onclick="c.getSelection().addFilter(Filter.GRAYSCALE)" value="grayscale"/>
+            <input type="button" onclick="c.getSelection().addFilter(Filter.EMBOSS)" value="emboss"/>
+            <input type="button" onclick="c.getSelection().addFilter(Filter.SHARPEN)" value="sharpen"/>
+            <input type="button" onclick="c.getSelection().addFilter(Filter.BLUR)" value="blur"/>
+            <input type="button" onclick="c.getSelection().resetFilters()" value="clear filters"/>
+            <input type="button" onclick="c.remove()" value="remove"/>
+            <input type="button" onclick="c.copy()" value="copy"/>
+            <input type="button" onclick="c.cut()" value="cut"/>
+            <input type="button" onclick="c.paste()" value="paste"/>
+            <input type="button" onclick="c.duplicate()" value="duplicate"/>
+            <input type="button" onclick="c.undo()" value="undo"/>
+            <input type="button" onclick="c.redo()" value="redo"/>
+            <input type="button" onclick="c.getSelection().setBold(true)" value="bold"/>
+            <input type="button" onclick="c.getSelection().setItalic(true)" value="italic"/>
+            <input type="button" onclick="c.getSelection().setFontFamily('Times')" value="times"/>
+            <input type="button" onclick="c.getSelection().setFontFamily('Lobster')" value="Lobster"/>
+            <input type="button" onclick="c.getSelection().setFontFamily('Oranienbaum')" value="Oranienbaum"/>
+            <input type="button" onclick="c.getSelection().setFontFamily('Seymour One')" value="Seymour"/>
+            <input type="button" onclick="c.preview.setFills('green', 0)" value="0"/>
+            <input type="button" onclick="c.preview.setFills('green', 1)" value="1"/>
+            <input type="button" onclick="c.preview.setFills('green', 2)" value="2"/>
+            <input type="button" onclick="c.preview.setFills('green', 0, 1)" value="0,1"/>
+            <input type="button" onclick="c.preview.setFills('green', 0, 2)" value="0,2"/>
+            <input type="button" onclick="c.preview.setFills('green', 1, 2)" value="1,2"/>
+            <input type="button" onclick="c.preview.setFills('green', 0, 1, 2)" value="0,1,2"/>
+            <input type="button" onclick="c.preview.clearFills()" value="no fills"/>
+            <input type="button" onclick="document.getElementById('preview').src = c.preview.exportImage(256)"
+                   value="preview"/>
+            <input type="button" onclick="imageRemote()" value="preview remote"/>
+        </div>
+        <div class="panel">
+            <input type="button" onclick="loadFast()" value="loadFast"/>
+        </div>
+        <img src="" id="preview">
+        <script>
+            function loadFast() {
+                let s = new Date().getTime();
+                c.setState('{"model":"ball","sides":[{"width":600,"height":500}]}', () => {
+                    console.log(new Date().getTime() - s, 'ms')
+                });
+            }
+
+            color = document.getElementById("color");
+            locked = document.getElementById("locked");
+            alpha = document.getElementById("alpha");
+            shadow = document.getElementById("shadow");
+            c.onSelect(s => {
+                color.value = s.getColor().toHex();
+                locked.style.background = s.isLocked() ? "#bbbbbb" : null;
+                alpha.value = c.getSelection().getAlpha();
+                shadow.value = c.getSelection().getShadow();
+            });
+            c.onDeselect(s => {
+                color.value = "#ffffff";
+                locked.style.background = null;
+                alpha.value = 0;
+                shadow.value = 0;
+            });
+        </script>
+        <input type="button" onclick="exportAnimation()" value="banner"/>
+        <input type="button" onclick="image()" value="image"/>
+        <script>
+            function image() {
+                c.preview.exportImage(src => {
+                    let image = new Image();
+                    image.src = src;
+                    let w = window.open("");
+                    w.document.write(image.outerHTML);
+                }, 1024, ImageType.JPG)
+            }
+
+            function imageRemote() {
+                let json = c.getState();
+                var xmlhttp = new XMLHttpRequest();   // new HttpRequest instance
+                xmlhttp.open("POST", "http://pechat55.ru:2018/preview?width=256&height=256", true);
+                xmlhttp.onreadystatechange = function () {
+                    if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                        document.getElementById("preview").src = xmlhttp.responseText;
+                    }
+                    else {
+                        console.log(xmlhttp.responseText);
+                    }
+                };
+                xmlhttp.send(json);
+            }
+
+            function exportAnimation() {
+                let s = new Date().getTime();
+                c.preview.exportAnimation(src => {
+                    console.log(new Date().getTime() - s + ' ms ' + Math.round(src.length / 1024) + ' KB');
+                }, 128);
+            }
+        </script>
+    </body>
+</html>

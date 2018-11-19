@@ -1,0 +1,44 @@
+{
+  "model": "puzzle_A3_0205",
+  "fills": [
+    16119285
+  ],
+  "sides": [
+    {
+      "objects": [
+        {
+          "filters": [],
+          "height": 905,
+          "left": 365.61,
+          "opacity": 1,
+          "scaleX": 0.48,
+          "scaleY": 0.48,
+          "src": "https://xn--80aj0aafqej6a4c.xn--80asehdb/image/customer/authorized/1c54985e4f95b7819ca0357c0cb9a09f/0bcbb1b37d6956b470df125c02a16a78.png",
+          "top": 277.15,
+          "type": "image",
+          "width": 1280
+        },
+        {
+          "fill": "rgba(34,34,34,1)",
+          "fontFamily": "Lobster",
+          "fontSize": 25,
+          "fontWeight": "normal",
+          "height": 93.79,
+          "left": 153.83,
+          "lineHeight": 1.16,
+          "opacity": 1,
+          "scaleX": 1.52,
+          "scaleY": 1.52,
+          "text": "Лучшая мама \nна \nсвете!",
+          "textAlign": "center",
+          "top": 92.27,
+          "type": "i-text",
+          "width": 151.22
+        }
+      ],
+      "width": 628.5,
+      "height": 444,
+      "roundCorners": null
+    }
+  ]
+}

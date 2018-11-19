@@ -1,0 +1,30 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+
+#container {
+    float: left;
+    border: 1px solid #808080;
+    position: relative;
+    width: 800px;
+    height: 600px;
+}
+
+.panel {
+    display: block;
+    float: left;
+    width: 120px;
+    text-align: center;
+    padding: 0;
+    margin: 0;
+}
+
+input {
+    display: inline;
+    width: 110px;
+    font-size: 12pt;
+    background: #eeeeee;
+    padding: 1px;
+    margin: 1px;
+}

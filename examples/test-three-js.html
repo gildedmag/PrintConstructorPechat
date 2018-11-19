@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+    <meta charset="UTF-8"/>
+    <head>
+        <title>Print Constructor</title>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+        <script src="../js/three.js"></script>
+        <script src="../js/OrbitControls.js"></script>
+        <script src="../js/OBJLoader.js"></script>
+        <!--<script src="WebGLDeferredRenderer.js"></script>-->
+        <script>
+            let renderer = new THREE.WebGLRenderer({antialias: true, alpha: true, preserveDrawingBuffer: true});
+            /*
+                        let renderer = new THREE.WebGLDeferredRenderer({
+                            width: 800,
+                            height: 600,
+                            scale: 1,
+                            antialias: true,
+                            useMultipleRenderTargets: true,
+                            tonemapping: THREE.UnchartedOperator,
+                            brightness: 2.0
+                        });
+            */
+            renderer.setClearColor("#ffffff");
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(800, 600);
+            document.body.appendChild(renderer.domElement);
+
+            let loader = new THREE.ObjectLoader();
+            let camera, scene, controls;
+
+            let img = new Image();
+            img.src = "data:image/png;base64,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";
+
+            let texture = new THREE.Texture(img);
+            texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
+            texture.repeat.set(1, 1);
+            texture.transparent = true;
+            texture.minFilter = THREE.LinearFilter;
+            texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            texture.needsUpdate = true;
+
+            //loader.setTexturePath('scene/');
+            loader.load(
+                "scene.json",
+                function (obj) {
+                    scene = obj;
+                    obj.children.forEach(child => {
+                        if (child.type === "PerspectiveCamera") {
+                            camera = child;
+                        }
+                    });
+                    camera.aspect = 800 / 600;
+                    camera.updateProjectionMatrix();
+                    controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+                    for (let j = 0; j < scene.children.length; j++) {
+                        let object = scene.children[j];
+                        if (!object.material) continue;
+                        for (let i = 0; i < object.material.length; i++) {
+                            let material = object.material[i];
+                            if (material.name === 'fill') {
+                                material.color = new THREE.Color(0x00aa00);
+                                material.specular = new THREE.Color(0x00aa00);
+                                material.needsUpdate = true;
+                            } else if (material.name === 'print') {
+                                material.transparent = true;
+                                material.needsUpdate = true;
+                            }
+                        }
+                    }
+
+                    animate();
+                },
+
+                function (xhr) {
+                    console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+                },
+
+                function (xhr) {
+                    console.error(xhr);
+                }
+            )
+            ;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                render();
+            }
+
+            function render() {
+                renderer.render(scene, camera);
+            }
+        </script>
+    </body>
+</html>

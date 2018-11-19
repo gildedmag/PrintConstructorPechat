@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+    <meta charset="UTF-8"/>
+    <head>
+        <title>Print Constructor</title>
+    </head>
+    <body>
+        <link rel="stylesheet" type="text/css"
+              href="https://fonts.googleapis.com/css?family=Alegreya|Alegreya+Sans|Arsenal|Bad+Script|Caveat|Comfortaa|Cormorant+Infant|Exo+2|Fira+Sans+Extra+Condensed|Forum|Kurale|Lobster|Marck+Script|Marmelad|Montserrat+Alternates|Old+Standard+TT|Oranienbaum|Oswald|PT+Sans+Narrow|Pacifico|Philosopher|Poiret+One|Prata|Roboto+Condensed|Ruslan+Display|Russo+One|Seymour+One|Underdog|Vollkorn|Yanone+Kaffeesatz&subset=latin,cyrillic"/>
+        <link rel="stylesheet" href="style.css" type="text/css">
+        <!--<script src="https://raw.githubusercontent.com/AL13/PrintConstructor/master/build/constructor.min.js"></script>-->
+        <script src="../js/three.js" type="application/javascript"></script>
+        <script src="../js/OrbitControls.js" type="application/javascript"></script>
+        <script src="../js/fabric.js" type="application/javascript"></script>
+        <script src="../js/constructor.js" type="application/javascript"></script>
+        <script>
+            let div = document.createElement("div");
+            div.textContent = Constructor.version;
+            div.style.fontFamily = 'Helvetica';
+            document.body.appendChild(div);
+        </script>
+        <div id="container"></div>
+        <script>
+            container = document.getElementById('container');
+            c = new Constructor(container);
+            c.applyPreset('jar', [{width: 400, height: 300}], () => c.setMode(Mode.Mode3D));
+            preview = document.getElementById("preview");
+        </script>
+        <button onclick="mode()">mode</button>
+        <button onclick="resize()">resize</button>
+        <script>
+            function resize() {
+                container.style.width = "100%";
+                container.style.height = "600px";
+            }
+            function mode() {
+                c.setMode(c.getMode() === Mode.Mode2D ? Mode.Mode3D : Mode.Mode2D);
+            }
+        </script>
+    </body>
+</html>

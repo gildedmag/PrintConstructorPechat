@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+    <meta charset="UTF-8"/>
+    <body>
+        <link rel="stylesheet" href="style.css">
+        <script src="../js/three.js"></script>
+        <script src="../js/OrbitControls.js"></script>
+        <script src="../js/OBJLoader.js"></script>
+        <script src="../js/fabric.js"></script>
+        <script src="../js/ZipLoader.js"></script>
+        <script src="../js/constructor.js"></script>
+        <div id="container"></div>
+        <script>
+            let lastTime;
+            let requestComplete = true;
+
+            function watch() {
+                if (!requestComplete) return;
+                let request = new XMLHttpRequest();
+                request.open('HEAD', '../js/constructor.js', true);
+                request.onreadystatechange = function () {
+                    if (request.readyState == 4 && request.status == 200) {
+                        let time = request.getResponseHeader("Last-Modified");
+                        if (!lastTime) {
+                            lastTime = time;
+                        }
+                        else if (lastTime != time) {
+                            document.body.style.borderBottom = "2px solid #ff0000";
+                        }
+                        requestComplete = true;
+                        setTimeout(watch, 200);
+                    }
+                };
+                request.send(null);
+            }
+
+            watch();
+
+            c = new Constructor(document.getElementById('container'));
+            c.loadPreset('porcelain_cup_handle', () => c.mode = Mode.Mode3D);
+        </script>
+        <div class="panel">
+            <input type="button" onclick="c.setMode(Mode.Mode2D)" value="Mode 2D"/>
+            <input type="button" onclick="c.setMode(Mode.Mode3D)" value="Mode 3D"/>
+            <input type="button" onclick="c.zoomIn()" value="zoom in"/>
+            <input type="button" onclick="c.zoomOut()" value="zoom out"/>
+            <input type="button" onclick="c.zoomToFit()" value="zoom to fit"/>
+            <input type="button" onclick="c.resetZoom()" value="zoom 1:1"/>
+            <input type="button" onclick="c.setActiveSide(0)" value="side 1"/>
+            <input type="button" onclick="c.setActiveSide(1)" value="side 2"/>
+            <input type="button" onclick="c.setActiveSide(2)" value="side 3"/>
+            <input type="button" onclick="c.setActiveSide(3)" value="side 4"/>
+            <input type="button" onclick="c.addSide(800, 600)" value="addSide"/>
+            <input type="button" onclick="c.getActiveSide().addRectangle()" value="add rectangle"/>
+            <input type="button" onclick="c.getActiveSide().addCircle()" value="add circle"/>
+            <input type="button" onclick="c.getActiveSide().addTriangle()" value="add triangle"/>
+            <input type="button" onclick="c.getActiveSide().addText()" value="add text"/>
+            <input type="button" onclick="c.getActiveSide().addImage('images/bug.png')" value="add image"/>
+            <input type="button" onclick="c.getSelection().remove()" value="remove"/>
+            <input type="button" onclick="c.getSelection().toFront()" value="up"/>
+            <input type="button" onclick="c.getSelection().toBack()" value="down"/>
+            <input id="locked" type="button"
+                   onclick="c.getSelection().setLocked(!c.getSelection().isLocked());this.style.background = c.getSelection().isLocked() ? '#bbbbbb' : null"
+                   value="locked">
+            <input id="snap" type="button"
+                   onclick="c.snapToObjects=!c.snapToObjects;this.style.background = c.snapToObjects ? '#bbbbbb' : null"
+                   value="snap to objects">
+            <input id="color" type="color" onchange="c.getSelection().setColor(this.value)"/>
+            <input id="alpha" type="range" min="0.0" max="1.0" step="0.1" oninput="c.getSelection().setAlpha(this.value)"/>
+            <input type="button" onclick="c.preview.model.load('hood')" value="hood"/>
+            <input type="button" onclick="c.preview.model.load('curved_cup')" value="curved_cup"/>
+            <input type="button" onclick="c.preview.model.load('t-shirt')" value="t-shirt"/>
+            <input type="button" onclick="c.preview.model.setMaterial(Materials.ceramics)" value="ceramics"/>
+            <input type="button" onclick="c.preview.model.setMaterial(Materials.glass)" value="glass"/>
+            <input type="button" onclick="c.preview.model.setMaterial(Materials.metal)" value="metal"/>
+            <input type="button" onclick="c.preview.model.setMaterial(Materials.paper)" value="paper"/>
+            <input type="button" onclick="c.getSelection().addFilter(Filters.EMBOSS)" value="emboss"/>
+            <input type="button" onclick="c.getSelection().addFilter(Filters.SHARPEN)" value="sharpen"/>
+            <input type="button" onclick="c.getSelection().addFilter(Filters.blur)" value="blur"/>
+            <input type="button" onclick="c.getSelection().resetFilters()" value="clear filters"/>
+        </div>
+        <script>
+            color = document.getElementById("color");
+            locked = document.getElementById("locked");
+            alpha = document.getElementById("alpha");
+            c.onSelect(s => {
+                color.value = s.getColor();
+                locked.style.background = s.isLocked() ? "#bbbbbb" : null;
+                alpha.value = c.selection.getAlpha();
+            });
+            c.onDeselect(s => {
+                color.value = "#ffffff";
+                locked.style.background = null;
+                alpha.value = 0;
+            });
+        </script>
+    </body>
+</html>

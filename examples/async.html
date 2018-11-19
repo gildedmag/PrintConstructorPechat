@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+    <meta charset="UTF-8"/>
+    <body>
+        <script>
+            let result;
+
+            function asyncFunction(callback, number) {
+                setTimeout(() => callback(number + 1), 100);
+            }
+
+            function getResultAsync(callable, args) {
+                result = null;
+                callable(res => result = res, args);
+                for (let j = 0; j < 10; j++) {
+                    wait(100);
+                }
+                return result;
+            }
+
+            function wait(ms) {
+                let start = Date.now();
+                let now = start;
+                while (now - start < ms) {
+                    now = Date.now();
+                }
+            }
+
+            document.body.innerText += "waiting...";
+            let i = getResultAsync(asyncFunction, 4);
+            document.body.innerText = i;
+        </script>
+    </body>
+</html>

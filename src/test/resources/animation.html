@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+    <meta charset="UTF-8"/>
+    <head>
+        <title>Print Constructor</title>
+    </head>
+    <body>
+        <script src="icon.js"></script>
+        <script>
+            let s = new Date().getTime();
+            let icon = new Icon('$');
+            console.log(new Date().getTime() - s);
+            s = new Date().getTime();
+            let element = icon.getElement();
+            console.log(new Date().getTime() - s);
+            document.body.appendChild(element);
+        </script>
+    </body>
+</html>

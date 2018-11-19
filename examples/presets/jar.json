@@ -1,0 +1,15 @@
+{
+  "model": "jar",
+  "sides": [
+    {
+      "width": 400,
+      "height": 300,
+      "roundCorners": 10
+    },
+    {
+      "width": 600,
+      "height": 600,
+      "roundCorners": 50
+    }
+  ]
+}
