@@ -43,14 +43,14 @@ Constructor
 ```
 ## API Documentation
 Auto-generated **TypeDoc** documentation can be found here: 
-https://rawgit.com/AL13/PrintConstructor/master/doc/globals.html
+https://rawcdn.githack.com/gildedmag/PrintConstructorPechat/e897a948bf4e0f111f3da4aeaa012b16ea95a56f/doc/globals.html
 
 ## Examples
 Basic Constructor implementation example:
-https://rawgit.com/AL13/PrintConstructor/master/examples/index.html
+https://rawcdn.githack.com/gildedmag/PrintConstructorPechat/e897a948bf4e0f111f3da4aeaa012b16ea95a56f/examples/index.html
 
 ## Model Editor
-https://rawgit.com/AL13/PrintConstructor/master/editor/editor/index.html
+https://rawcdn.githack.com/gildedmag/PrintConstructorPechat/e897a948bf4e0f111f3da4aeaa012b16ea95a56f/editor/editor/index.html
 
 ## Setting up
 
@@ -62,7 +62,7 @@ To initialize Constructor instance on a page:
 ```html
 <html>
 <body>
-    <script src="https://rawgit.com/AL13/PrintConstructor/master/build/constructor.min.js"></script>
+    <script src="https://raw.githubusercontent.com/gildedmag/PrintConstructorPechat/master/build/constructor.min.js"></script>
     <div id="container"></div> 
     <script>
         let printConstructor = new Constructor('container');
@@ -73,7 +73,7 @@ To initialize Constructor instance on a page:
 
 ### Constructor Settings
 
-To change Constructor defaults use `Constructor.settings`. See docs [reference](https://rawgit.com/AL13/PrintConstructor/master/doc/classes/settings.html) for details.
+To change Constructor defaults use `Constructor.settings`. See docs [reference](https://rawcdn.githack.com/gildedmag/PrintConstructorPechat/e897a948bf4e0f111f3da4aeaa012b16ea95a56f/doc/classes/settings.html) for details.
 
 ### Adding 3D models
 
