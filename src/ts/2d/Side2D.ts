@@ -53,7 +53,7 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
             this.saveState();
         });
         this.canvas.on(Constants.SELECTION_CLEARED, () => {
-            Constructor.instance.onDeselectHandler(this.selection);
+            //Constructor.instance.onDeselectHandler(this.selection);
             this.selection = null;
         });
         this.horizontalGuide = new HorizontalGuide(height);
@@ -268,10 +268,10 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
         if (format == ImageType.JPG) {
             let background = this.addElement(ElementType.RECTANGLE);
             background.setColor(Color.WHITE);
-            background.object.setWidth(w);
-            background.object.setHeight(h);
-            background.object.setLeft(w / 2);
-            background.object.setTop(h / 2);
+            background.object.width = w;
+            background.object.height = h;
+            background.object.left = w / 2;
+            background.object.top = h / 2;
             background.object.setCoords();
             background.toBack();
             this.canvas.renderAll();

@@ -1,6 +1,6 @@
 "use strict";
-var Map = (function () {
-    function Map() {
+var ValueMap = (function () {
+    function ValueMap() {
         var values = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             values[_i] = arguments[_i];
@@ -14,14 +14,14 @@ var Map = (function () {
             this.map.put(key, value);
         }
     }
-    Map.prototype.put = function (key, value) {
+    ValueMap.prototype.put = function (key, value) {
         this.map[key] = value;
-        new Map();
+        new ValueMap();
     };
-    Map.prototype.get = function (key) {
+    ValueMap.prototype.get = function (key) {
         return this.map[key];
     };
-    return Map;
+    return ValueMap;
 }());
 var Associated = (function () {
     function Associated(name) {
@@ -34,7 +34,7 @@ var Associated = (function () {
     Associated.prototype.getName = function () {
         return this.name;
     };
-    Associated.map = new Map();
+    Associated.map = new ValueMap();
     return Associated;
 }());
 var __extends = (this && this.__extends) || (function () {
@@ -43,7 +43,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -170,7 +170,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "11.10.2018 15:44";
+    Version.version = "01.07.2020 12:56";
     return Version;
 }());
 var View = (function () {
@@ -675,18 +675,35 @@ var Dimensions = (function () {
 }());
 var Element2D = (function () {
     function Element2D(type, side) {
+        var _this = this;
+        console.log();
         this.type = type;
         this.side = side;
         if (type === ElementType.IMAGE) {
             this.object = new type.nativeType();
         }
         else {
-            this.object = type.nativeType.fromObject(Constructor.settings.elementDefaults[type.getNativeTypeName()]);
+            var defaults = Constructor.settings.elementDefaults[type.getNativeTypeName()];
+            console.log("type.nativeType", type.nativeType);
+            type.nativeType.fromObject(defaults, function (native) {
+                console.log("native", native);
+                _this.object = native;
+                _this.setOptions(_this.object);
+                try {
+                    Constructor.instance.getActiveSide().canvas.renderAll();
+                }
+                catch (e) {
+                    console.error(e);
+                }
+            });
         }
         this.setOptions(this.object);
     }
     Element2D.prototype.setOptions = function (object) {
         var _this = this;
+        console.log(object);
+        if (!object) {
+        }
         object.on(Constants.ADDED, function () {
             _this.calculateGuides();
         });
@@ -702,10 +719,8 @@ var Element2D = (function () {
         object.on(Constants.ROTATING, function () { return _this.snapRotation(); });
         object.on(Constants.SELECTED, function () {
             _this.side.selection = _this;
-            Constructor.instance.onSelectHandler((_this));
         });
         object.on(Constants.DESELECTED, function () {
-            Constructor.instance.onDeselectHandler((_this));
             _this.side.selection = null;
         });
         object.on(Constants.REMOVED, function () {
@@ -718,15 +733,15 @@ var Element2D = (function () {
         var height = this.side.canvas.getHeight();
         var w = Math.max((width / 2) * Math.random(), width * 0.1);
         var h = Math.max((height / 2) * Math.random(), height * 0.1);
-        this.object.setLeft((width - w) * Math.random() + w / 2);
-        this.object.setTop((height - h) * Math.random() + h / 2);
+        this.object.left = (width - w) * Math.random() + w / 2;
+        this.object.top = (height - h) * Math.random() + h / 2;
         this.fitIntoMargins();
         this.object.setCoords();
         this.side.canvas.renderAll();
     };
     Element2D.prototype.offset = function () {
-        this.object.setLeft(this.object.getLeft() + Constructor.settings.duplicateOffset);
-        this.object.setTop(this.object.getTop() + Constructor.settings.duplicateOffset);
+        this.object.left = this.object.left + Constructor.settings.duplicateOffset;
+        this.object.top = this.object.top + Constructor.settings.duplicateOffset;
         this.object.setCoords();
         this.side.canvas.renderAll();
     };
@@ -738,25 +753,32 @@ var Element2D = (function () {
             if (typeof value === Constants.STRING)
                 value = new Color(value);
             var color = value;
-            this.object.setFill(color.toRgba());
+            this.object.fill = color.toRgba();
+            this.object.dirty = true;
             this.side.canvas.renderAll();
+            setTimeout(function () {
+                console.log("RENDER");
+                Constructor.instance.getActiveSide().canvas.renderAll();
+            }, 100);
             this.side.saveState();
         }
     };
     Element2D.prototype.getAlpha = function () {
-        var color = new Color(this.object.getFill());
+        var color = new Color(this.object.fill);
         return color.getAlpha();
     };
     Element2D.prototype.setAlpha = function (value) {
-        this.object.setOpacity(value);
+        this.object.opacity = value;
         this.side.saveState();
-        this.side.canvas.renderAll(true);
+        this.side.canvas.renderAll();
     };
     Element2D.prototype.setShadow = function (value) {
         if (value && value != 0) {
-            this.object.setShadow({
-                color: Color.TRANSPARENT_BLACK.toRgba()
-            });
+            var options = {
+                color: Color.TRANSPARENT_BLACK.toRgba(),
+                includeDefaultValues: true
+            };
+            this.object.setShadow(new fabric.Shadow(options));
             var shadow = this.object.shadow;
             shadow.offsetX = value;
             shadow.offsetY = value;
@@ -773,8 +795,8 @@ var Element2D = (function () {
         return shadow ? shadow.offsetX : 0;
     };
     Element2D.prototype.setPosition = function (left, top) {
-        this.object.setLeft(left);
-        this.object.setTop(top);
+        this.object.left = left;
+        this.object.top = top;
         this.object.setCoords();
         this.side.canvas.renderAll();
         this.side.saveState();
@@ -805,57 +827,84 @@ var Element2D = (function () {
         }
     };
     Element2D.prototype.getFontFamily = function () {
-        return this.type === ElementType.TEXT ? this.object.getFontFamily() : null;
+        return this.type === ElementType.TEXT ? this.object.fontFamily : null;
     };
     Element2D.prototype.setFontSize = function (value) {
         if (this.type === ElementType.TEXT) {
-            this.object.setFontSize(value);
+            this.object.fontSize = value;
             this.side.canvas.renderAll();
             this.side.saveState();
         }
     };
     Element2D.prototype.getFontSize = function () {
-        return this.type === ElementType.TEXT ? this.object.getFontSize() : null;
+        return this.type === ElementType.TEXT ? this.object.fontSize : null;
     };
     Element2D.prototype.setItalic = function (value) {
         if (this.type === ElementType.TEXT) {
-            this.object.setFontStyle(value ? Constants.ITALIC : null);
+            this.object.fontStyle = value ? Constants.ITALIC : null;
             this.side.canvas.renderAll();
             this.side.saveState();
         }
     };
     Element2D.prototype.isItalic = function () {
-        return this.type === ElementType.TEXT ? this.object.getFontStyle() === Constants.ITALIC : null;
+        return this.type === ElementType.TEXT ? this.object.fontStyle === Constants.ITALIC : null;
     };
     Element2D.prototype.setBold = function (value) {
         if (this.type === ElementType.TEXT) {
-            this.object.setFontWeight(value ? Constants.BOLD : Constants.NORMAL);
+            this.object.fontWeight = value ? Constants.BOLD : Constants.NORMAL;
             this.side.canvas.renderAll();
             this.side.saveState();
         }
     };
     Element2D.prototype.isBold = function () {
-        return this.type === ElementType.TEXT ? this.object.getFontWeight() === Constants.BOLD : null;
+        return this.type === ElementType.TEXT ? this.object.fontWeight === Constants.BOLD : null;
     };
     Element2D.prototype.setTextDecoration = function (value) {
         if (this.type === ElementType.TEXT) {
-            this.object.setTextDecoration(value ? value : null);
+            switch (value) {
+                case TextDecoration.LINETHROUGH:
+                    this.object.linethrough = true;
+                    break;
+                case TextDecoration.OVERLINE:
+                    this.object.overline = true;
+                    break;
+                case TextDecoration.UNDERLINE:
+                    this.object.underline = true;
+                    break;
+                default: {
+                    this.object.linethrough = false;
+                    this.object.overline = false;
+                    this.object.underline = false;
+                }
+            }
             this.side.canvas.renderAll();
             this.side.saveState();
         }
     };
     Element2D.prototype.getTextDecoration = function () {
-        return this.type === ElementType.TEXT ? this.object.getTextDecoration() : null;
+        if (this.type != ElementType.TEXT) {
+            return null;
+        }
+        if (this.object.underline) {
+            return TextDecoration.UNDERLINE;
+        }
+        if (this.object.overline) {
+            return TextDecoration.OVERLINE;
+        }
+        if (this.object.linethrough) {
+            return TextDecoration.LINETHROUGH;
+        }
+        return null;
     };
     Element2D.prototype.setTextAlignment = function (value) {
         if (this.type === ElementType.TEXT) {
-            this.object.setTextAlign(value);
+            this.object.textAlign = value;
             this.side.canvas.renderAll();
             this.side.saveState();
         }
     };
     Element2D.prototype.getTextAlignment = function () {
-        return this.type === ElementType.TEXT ? this.object.getTextAlign() : null;
+        return this.type === ElementType.TEXT ? this.object.textAlign : null;
     };
     Element2D.prototype.addFilter = function (filter, callback) {
         if (this.object instanceof fabric.Image) {
@@ -883,7 +932,6 @@ var Element2D = (function () {
         }
     };
     Element2D.prototype.applyFilters = function (callback) {
-        var _this = this;
         var image = this.object;
         image.filters = [];
         if (this.filters) {
@@ -893,14 +941,13 @@ var Element2D = (function () {
             }
         }
         this.side.saveState();
-        image.applyFilters(function () {
-            _this.side.canvas.renderAll(true);
-            if (callback)
-                callback(_this);
-        });
+        image.applyFilters();
+        this.side.canvas.renderAll();
+        if (callback)
+            callback(this);
     };
     Element2D.prototype.snapRotation = function () {
-        var angle = this.object.getAngle();
+        var angle = this.object.angle;
         angle = Math.round(angle / Constructor.settings.rotationStep) * Constructor.settings.rotationStep;
         this.object.rotate(angle);
     };
@@ -1013,7 +1060,7 @@ var Element2D = (function () {
                 if (!yUpdated) {
                     var y = this.getVerticalSnapPosition(element);
                     if (y != null) {
-                        this.object.setTop(y.objectPosition);
+                        this.object.top = y.objectPosition;
                         this.side.verticalGuide.update(y.guidePosition);
                         yUpdated = true;
                     }
@@ -1042,8 +1089,8 @@ var Element2D = (function () {
                 var x = this.getHorizontalSnapPosition(element);
                 if (x != null) {
                     var dx = x.objectPosition - mouseEvent.clientX;
-                    this.object.setWidth(this.object.width + dx / 2);
-                    this.object.setLeft(this.object.left - dx / 2);
+                    this.object.width = this.object.width + dx / 2;
+                    this.object.left = this.object.left - dx / 2;
                     this.object.setCoords();
                     this.side.horizontalGuide.update(x.guidePosition);
                     xUpdated = true;
@@ -1063,6 +1110,7 @@ var Element2D = (function () {
         var type = ElementType.get(object.type);
         var element = new Element2D(type);
         var filters = object.filters;
+        console.log(object);
         if (filters && filters.length > 0) {
             element.filtersCache = object.filters;
             delete object.filters;
@@ -1173,11 +1221,13 @@ var Guide = (function (_super) {
         return _super.call(this, [0, 0, 0, 0], Guide.DEFAULTS) || this;
     }
     Guide.prototype.show = function () {
-        this.setStroke(Color.GUIDE.toRgba());
+        this.stroke = Color.GUIDE.toRgba();
         this.bringToFront();
+        this.dirty = true;
+        Constructor.instance.getActiveSide().canvas.renderAll();
     };
     Guide.prototype.hide = function () {
-        this.setStroke(Color.TRANSPARENT.toRgba());
+        this.stroke = Color.TRANSPARENT.toRgba();
     };
     Guide.DEFAULTS = {
         left: 0,
@@ -1192,11 +1242,11 @@ var HorizontalGuide = (function (_super) {
     __extends(HorizontalGuide, _super);
     function HorizontalGuide(h) {
         var _this = _super.call(this) || this;
-        _this.setHeight(h);
+        _this.height = h;
         return _this;
     }
     HorizontalGuide.prototype.update = function (x) {
-        this.setLeft(x);
+        this.left = x;
         this.show();
     };
     return HorizontalGuide;
@@ -1294,7 +1344,9 @@ var ObjectOptions = (function () {
         "text",
         "textAlign",
         "textBackgroundColor",
-        "textDecoration",
+        'underline',
+        'overline',
+        'linethrough',
         "top",
         "transformMatrix",
         "type",
@@ -1378,7 +1430,6 @@ var Side2D = (function (_super) {
             _this.saveState();
         });
         _this.canvas.on(Constants.SELECTION_CLEARED, function () {
-            Constructor.instance.onDeselectHandler(_this.selection);
             _this.selection = null;
         });
         _this.horizontalGuide = new HorizontalGuide(height);
@@ -1572,10 +1623,10 @@ var Side2D = (function (_super) {
         if (format == ImageType.JPG) {
             var background = this.addElement(ElementType.RECTANGLE);
             background.setColor(Color.WHITE);
-            background.object.setWidth(w);
-            background.object.setHeight(h);
-            background.object.setLeft(w / 2);
-            background.object.setTop(h / 2);
+            background.object.width = w;
+            background.object.height = h;
+            background.object.left = w / 2;
+            background.object.top = h / 2;
             background.object.setCoords();
             background.toBack();
             this.canvas.renderAll();
@@ -1629,11 +1680,11 @@ var VerticalGuide = (function (_super) {
     __extends(VerticalGuide, _super);
     function VerticalGuide(w) {
         var _this = _super.call(this) || this;
-        _this.setWidth(w);
+        _this.width = w;
         return _this;
     }
     VerticalGuide.prototype.update = function (y) {
-        this.setTop(y);
+        this.top = y;
         this.show();
     };
     return VerticalGuide;

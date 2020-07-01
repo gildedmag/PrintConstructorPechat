@@ -3,11 +3,11 @@ class HorizontalGuide extends Guide {
 
     constructor(h: number) {
         super();
-        this.setHeight(h);
+        this.height = h;
     }
 
     update(x: number){
-        this.setLeft(x);
+        this.left = x;
         this.show();
     }
 

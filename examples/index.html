@@ -24,6 +24,7 @@
         </script>
         <div id="container"></div>
         <script>
+            Constructor.settings.localStorage.enabled = false;
             c = new Constructor(document.getElementById('container'));
             c.setState('{"model":"mug1","sides":[{"width":600,"height":500}]}');
             preview = document.getElementById("preview");

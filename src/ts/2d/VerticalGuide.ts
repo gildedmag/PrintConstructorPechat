@@ -3,11 +3,11 @@ class VerticalGuide extends Guide {
 
     constructor(w: number) {
         super();
-        this.setWidth(w);
+        this.width = w;
     }
 
     update(y: number){
-        this.setTop(y);
+        this.top = y;
         this.show();
     }
 

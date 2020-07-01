@@ -31,18 +31,36 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
 
     /** @hidden */
     constructor(type: ElementType, side?: Side2D) {
+        console.log()
         this.type = type;
         this.side = side;
+        //if (type === ElementType.IMAGE) {
         if (type === ElementType.IMAGE) {
             this.object = new type.nativeType();
         } else {
-            this.object = type.nativeType.fromObject(Constructor.settings.elementDefaults[type.getNativeTypeName()]);
+            let defaults = Constructor.settings.elementDefaults[type.getNativeTypeName()]
+            console.log("type.nativeType", type.nativeType);
+            type.nativeType.fromObject(defaults, native => {
+                console.log("native", native);
+                this.object = native
+                this.setOptions(this.object);
+                try {
+                    Constructor.instance.getActiveSide().canvas.renderAll();
+                    //Constructor.instance.preview.render();
+                } catch (e) {
+                    console.error(e)
+                }
+            });
         }
         this.setOptions(this.object);
     }
 
     /** @hidden */
     private setOptions(object: fabric.Object) {
+        console.log(object)
+        if (!object){
+            //return
+        }
         object.on(Constants.ADDED, () => {
             this.calculateGuides();
         });
@@ -59,10 +77,10 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         object.on(Constants.ROTATING, () => this.snapRotation());
         object.on(Constants.SELECTED, () => {
             this.side.selection = this;
-            Constructor.instance.onSelectHandler((this));
+            //Constructor.instance.onSelectHandler((this));
         });
         object.on(Constants.DESELECTED, () => {
-            Constructor.instance.onDeselectHandler((this));
+            //Constructor.instance.onDeselectHandler((this));
             this.side.selection = null;
         });
         object.on(Constants.REMOVED, () => {
@@ -77,8 +95,8 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         let height = this.side.canvas.getHeight();
         let w = Math.max((width / 2) * Math.random(), width * 0.1);
         let h = Math.max((height / 2) * Math.random(), height * 0.1);
-        this.object.setLeft((width - w) * Math.random() + w / 2);
-        this.object.setTop((height - h) * Math.random() + h / 2);
+        this.object.left = (width - w) * Math.random() + w / 2;
+        this.object.top = (height - h) * Math.random() + h / 2;
         this.fitIntoMargins();
         this.object.setCoords();
         this.side.canvas.renderAll();
@@ -86,8 +104,8 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
 
     /** @hidden */
     offset() {
-        this.object.setLeft(this.object.getLeft() + Constructor.settings.duplicateOffset);
-        this.object.setTop(this.object.getTop() + Constructor.settings.duplicateOffset);
+        this.object.left = this.object.left + Constructor.settings.duplicateOffset;
+        this.object.top = this.object.top + Constructor.settings.duplicateOffset;
         this.object.setCoords();
         this.side.canvas.renderAll();
     }
@@ -100,28 +118,36 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         if (this.type != ElementType.IMAGE) {
             if (typeof value === Constants.STRING) value = new Color(value);
             let color = <Color> value;
-            this.object.setFill(color.toRgba());
+            this.object.fill = color.toRgba();
+            this.object.dirty = true;
             this.side.canvas.renderAll();
+
+            setTimeout(() => {
+                console.log("RENDER");
+                Constructor.instance.getActiveSide().canvas.renderAll();
+            }, 100)
             this.side.saveState();
         }
     }
 
     getAlpha(): number {
-        let color = new Color(this.object.getFill());
+        let color = new Color(this.object.fill);
         return color.getAlpha();
     }
 
     setAlpha(value: number) {
-        (<fabric.Image>this.object).setOpacity(value);
+        (<fabric.Image>this.object).opacity = value;
         this.side.saveState();
-        this.side.canvas.renderAll(true);
+        this.side.canvas.renderAll();
     }
 
     setShadow(value: number) {
         if (value && value != 0) {
-            this.object.setShadow({
-                color: Color.TRANSPARENT_BLACK.toRgba()
-            });
+            let options = {
+                color: Color.TRANSPARENT_BLACK.toRgba(),
+                includeDefaultValues: true
+            };
+            this.object.setShadow(new fabric.Shadow(options));
             let shadow = this.object.shadow as any;
             shadow.offsetX = value;
             shadow.offsetY = value;
@@ -139,8 +165,8 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     }
 
     setPosition(left: number, top: number) {
-        this.object.setLeft(left);
-        this.object.setTop(top);
+        this.object.left = left;
+        this.object.top = top;
         this.object.setCoords();
         this.side.canvas.renderAll();
         this.side.saveState();
@@ -175,67 +201,95 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     }
 
     getFontFamily(): string {
-        return this.type === ElementType.TEXT ? (this.object as fabric.IText).getFontFamily() : null;
+        return this.type === ElementType.TEXT ? (this.object as fabric.IText).fontFamily : null;
     }
 
     setFontSize(value: number) {
         if (this.type === ElementType.TEXT) {
-            (this.object as fabric.IText).setFontSize(value);
+            (this.object as fabric.IText).fontSize = value;
             this.side.canvas.renderAll();
             this.side.saveState();
         }
     }
 
     getFontSize(): number {
-        return this.type === ElementType.TEXT ? (this.object as fabric.IText).getFontSize() : null;
+        return this.type === ElementType.TEXT ? (this.object as fabric.IText).fontSize : null;
     }
 
     setItalic(value: boolean) {
         if (this.type === ElementType.TEXT) {
-            (this.object as fabric.IText).setFontStyle(value ? Constants.ITALIC : null);
+            (this.object as fabric.IText).fontStyle = value ? Constants.ITALIC : null;
             this.side.canvas.renderAll();
             this.side.saveState();
         }
     }
 
     isItalic(): boolean {
-        return this.type === ElementType.TEXT ? (this.object as fabric.IText).getFontStyle() === Constants.ITALIC : null;
+        return this.type === ElementType.TEXT ? (this.object as fabric.IText).fontStyle === Constants.ITALIC : null;
     }
 
     setBold(value: boolean) {
         if (this.type === ElementType.TEXT) {
-            (this.object as fabric.IText).setFontWeight(value ? Constants.BOLD : Constants.NORMAL);
+            (this.object as fabric.IText).fontWeight = value ? Constants.BOLD : Constants.NORMAL;
             this.side.canvas.renderAll();
             this.side.saveState();
         }
     }
 
     isBold(): boolean {
-        return this.type === ElementType.TEXT ? (this.object as fabric.IText).getFontWeight() === Constants.BOLD : null;
+        return this.type === ElementType.TEXT ? (this.object as fabric.IText).fontWeight === Constants.BOLD : null;
     }
 
     setTextDecoration(value: TextDecoration) {
         if (this.type === ElementType.TEXT) {
-            (this.object as fabric.IText).setTextDecoration(value ? value : null);
+            switch (value) {
+                case TextDecoration.LINETHROUGH:
+                    (this.object as fabric.IText).linethrough = true;
+                    break
+                case TextDecoration.OVERLINE:
+                    (this.object as fabric.IText).overline = true;
+                    break
+                case TextDecoration.UNDERLINE:
+                    (this.object as fabric.IText).underline = true;
+                    break
+                default: {
+                    (this.object as fabric.IText).linethrough = false;
+                    (this.object as fabric.IText).overline = false;
+                    (this.object as fabric.IText).underline = false;
+                }
+
+            }
             this.side.canvas.renderAll();
             this.side.saveState();
         }
     }
 
     getTextDecoration(): string {
-        return this.type === ElementType.TEXT ? (this.object as fabric.IText).getTextDecoration() : null;
+        if (this.type != ElementType.TEXT) {
+            return null;
+        }
+        if ((this.object as fabric.IText).underline) {
+            return TextDecoration.UNDERLINE
+        }
+        if ((this.object as fabric.IText).overline) {
+            return TextDecoration.OVERLINE
+        }
+        if ((this.object as fabric.IText).linethrough) {
+            return TextDecoration.LINETHROUGH
+        }
+        return null
     }
 
     setTextAlignment(value: TextAlignment) {
         if (this.type === ElementType.TEXT) {
-            (this.object as fabric.IText).setTextAlign(value);
+            (this.object as fabric.IText).textAlign = value;
             this.side.canvas.renderAll();
             this.side.saveState();
         }
     }
 
     getTextAlignment(): string {
-        return this.type === ElementType.TEXT ? (this.object as fabric.IText).getTextAlign() : null;
+        return this.type === ElementType.TEXT ? (this.object as fabric.IText).textAlign : null;
     }
 
     addFilter(filter: Filter, callback?: (element: Element2D) => void) {
@@ -272,14 +326,13 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
             }
         }
         this.side.saveState();
-        image.applyFilters(() => {
-            this.side.canvas.renderAll(true);
-            if (callback) callback(this);
-        });
+        image.applyFilters();
+        this.side.canvas.renderAll();
+        if (callback) callback(this);
     }
 
     private snapRotation() {
-        let angle = this.object.getAngle();
+        let angle = this.object.angle;
         angle = Math.round(angle / Constructor.settings.rotationStep) * Constructor.settings.rotationStep;
         this.object.rotate(angle)
     }
@@ -397,7 +450,7 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
                 if (!yUpdated) {
                     let y = this.getVerticalSnapPosition(element);
                     if (y != null) {
-                        this.object.setTop(y.objectPosition);
+                        this.object.top = y.objectPosition;
                         this.side.verticalGuide.update(y.guidePosition);
                         yUpdated = true;
                     }
@@ -427,8 +480,8 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
                 let x = this.getHorizontalSnapPosition(element);
                 if (x != null) {
                     let dx = x.objectPosition - mouseEvent.clientX;
-                    this.object.setWidth(this.object.width + dx / 2);
-                    this.object.setLeft(this.object.left - dx / 2);
+                    this.object.width = this.object.width + dx / 2;
+                    this.object.left = this.object.left - dx / 2;
                     this.object.setCoords();
                     this.side.horizontalGuide.update(x.guidePosition);
                     xUpdated = true;
@@ -459,6 +512,7 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         let type = ElementType.get(object.type);
         let element = new Element2D(type);
         let filters = object.filters;
+        console.log(object)
         if (filters && filters.length > 0) {
             element.filtersCache = object.filters;
             delete object.filters;

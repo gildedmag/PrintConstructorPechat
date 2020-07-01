@@ -14,12 +14,14 @@ abstract class Guide extends fabric.Line {
     }
 
     show() {
-        (<any>this).setStroke(Color.GUIDE.toRgba());
+        this.stroke = Color.GUIDE.toRgba();
         this.bringToFront();
+        this.dirty = true;
+        Constructor.instance.getActiveSide().canvas.renderAll();
     }
 
     hide() {
-        (<any>this).setStroke(Color.TRANSPARENT.toRgba());
+        this.stroke = Color.TRANSPARENT.toRgba();
     }
 
 }

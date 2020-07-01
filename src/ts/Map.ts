@@ -1,5 +1,5 @@
 /** @hidden */
-class Map<K, V> {
+class ValueMap<K, V> {
 
     private map: any = {};
 
@@ -14,13 +14,11 @@ class Map<K, V> {
 
     public put(key: K, value: V) {
         this.map[key] = value;
-        new Map()
+        new ValueMap()
     }
 
     public get(key: K): V {
         return this.map[key];
     }
-
-
 
 }
