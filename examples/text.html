@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html"
+      xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
+<meta charset="UTF-8"/>
+<head>
+    <title>Print Constructor</title>
+</head>
+<body>
+<link rel="stylesheet" type="text/css"
+      href="https://fonts.googleapis.com/css?family=Alegreya|Alegreya+Sans|Arsenal|Bad+Script|Caveat|Comfortaa|Cormorant+Infant|Exo+2|Fira+Sans+Extra+Condensed|Forum|Kurale|Lobster|Marck+Script|Marmelad|Montserrat+Alternates|Old+Standard+TT|Oranienbaum|Oswald|PT+Sans+Narrow|Pacifico|Philosopher|Poiret+One|Prata|Roboto+Condensed|Ruslan+Display|Russo+One|Seymour+One|Underdog|Vollkorn|Yanone+Kaffeesatz&subset=latin,cyrillic"/>
+<link rel="stylesheet" href="style.css" type="text/css">
+<!--<script src="../build/constructor.min.js" type="application/javascript"></script>-->
+<script src="../js/fabric.js" type="application/javascript"></script>
+<script src="../js/three.js" type="application/javascript"></script>
+<script src="../js/OrbitControls.js" type="application/javascript"></script>
+<script src="../js/constructor.js" type="application/javascript"></script>
+<style type="text/css">
+    * {
+        overflow: hidden;
+    }
+</style>
+<script>
+    let div = document.createElement("div");
+    div.textContent = Constructor.version;
+    div.style.fontFamily = 'Helvetica';
+    document.body.appendChild(div);
+</script>
+<div id="container" style="width: 300px;height: 300px;"></div>
+<script>
+    Constructor.settings.localStorage.enabled = false;
+    let c = new Constructor(document.getElementById('container'));
+    c.setState('{"model":"mug1","sides":[{"width":300,"height":300}]}');
+    preview = document.getElementById("preview");
+    c.addElement(ElementType.TEXT);
+</script>
+<button onclick="c.addElement(ElementType.TEXT)">Add text</button>
+</body>
+</html>
