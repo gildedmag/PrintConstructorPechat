@@ -170,7 +170,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "01.07.2020 12:56";
+    Version.version = "02.07.2020 18:30";
     return Version;
 }());
 var View = (function () {
