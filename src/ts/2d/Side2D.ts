@@ -126,8 +126,8 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
         this.canvas.add(element.object);
         element.fitIntoMargins();
         element.object.setCoords();
-        this.canvas.renderAll();
-        setTimeout(() => this.canvas.renderAll(), null);
+        //this.canvas.renderAll();
+        //setTimeout(() => this.canvas.renderAll(), null);
         return element;
     }
 
@@ -221,7 +221,7 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
             }
         }
         this.saveToLocalStorage(state);
-        this.canvas.renderAll();
+        //this.canvas.renderAll();
         this.history.unlock();
     }
 

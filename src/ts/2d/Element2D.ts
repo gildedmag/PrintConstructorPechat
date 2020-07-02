@@ -31,7 +31,6 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
 
     /** @hidden */
     constructor(type: ElementType, side?: Side2D) {
-        console.log()
         this.type = type;
         this.side = side;
         //if (type === ElementType.IMAGE) {
@@ -45,8 +44,9 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
                 this.object = native
                 this.setOptions(this.object);
                 try {
-                    Constructor.instance.getActiveSide().canvas.renderAll();
+                    //Constructor.instance.getActiveSide().canvas.renderAll();
                     //Constructor.instance.preview.render();
+                    this.object.dirty = true;
                 } catch (e) {
                     console.error(e)
                 }
@@ -176,27 +176,30 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         if (this.type === ElementType.TEXT) {
             (fabric as any).charWidthsCache[fontFamily] = {};
             let object = this.object as any;
-            object.setFontFamily(fontFamily);
-            this.side.canvas.renderAll();
-            if (!repeat) {
-                this.side.canvas.renderAll();
-                this.side.saveState();
-                setTimeout(() => { //TODO: fix by checking font cache changes
-                        this.setFontFamily(fontFamily, true);
-                        this.side.canvas.renderAll();
-                    }, 100
-                );
-                setTimeout(() => { //TODO: fix by checking font cache changes
-                        this.setFontFamily(fontFamily, true);
-                        this.side.canvas.renderAll();
-                    }, 500
-                );
-                setTimeout(() => { //TODO: fix by checking font cache changes
-                        this.setFontFamily(fontFamily, true);
-                        this.side.canvas.renderAll();
-                    }, 1000
-                );
-            }
+            object.fontFamily = fontFamily;
+            this.object.dirty = true;
+            this.side.canvas.requestRenderAll();
+            //this.side.canvas.renderAll();
+            // if (!repeat) {
+            //     this.side.canvas.renderAll();
+            //     this.side.saveState();
+            //     setTimeout(() => { //TODO: fix by checking font cache changes
+            //             this.setFontFamily(fontFamily, true);
+            //
+            //             //this.side.canvas.renderAll();
+            //         }, 100
+            //     );
+            //     setTimeout(() => { //TODO: fix by checking font cache changes
+            //             this.setFontFamily(fontFamily, true);
+            //             //this.side.canvas.renderAll();
+            //         }, 500
+            //     );
+            //     setTimeout(() => { //TODO: fix by checking font cache changes
+            //             this.setFontFamily(fontFamily, true);
+            //             //this.side.canvas.renderAll();
+            //         }, 1000
+            //     );
+            // }
         }
     }
 
@@ -207,7 +210,7 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     setFontSize(value: number) {
         if (this.type === ElementType.TEXT) {
             (this.object as fabric.IText).fontSize = value;
-            this.side.canvas.renderAll();
+            //this.side.canvas.renderAll();
             this.side.saveState();
         }
     }
@@ -509,7 +512,9 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     }
 
     deserialize(object: ObjectOptions): Element2D {
+        console.log(ElementType.map);
         let type = ElementType.get(object.type);
+        console.dir(type);
         let element = new Element2D(type);
         let filters = object.filters;
         console.log(object)
@@ -517,7 +522,7 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
             element.filtersCache = object.filters;
             delete object.filters;
         }
-        element.object = new type.nativeType();
+        //element.object = new type.nativeType();
         element.object.setOptions(object.toObject());
         if (type === ElementType.IMAGE) {
             let image: fabric.Image = element.object as fabric.Image;

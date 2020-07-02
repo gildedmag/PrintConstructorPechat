@@ -3,7 +3,7 @@
 /** @hidden */
 abstract class Associated<T> {
 
-    protected static map = new ValueMap<string, any>();
+    static map = new ValueMap<string, any>();
     private name: string;
 
     constructor(name: string) {

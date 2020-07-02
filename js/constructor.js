@@ -676,7 +676,6 @@ var Dimensions = (function () {
 var Element2D = (function () {
     function Element2D(type, side) {
         var _this = this;
-        console.log();
         this.type = type;
         this.side = side;
         if (type === ElementType.IMAGE) {
@@ -690,7 +689,7 @@ var Element2D = (function () {
                 _this.object = native;
                 _this.setOptions(_this.object);
                 try {
-                    Constructor.instance.getActiveSide().canvas.renderAll();
+                    _this.object.dirty = true;
                 }
                 catch (e) {
                     console.error(e);
@@ -802,28 +801,12 @@ var Element2D = (function () {
         this.side.saveState();
     };
     Element2D.prototype.setFontFamily = function (fontFamily, repeat) {
-        var _this = this;
         if (this.type === ElementType.TEXT) {
             fabric.charWidthsCache[fontFamily] = {};
             var object = this.object;
-            object.setFontFamily(fontFamily);
-            this.side.canvas.renderAll();
-            if (!repeat) {
-                this.side.canvas.renderAll();
-                this.side.saveState();
-                setTimeout(function () {
-                    _this.setFontFamily(fontFamily, true);
-                    _this.side.canvas.renderAll();
-                }, 100);
-                setTimeout(function () {
-                    _this.setFontFamily(fontFamily, true);
-                    _this.side.canvas.renderAll();
-                }, 500);
-                setTimeout(function () {
-                    _this.setFontFamily(fontFamily, true);
-                    _this.side.canvas.renderAll();
-                }, 1000);
-            }
+            object.fontFamily = fontFamily;
+            this.object.dirty = true;
+            this.side.canvas.requestRenderAll();
         }
     };
     Element2D.prototype.getFontFamily = function () {
@@ -832,7 +815,6 @@ var Element2D = (function () {
     Element2D.prototype.setFontSize = function (value) {
         if (this.type === ElementType.TEXT) {
             this.object.fontSize = value;
-            this.side.canvas.renderAll();
             this.side.saveState();
         }
     };
@@ -1107,7 +1089,9 @@ var Element2D = (function () {
         return new ObjectOptions(this);
     };
     Element2D.prototype.deserialize = function (object) {
+        console.log(ElementType.map);
         var type = ElementType.get(object.type);
+        console.dir(type);
         var element = new Element2D(type);
         var filters = object.filters;
         console.log(object);
@@ -1115,7 +1099,6 @@ var Element2D = (function () {
             element.filtersCache = object.filters;
             delete object.filters;
         }
-        element.object = new type.nativeType();
         element.object.setOptions(object.toObject());
         if (type === ElementType.IMAGE) {
             var image = element.object;
@@ -1490,14 +1473,11 @@ var Side2D = (function (_super) {
         return Constructor.instance.sides.indexOf(this);
     };
     Side2D.prototype.add = function (element) {
-        var _this = this;
         element.side = this;
         this.elements.push(element);
         this.canvas.add(element.object);
         element.fitIntoMargins();
         element.object.setCoords();
-        this.canvas.renderAll();
-        setTimeout(function () { return _this.canvas.renderAll(); }, null);
         return element;
     };
     Side2D.prototype.addElement = function (type) {
@@ -1580,7 +1560,6 @@ var Side2D = (function (_super) {
             _loop_1(objectOptions);
         }
         this.saveToLocalStorage(state);
-        this.canvas.renderAll();
         this.history.unlock();
     };
     Side2D.prototype.getLocalStorageKey = function () {

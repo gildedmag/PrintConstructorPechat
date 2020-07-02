@@ -22,6 +22,8 @@ abstract class Guide extends fabric.Line {
 
     hide() {
         this.stroke = Color.TRANSPARENT.toRgba();
+        //this.dirty = true;
+        //Constructor.instance.getActiveSide().canvas.renderAll();
     }
 
 }
