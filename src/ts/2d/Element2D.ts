@@ -33,7 +33,6 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     constructor(type: ElementType, side?: Side2D) {
         this.type = type;
         this.side = side;
-        //if (type === ElementType.IMAGE) {
         if (type === ElementType.IMAGE) {
             this.object = new type.nativeType();
         } else {
@@ -44,8 +43,8 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
                 this.object = native
                 this.setOptions(this.object);
                 try {
-                    //Constructor.instance.getActiveSide().canvas.renderAll();
-                    //Constructor.instance.preview.render();
+                    Constructor.instance.getActiveSide().canvas.requestRenderAll();
+                    Constructor.instance.preview.render();
                     this.object.dirty = true;
                 } catch (e) {
                     console.error(e)
@@ -57,9 +56,8 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
 
     /** @hidden */
     private setOptions(object: fabric.Object) {
-        console.log(object)
         if (!object){
-            //return
+            return
         }
         object.on(Constants.ADDED, () => {
             this.calculateGuides();
@@ -77,10 +75,10 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         object.on(Constants.ROTATING, () => this.snapRotation());
         object.on(Constants.SELECTED, () => {
             this.side.selection = this;
-            //Constructor.instance.onSelectHandler((this));
+            Constructor.instance.onSelectHandler((this));
         });
         object.on(Constants.DESELECTED, () => {
-            //Constructor.instance.onDeselectHandler((this));
+            Constructor.instance.onDeselectHandler((this));
             this.side.selection = null;
         });
         object.on(Constants.REMOVED, () => {
@@ -179,27 +177,6 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
             object.fontFamily = fontFamily;
             this.object.dirty = true;
             this.side.canvas.requestRenderAll();
-            //this.side.canvas.renderAll();
-            // if (!repeat) {
-            //     this.side.canvas.renderAll();
-            //     this.side.saveState();
-            //     setTimeout(() => { //TODO: fix by checking font cache changes
-            //             this.setFontFamily(fontFamily, true);
-            //
-            //             //this.side.canvas.renderAll();
-            //         }, 100
-            //     );
-            //     setTimeout(() => { //TODO: fix by checking font cache changes
-            //             this.setFontFamily(fontFamily, true);
-            //             //this.side.canvas.renderAll();
-            //         }, 500
-            //     );
-            //     setTimeout(() => { //TODO: fix by checking font cache changes
-            //             this.setFontFamily(fontFamily, true);
-            //             //this.side.canvas.renderAll();
-            //         }, 1000
-            //     );
-            // }
         }
     }
 
@@ -210,7 +187,8 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     setFontSize(value: number) {
         if (this.type === ElementType.TEXT) {
             (this.object as fabric.IText).fontSize = value;
-            //this.side.canvas.renderAll();
+            this.object.dirty = true;
+            this.side.canvas.requestRenderAll();
             this.side.saveState();
         }
     }

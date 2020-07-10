@@ -170,7 +170,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "02.07.2020 18:30";
+    Version.version = "10.07.2020 08:58";
     return Version;
 }());
 var View = (function () {
@@ -689,6 +689,8 @@ var Element2D = (function () {
                 _this.object = native;
                 _this.setOptions(_this.object);
                 try {
+                    Constructor.instance.getActiveSide().canvas.requestRenderAll();
+                    Constructor.instance.preview.render();
                     _this.object.dirty = true;
                 }
                 catch (e) {
@@ -700,8 +702,8 @@ var Element2D = (function () {
     }
     Element2D.prototype.setOptions = function (object) {
         var _this = this;
-        console.log(object);
         if (!object) {
+            return;
         }
         object.on(Constants.ADDED, function () {
             _this.calculateGuides();
@@ -718,8 +720,10 @@ var Element2D = (function () {
         object.on(Constants.ROTATING, function () { return _this.snapRotation(); });
         object.on(Constants.SELECTED, function () {
             _this.side.selection = _this;
+            Constructor.instance.onSelectHandler((_this));
         });
         object.on(Constants.DESELECTED, function () {
+            Constructor.instance.onDeselectHandler((_this));
             _this.side.selection = null;
         });
         object.on(Constants.REMOVED, function () {
@@ -815,6 +819,8 @@ var Element2D = (function () {
     Element2D.prototype.setFontSize = function (value) {
         if (this.type === ElementType.TEXT) {
             this.object.fontSize = value;
+            this.object.dirty = true;
+            this.side.canvas.requestRenderAll();
             this.side.saveState();
         }
     };
@@ -1550,6 +1556,7 @@ var Side2D = (function (_super) {
         var _loop_1 = function (objectOptions) {
             var element = Element2D.prototype.deserialize(objectOptions);
             this_1.add(element);
+            element.object.dirty = true;
             if (element.type === ElementType.TEXT) {
                 setTimeout(function () { return element.setFontFamily(element.getFontFamily()); }, 0);
             }
@@ -1560,6 +1567,7 @@ var Side2D = (function (_super) {
             _loop_1(objectOptions);
         }
         this.saveToLocalStorage(state);
+        this.canvas.requestRenderAll();
         this.history.unlock();
     };
     Side2D.prototype.getLocalStorageKey = function () {

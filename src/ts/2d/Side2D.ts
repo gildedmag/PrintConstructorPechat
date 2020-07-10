@@ -216,12 +216,13 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
         for (let objectOptions of state.objects) {
             let element = Element2D.prototype.deserialize(objectOptions);
             this.add(element);
+            element.object.dirty = true;
             if (element.type === ElementType.TEXT){
                 setTimeout(() => element.setFontFamily(element.getFontFamily()), 0);
             }
         }
         this.saveToLocalStorage(state);
-        //this.canvas.renderAll();
+        this.canvas.requestRenderAll();
         this.history.unlock();
     }
 
