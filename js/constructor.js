@@ -170,7 +170,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "10.07.2020 08:58";
+    Version.version = "10.07.2020 09:20";
     return Version;
 }());
 var View = (function () {
@@ -801,7 +801,8 @@ var Element2D = (function () {
         this.object.left = left;
         this.object.top = top;
         this.object.setCoords();
-        this.side.canvas.renderAll();
+        this.object.dirty = true;
+        this.side.canvas.requestRenderAll();
         this.side.saveState();
     };
     Element2D.prototype.setFontFamily = function (fontFamily, repeat) {
@@ -830,7 +831,8 @@ var Element2D = (function () {
     Element2D.prototype.setItalic = function (value) {
         if (this.type === ElementType.TEXT) {
             this.object.fontStyle = value ? Constants.ITALIC : null;
-            this.side.canvas.renderAll();
+            this.object.dirty = true;
+            this.side.canvas.requestRenderAll();
             this.side.saveState();
         }
     };

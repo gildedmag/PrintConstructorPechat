@@ -166,7 +166,8 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         this.object.left = left;
         this.object.top = top;
         this.object.setCoords();
-        this.side.canvas.renderAll();
+        this.object.dirty = true;
+        this.side.canvas.requestRenderAll();
         this.side.saveState();
     }
 
@@ -200,7 +201,8 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     setItalic(value: boolean) {
         if (this.type === ElementType.TEXT) {
             (this.object as fabric.IText).fontStyle = value ? Constants.ITALIC : null;
-            this.side.canvas.renderAll();
+            this.object.dirty = true;
+            this.side.canvas.requestRenderAll();
             this.side.saveState();
         }
     }
