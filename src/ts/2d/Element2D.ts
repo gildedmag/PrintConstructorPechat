@@ -200,7 +200,7 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
 
     setItalic(value: boolean) {
         if (this.type === ElementType.TEXT) {
-            (this.object as fabric.IText).fontStyle = value ? Constants.ITALIC : null;
+            (this.object as fabric.IText).fontStyle = value ? Constants.ITALIC : Constants.NORMAL;
             this.object.dirty = true;
             this.side.canvas.requestRenderAll();
             this.side.saveState();
