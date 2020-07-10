@@ -38,9 +38,12 @@ var Associated = (function () {
     return Associated;
 }());
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -167,7 +170,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "10.07.2020 09:25";
+    Version.version = "10.07.2020 19:26";
     return Version;
 }());
 var View = (function () {
@@ -261,6 +264,7 @@ var Constructor = (function (_super) {
                 }
             }, 500);
         }
+        console.log("Constructor.version: ", Constructor.version);
         return _this;
     }
     Constructor.prototype.autoSize = function () {
@@ -1094,12 +1098,9 @@ var Element2D = (function () {
         return new ObjectOptions(this);
     };
     Element2D.prototype.deserialize = function (object) {
-        console.log(ElementType.map);
         var type = ElementType.get(object.type);
-        console.dir(type);
         var element = new Element2D(type);
         var filters = object.filters;
-        console.log(object);
         if (filters && filters.length > 0) {
             element.filtersCache = object.filters;
             delete object.filters;
@@ -1206,16 +1207,18 @@ var Filter = (function (_super) {
 var Guide = (function (_super) {
     __extends(Guide, _super);
     function Guide() {
-        return _super.call(this, [0, 0, 0, 0], Guide.DEFAULTS) || this;
+        var _this = _super.call(this, [0, 0, 0, 0], Guide.DEFAULTS) || this;
+        _this.dirty = true;
+        return _this;
     }
     Guide.prototype.show = function () {
         this.stroke = Color.GUIDE.toRgba();
         this.bringToFront();
         this.dirty = true;
-        Constructor.instance.getActiveSide().canvas.renderAll();
     };
     Guide.prototype.hide = function () {
         this.stroke = Color.TRANSPARENT.toRgba();
+        this.dirty = true;
     };
     Guide.DEFAULTS = {
         left: 0,
@@ -1553,11 +1556,24 @@ var Side2D = (function (_super) {
         this.history.lock();
         this.clear();
         var _loop_1 = function (objectOptions) {
-            var element = Element2D.prototype.deserialize(objectOptions);
-            this_1.add(element);
-            element.object.dirty = true;
-            if (element.type === ElementType.TEXT) {
-                setTimeout(function () { return element.setFontFamily(element.getFontFamily()); }, 0);
+            if (objectOptions.type === 'image') {
+                var object = objectOptions.toObject();
+                console.log(object);
+                var side_1 = this_1;
+                fabric.Image.fromObject(object, function (image) {
+                    var element = new Element2D(ElementType.IMAGE);
+                    element.object = image;
+                    element.setOptions(element.object);
+                    side_1.add(element);
+                });
+            }
+            else {
+                var element_1 = Element2D.prototype.deserialize(objectOptions);
+                this_1.add(element_1);
+                element_1.object.dirty = true;
+                if (element_1.type === ElementType.TEXT) {
+                    setTimeout(function () { return element_1.setFontFamily(element_1.getFontFamily()); }, 0);
+                }
             }
         };
         var this_1 = this;

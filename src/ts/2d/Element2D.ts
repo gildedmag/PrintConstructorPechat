@@ -55,8 +55,8 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     }
 
     /** @hidden */
-    private setOptions(object: fabric.Object) {
-        if (!object){
+    setOptions(object: fabric.Object) {
+        if (!object) {
             return
         }
         object.on(Constants.ADDED, () => {
@@ -115,7 +115,7 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     setColor(value: string | Color) {
         if (this.type != ElementType.IMAGE) {
             if (typeof value === Constants.STRING) value = new Color(value);
-            let color = <Color> value;
+            let color = <Color>value;
             this.object.fill = color.toRgba();
             this.object.dirty = true;
             this.side.canvas.renderAll();
@@ -492,12 +492,9 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     }
 
     deserialize(object: ObjectOptions): Element2D {
-        console.log(ElementType.map);
         let type = ElementType.get(object.type);
-        console.dir(type);
         let element = new Element2D(type);
         let filters = object.filters;
-        console.log(object)
         if (filters && filters.length > 0) {
             element.filtersCache = object.filters;
             delete object.filters;

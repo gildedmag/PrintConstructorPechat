@@ -69,6 +69,7 @@ class Constructor extends View {
                 }
             }, 500);
         }
+        console.log("Constructor.version: ", Constructor.version);
     }
 
     autoSize() {
