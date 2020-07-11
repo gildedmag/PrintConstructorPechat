@@ -170,7 +170,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "10.07.2020 19:26";
+    Version.version = "11.07.2020 08:21";
     return Version;
 }());
 var View = (function () {
@@ -684,18 +684,15 @@ var Element2D = (function () {
         }
         else {
             var defaults = Constructor.settings.elementDefaults[type.getNativeTypeName()];
-            console.log("type.nativeType", type.nativeType);
             type.nativeType.fromObject(defaults, function (native) {
-                console.log("native", native);
                 _this.object = native;
                 _this.setOptions(_this.object);
-                try {
-                    Constructor.instance.getActiveSide().canvas.requestRenderAll();
-                    Constructor.instance.preview.render();
+                if (_this.side && _this.side.canvas) {
                     _this.object.dirty = true;
+                    Constructor.instance.getActiveSide().canvas.requestRenderAll();
                 }
-                catch (e) {
-                    console.error(e);
+                if (Constructor.instance.preview) {
+                    Constructor.instance.preview.render();
                 }
             });
         }
@@ -761,7 +758,6 @@ var Element2D = (function () {
             this.object.dirty = true;
             this.side.canvas.renderAll();
             setTimeout(function () {
-                console.log("RENDER");
                 Constructor.instance.getActiveSide().canvas.renderAll();
             }, 100);
             this.side.saveState();
@@ -1558,13 +1554,30 @@ var Side2D = (function (_super) {
         var _loop_1 = function (objectOptions) {
             if (objectOptions.type === 'image') {
                 var object = objectOptions.toObject();
-                console.log(object);
                 var side_1 = this_1;
                 fabric.Image.fromObject(object, function (image) {
                     var element = new Element2D(ElementType.IMAGE);
                     element.object = image;
+                    image.crossOrigin = "anonymous";
                     element.setOptions(element.object);
                     side_1.add(element);
+                    if (objectOptions.filters) {
+                        element.filters = [];
+                        for (var _i = 0, _a = objectOptions.filters; _i < _a.length; _i++) {
+                            var filterName = _a[_i];
+                            var filter = Filter.get(filterName);
+                            try {
+                                element.addFilter(filter, function () { return element.side.canvas.renderAll(); });
+                            }
+                            catch (e) {
+                                console.error(e.message);
+                            }
+                        }
+                        element.applyFilters(function (imageElement) {
+                            imageElement.object.dirty = true;
+                            imageElement.side.canvas.requestRenderAll();
+                        });
+                    }
                 });
             }
             else {
@@ -1720,7 +1733,6 @@ var Preview = (function (_super) {
     }
     Preview.prototype.autoSize = function () {
         this.renderer.setPixelRatio(window.devicePixelRatio);
-        console.log(Constructor.instance.container.clientWidth);
         this.renderer.setSize(Constructor.instance.getElement().clientWidth, Constructor.instance.getElement().clientHeight);
         this.camera.aspect = this.renderer.getSize().width / this.renderer.getSize().height;
         this.camera.updateProjectionMatrix();

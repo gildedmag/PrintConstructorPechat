@@ -37,17 +37,15 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
             this.object = new type.nativeType();
         } else {
             let defaults = Constructor.settings.elementDefaults[type.getNativeTypeName()]
-            console.log("type.nativeType", type.nativeType);
             type.nativeType.fromObject(defaults, native => {
-                console.log("native", native);
                 this.object = native
                 this.setOptions(this.object);
-                try {
-                    Constructor.instance.getActiveSide().canvas.requestRenderAll();
-                    Constructor.instance.preview.render();
+                if (this.side && this.side.canvas) {
                     this.object.dirty = true;
-                } catch (e) {
-                    console.error(e)
+                    Constructor.instance.getActiveSide().canvas.requestRenderAll();
+                }
+                if (Constructor.instance.preview) {
+                    Constructor.instance.preview.render();
                 }
             });
         }
@@ -121,7 +119,6 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
             this.side.canvas.renderAll();
 
             setTimeout(() => {
-                console.log("RENDER");
                 Constructor.instance.getActiveSide().canvas.renderAll();
             }, 100)
             this.side.saveState();
@@ -300,7 +297,7 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         }
     }
 
-    private applyFilters(callback?: (element: Element2D) => void) {
+    applyFilters(callback?: (element: Element2D) => void) {
         let image = this.object as fabric.Image;
         image.filters = [];
         if (this.filters) {

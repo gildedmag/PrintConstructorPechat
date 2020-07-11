@@ -48,7 +48,6 @@ class Preview extends View {
 
     autoSize() {
         this.renderer.setPixelRatio(window.devicePixelRatio);
-        console.log(Constructor.instance.container.clientWidth);
         this.renderer.setSize(
             Constructor.instance.getElement().clientWidth,
             Constructor.instance.getElement().clientHeight

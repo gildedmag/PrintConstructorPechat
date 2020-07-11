@@ -216,13 +216,28 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
         for (let objectOptions of state.objects) {
             if (objectOptions.type === 'image') {
                 let object = objectOptions.toObject();
-                console.log(object);
                 let side = this;
                 (fabric.Image as any).fromObject(object, image => {
                     let element = new Element2D(ElementType.IMAGE);
                     element.object = image;
+                    image.crossOrigin = "anonymous";
                     element.setOptions(element.object);
                     side.add(element);
+                    if (objectOptions.filters){
+                        element.filters = [];
+                        for (let filterName of objectOptions.filters) {
+                            let filter = Filter.get(filterName);
+                            try {
+                                element.addFilter(filter, () => element.side.canvas.renderAll());
+                            } catch (e) {
+                                console.error(e.message);
+                            }
+                        }
+                        element.applyFilters(imageElement => {
+                            imageElement.object.dirty = true;
+                            imageElement.side.canvas.requestRenderAll();
+                        });
+                    }
                 });
             } else {
                 let element = Element2D.prototype.deserialize(objectOptions);
