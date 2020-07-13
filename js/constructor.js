@@ -43,7 +43,7 @@ var __extends = (this && this.__extends) || (function () {
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
             function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
-    }
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -170,7 +170,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "11.10.2018 15:44";
+    Version.version = "13.07.2020 17:35";
     return Version;
 }());
 var View = (function () {
@@ -804,6 +804,17 @@ var Element2D = (function () {
             }
         }
     };
+    Element2D.prototype.getText = function () {
+        return this.type === ElementType.TEXT
+            ? this.object.text
+            : null;
+    };
+    Element2D.prototype.setText = function (value) {
+        if (this.type === ElementType.TEXT) {
+            this.object.text = value;
+            this.side.canvas.renderAll();
+        }
+    };
     Element2D.prototype.getFontFamily = function () {
         return this.type === ElementType.TEXT ? this.object.getFontFamily() : null;
     };
@@ -918,12 +929,44 @@ var Element2D = (function () {
     Element2D.prototype.toFront = function () {
         this.side.canvas.bringToFront(this.object);
         Utils.arrayMoveToEnd(this.side.elements, this.getIndex());
+        this.side.horizontalGuide.sendToBack();
+        this.side.verticalGuide.sendToBack();
         this.side.deselect();
     };
     Element2D.prototype.toBack = function () {
         this.side.canvas.sendToBack(this.object);
         Utils.arrayMoveToStart(this.side.elements, this.getIndex());
+        this.side.horizontalGuide.sendToBack();
+        this.side.verticalGuide.sendToBack();
         this.side.deselect();
+    };
+    Element2D.prototype.toLayer = function (index) {
+        this.side.canvas.moveTo(this.object, index + 2);
+        this.side.horizontalGuide.sendToBack();
+        this.side.verticalGuide.sendToBack();
+        Utils.arrayMove(this.side.elements, this.getIndex(), index);
+        this.side.deselect();
+        this.side.canvas.renderAll();
+    };
+    Element2D.prototype.hide = function () {
+        this.object.visible = false;
+        this.object.selectable = false;
+        this.side.deselect();
+        this.side.canvas.renderAll();
+    };
+    Element2D.prototype.show = function () {
+        this.object.visible = true;
+        this.object.selectable = true;
+        this.side.deselect();
+        this.side.canvas.renderAll();
+    };
+    Element2D.prototype.toDataURL = function (size) {
+        if (!size) {
+            return this.object.toDataURL({});
+        }
+        var maxSize = Math.max(this.object.width * this.object.scaleX, this.object.height * this.object.scaleY);
+        var multiplier = size / maxSize;
+        return this.object.toDataURL({ multiplier: multiplier });
     };
     Element2D.prototype.clone = function () {
         var o = this.serialize();

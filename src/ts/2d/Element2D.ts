@@ -99,7 +99,7 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     setColor(value: string | Color) {
         if (this.type != ElementType.IMAGE) {
             if (typeof value === Constants.STRING) value = new Color(value);
-            let color = <Color> value;
+            let color = <Color>value;
             this.object.setFill(color.toRgba());
             this.side.canvas.renderAll();
             this.side.saveState();
@@ -171,6 +171,19 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
                     }, 1000
                 );
             }
+        }
+    }
+
+    getText(): String {
+        return this.type === ElementType.TEXT
+            ? (this.object as fabric.IText).text
+            : null
+    }
+
+    setText(value: String): void {
+        if (this.type === ElementType.TEXT) {
+            (this.object as fabric.IText).text = value;
+            this.side.canvas.renderAll();
         }
     }
 
@@ -300,13 +313,49 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     toFront() {
         this.side.canvas.bringToFront(this.object);
         Utils.arrayMoveToEnd(this.side.elements, this.getIndex());
+        this.side.horizontalGuide.sendToBack();
+        this.side.verticalGuide.sendToBack();
         this.side.deselect();
     }
 
     toBack() {
         this.side.canvas.sendToBack(this.object);
         Utils.arrayMoveToStart(this.side.elements, this.getIndex());
+        this.side.horizontalGuide.sendToBack();
+        this.side.verticalGuide.sendToBack();
         this.side.deselect();
+    }
+
+    toLayer(index: number) {
+        this.side.canvas.moveTo(this.object, index + 2);
+        this.side.horizontalGuide.sendToBack();
+        this.side.verticalGuide.sendToBack();
+        Utils.arrayMove(this.side.elements, this.getIndex(), index);
+        this.side.deselect();
+        this.side.canvas.renderAll();
+    }
+
+    hide() {
+        this.object.visible = false;
+        this.object.selectable = false;
+        this.side.deselect();
+        this.side.canvas.renderAll();
+    }
+
+    show() {
+        this.object.visible = true;
+        this.object.selectable = true;
+        this.side.deselect();
+        this.side.canvas.renderAll();
+    }
+
+    toDataURL(size?: number): String {
+        if (!size) {
+            return this.object.toDataURL({});
+        }
+        let maxSize = Math.max(this.object.width * this.object.scaleX, this.object.height * this.object.scaleY);
+        let multiplier = size / maxSize;
+        return this.object.toDataURL({multiplier: multiplier});
     }
 
     clone(): Element2D {
