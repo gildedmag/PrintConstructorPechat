@@ -21,7 +21,7 @@
     "@types/node": "^9.4.0",
     "alsatian": "^2.2.1",
     "babel-preset-es3": "^1.0.1",
-    "electron": "^2.0.10",
+    "electron": "^9.1.0",
     "istanbul": "^0.4.5",
     "karma-chrome-launcher": "^2.2.0",
     "karma-phantomjs-launcher": "^1.0.4",
