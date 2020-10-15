@@ -49,6 +49,7 @@ class Constructor extends View {
     constructor(container: HTMLElement | string) {
         super(container instanceof HTMLElement ? container : document.getElementById(container));
         this.container.style.overflow = Constants.AUTO;
+        fabric.textureSize = 8096;
         Constructor.instance = this;
         this.clipboard = null;
         this.snapToObjects = false;

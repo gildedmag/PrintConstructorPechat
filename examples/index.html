@@ -18,7 +18,8 @@
         <script src="../js/constructor.js" type="application/javascript"></script>
         <script>
             let div = document.createElement("div");
-            div.textContent = Constructor.version;
+            div.innerHTML = 'Constructor.version: <b>' + Constructor.version
+            + '</b> fabric.version: <b>' + fabric.version + '</b>';
             div.style.fontFamily = 'Helvetica';
             document.body.appendChild(div);
         </script>
@@ -49,6 +50,7 @@
             <input type="button" onclick="c.addImage('images/bug.png')" value="add image"/>
             <input type="button" onclick="c.addImage('images/duck.jpg')" value="add image 2"/>
             <input type="button" onclick="c.addImage('images/board.png')" value="add image ext"/>
+            <input type="button" onclick="c.addImage('http://localhost:63342/render/examples/images/hunters.jpg')" value="add image HTTP"/>
             <input type="button" onclick="c.getSelection().toFront()" value="up"/>
             <input type="button" onclick="c.getSelection().toBack()" value="down"/>
             <input id="locked" type="button"
@@ -76,7 +78,7 @@
             <input type="button" onclick="c.getSelection().addFilter(Filter.SHARPEN)" value="sharpen"/>
             <input type="button" onclick="c.getSelection().addFilter(Filter.BLUR)" value="blur"/>
             <input type="button" onclick="c.getSelection().resetFilters()" value="clear filters"/>
-            <input type="button" onclick="c.remove()" value="remove"/>
+            <input id="deleteBtn" type="button" onclick="c.remove()" value="remove"/>
             <input type="button" onclick="c.copy()" value="copy"/>
             <input type="button" onclick="c.cut()" value="cut"/>
             <input type="button" onclick="c.paste()" value="paste"/>
@@ -162,6 +164,15 @@
                 c.preview.exportAnimation(src => {
                     console.log(new Date().getTime() - s + ' ms ' + Math.round(src.length / 1024) + ' KB');
                 }, 128);
+            }
+
+            document.addEventListener("keydown", keyDownTextField, false);
+
+            function keyDownTextField(e) {
+                var keyCode = e.keyCode;
+                if(keyCode==46) {
+                    document.getElementById("deleteBtn").click();
+                }
             }
         </script>
     </body>
