@@ -126,8 +126,8 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     }
 
     getAlpha(): number {
-        let color = new Color(this.object.fill);
-        return color.getAlpha();
+        //let color = new Color(this.object.fill);
+        return this.object.opacity;
     }
 
     setAlpha(value: number) {

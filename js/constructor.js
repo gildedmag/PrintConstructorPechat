@@ -174,7 +174,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "16.10.2020 16:15";
+    Version.version = "16.10.2020 17:20";
     return Version;
 }());
 var View = (function () {
@@ -778,8 +778,7 @@ var Element2D = (function () {
         }
     };
     Element2D.prototype.getAlpha = function () {
-        var color = new Color(this.object.fill);
-        return color.getAlpha();
+        return this.object.opacity;
     };
     Element2D.prototype.setAlpha = function (value) {
         this.object.opacity = value;
