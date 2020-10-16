@@ -38,12 +38,9 @@ var Associated = (function () {
     return Associated;
 }());
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -177,7 +174,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "16.10.2020 15:50";
+    Version.version = "16.10.2020 16:15";
     return Version;
 }());
 var View = (function () {
@@ -251,7 +248,7 @@ var Constructor = (function (_super) {
     function Constructor(container) {
         var _this = _super.call(this, container instanceof HTMLElement ? container : document.getElementById(container)) || this;
         _this.container.style.overflow = Constants.AUTO;
-        fabric.textureSize = 8096;
+        fabric.textureSize = 4096;
         Constructor.instance = _this;
         _this.clipboard = null;
         _this.snapToObjects = false;
@@ -1255,7 +1252,7 @@ var Filter = (function (_super) {
     };
     Filter.GRAYSCALE = new Filter("grayscale", new fabric.Image.filters.Grayscale(), true);
     Filter.INVERT = new Filter("invert", new fabric.Image.filters.Invert(), true);
-    Filter.BRIGHTNESS = new Filter("brightness", new fabric.Image.filters.Brightness({ brightness: 100 }));
+    Filter.BRIGHTNESS = new Filter("brightness", new fabric.Image.filters.Brightness({ brightness: 0.1 }));
     Filter.BLUR = new Filter("blur", new fabric.Image.filters.Convolute({
         matrix: [
             1 / 9, 1 / 9, 1 / 9,

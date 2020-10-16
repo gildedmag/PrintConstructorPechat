@@ -17,7 +17,7 @@ class Filter extends Associated<Filter> {
 
     static INVERT = new Filter("invert", new fabric.Image.filters.Invert(), true);
 
-    static BRIGHTNESS = new Filter("brightness", new fabric.Image.filters.Brightness({brightness: 100}));
+    static BRIGHTNESS = new Filter("brightness", new fabric.Image.filters.Brightness({brightness: 0.1}));
 
     static BLUR = new Filter(
         "blur",
