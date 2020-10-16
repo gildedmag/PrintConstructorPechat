@@ -178,6 +178,19 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         }
     }
 
+    getText(): String {
+        return this.type === ElementType.TEXT
+            ? (this.object as fabric.IText).text
+            : null
+    }
+
+    setText(value: String): void {
+        if (this.type === ElementType.TEXT) {
+            ((this.object as fabric.IText).text as String) = value;
+            this.side.canvas.renderAll();
+        }
+    }
+
     getFontFamily(): string {
         return this.type === ElementType.TEXT ? (this.object as fabric.IText).fontFamily : null;
     }
@@ -237,8 +250,8 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
                     (this.object as fabric.IText).overline = false;
                     (this.object as fabric.IText).underline = false;
                 }
-
             }
+            this.side.canvas.requestRenderAll();
             this.side.canvas.renderAll();
             this.side.saveState();
         }
@@ -333,13 +346,69 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     toFront() {
         this.side.canvas.bringToFront(this.object);
         Utils.arrayMoveToEnd(this.side.elements, this.getIndex());
+        this.side.horizontalGuide.sendToBack();
+        this.side.verticalGuide.sendToBack();
         this.side.deselect();
+        this.side.saveState();
     }
 
     toBack() {
         this.side.canvas.sendToBack(this.object);
         Utils.arrayMoveToStart(this.side.elements, this.getIndex());
+        this.side.horizontalGuide.sendToBack();
+        this.side.verticalGuide.sendToBack();
         this.side.deselect();
+        this.side.saveState();
+    }
+
+    bringDown() {
+        this.shiftLayer(-1);
+    }
+
+    bringUp() {
+        this.shiftLayer(1);
+    }
+
+    shiftLayer(delta: number) {
+        let index = this.getIndex() + delta;
+        if (index < 0) {
+            index = 0;
+        } else if (index > this.side.getLayers().length - 1){
+            index = this.side.getLayers().length - 1
+        }
+        this.toLayer(index);
+    }
+
+    toLayer(index: number) {
+        this.side.canvas.moveTo(this.object, index + 2);
+        this.side.horizontalGuide.sendToBack();
+        this.side.verticalGuide.sendToBack();
+        Utils.arrayMove(this.side.elements, this.getIndex(), index);
+        this.side.deselect();
+        this.side.canvas.renderAll();
+    }
+
+    hide() {
+        this.object.visible = false;
+        this.object.selectable = false;
+        this.side.deselect();
+        this.side.canvas.renderAll();
+    }
+
+    show() {
+        this.object.visible = true;
+        this.object.selectable = true;
+        this.side.deselect();
+        this.side.canvas.renderAll();
+    }
+
+    toDataURL(size?: number): String {
+        if (!size) {
+            return this.object.toDataURL({});
+        }
+        let maxSize = Math.max(this.object.width * this.object.scaleX, this.object.height * this.object.scaleY);
+        let multiplier = size / maxSize;
+        return this.object.toDataURL({multiplier: multiplier});
     }
 
     clone(): Element2D {

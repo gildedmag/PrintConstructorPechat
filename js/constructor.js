@@ -38,9 +38,12 @@ var Associated = (function () {
     return Associated;
 }());
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -147,6 +150,13 @@ var Constants;
     Constants["AFTER_RENDER"] = "after:render";
     Constants["PROGRESS"] = "progress";
     Constants["LOAD"] = "load";
+    Constants["OBJECT_MODIFIED"] = "object:modified";
+    Constants["OBJECT_MOVED"] = "object:moved";
+    Constants["OBJECT_SCALED"] = "object:scaled";
+    Constants["OBJECT_ROTATED"] = "object:rotated";
+    Constants["OBJECT_SKEWED"] = "object:skewed";
+    Constants["OBJECT_ADDED"] = "object:added";
+    Constants["OBJECT_REMOVED"] = "object:removed";
     Constants["CHANGE"] = "change";
     Constants["CONTEXT_2D"] = "2d";
     Constants["FILL"] = "fill";
@@ -167,7 +177,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "15.10.2020 11:53";
+    Version.version = "16.10.2020 15:50";
     return Version;
 }());
 var View = (function () {
@@ -266,7 +276,6 @@ var Constructor = (function (_super) {
         return _this;
     }
     Constructor.prototype.autoSize = function () {
-        console.log("autoSize");
         this.sides.forEach(function (side) { return side.centerPosition(); });
         this.preview.autoSize();
         this.lastWidth = this.container.clientWidth;
@@ -370,6 +379,8 @@ var Constructor = (function (_super) {
             if (mode == Mode.Mode2D) {
                 this.preview.hide();
                 this.getActiveSide().show();
+                if (this.onModeChangeHandler)
+                    this.onModeChangeHandler();
             }
             else if (this.getActiveSide && this.preview) {
                 this.getActiveSide().deselect();
@@ -377,6 +388,8 @@ var Constructor = (function (_super) {
                 this.getActiveSide().hide();
                 this.preview.show();
                 this.preview.render();
+                if (this.onModeChangeHandler)
+                    this.onModeChangeHandler();
             }
         }
     };
@@ -388,6 +401,12 @@ var Constructor = (function (_super) {
     };
     Constructor.prototype.onDeselect = function (handler) {
         this.onDeselectHandler = handler;
+    };
+    Constructor.prototype.onModeChange = function (handler) {
+        this.onModeChangeHandler = handler;
+    };
+    Constructor.prototype.onElementModification = function (handler) {
+        this.onElementModificationHandler = handler;
     };
     Constructor.prototype.getSelection = function () {
         return this.getActiveSide().selection;
@@ -809,6 +828,17 @@ var Element2D = (function () {
             this.side.canvas.requestRenderAll();
         }
     };
+    Element2D.prototype.getText = function () {
+        return this.type === ElementType.TEXT
+            ? this.object.text
+            : null;
+    };
+    Element2D.prototype.setText = function (value) {
+        if (this.type === ElementType.TEXT) {
+            this.object.text = value;
+            this.side.canvas.renderAll();
+        }
+    };
     Element2D.prototype.getFontFamily = function () {
         return this.type === ElementType.TEXT ? this.object.fontFamily : null;
     };
@@ -862,6 +892,7 @@ var Element2D = (function () {
                     this.object.underline = false;
                 }
             }
+            this.side.canvas.requestRenderAll();
             this.side.canvas.renderAll();
             this.side.saveState();
         }
@@ -950,12 +981,62 @@ var Element2D = (function () {
     Element2D.prototype.toFront = function () {
         this.side.canvas.bringToFront(this.object);
         Utils.arrayMoveToEnd(this.side.elements, this.getIndex());
+        this.side.horizontalGuide.sendToBack();
+        this.side.verticalGuide.sendToBack();
         this.side.deselect();
+        this.side.saveState();
     };
     Element2D.prototype.toBack = function () {
         this.side.canvas.sendToBack(this.object);
         Utils.arrayMoveToStart(this.side.elements, this.getIndex());
+        this.side.horizontalGuide.sendToBack();
+        this.side.verticalGuide.sendToBack();
         this.side.deselect();
+        this.side.saveState();
+    };
+    Element2D.prototype.bringDown = function () {
+        this.shiftLayer(-1);
+    };
+    Element2D.prototype.bringUp = function () {
+        this.shiftLayer(1);
+    };
+    Element2D.prototype.shiftLayer = function (delta) {
+        var index = this.getIndex() + delta;
+        if (index < 0) {
+            index = 0;
+        }
+        else if (index > this.side.getLayers().length - 1) {
+            index = this.side.getLayers().length - 1;
+        }
+        this.toLayer(index);
+    };
+    Element2D.prototype.toLayer = function (index) {
+        this.side.canvas.moveTo(this.object, index + 2);
+        this.side.horizontalGuide.sendToBack();
+        this.side.verticalGuide.sendToBack();
+        Utils.arrayMove(this.side.elements, this.getIndex(), index);
+        this.side.deselect();
+        this.side.canvas.renderAll();
+    };
+    Element2D.prototype.hide = function () {
+        this.object.visible = false;
+        this.object.selectable = false;
+        this.side.deselect();
+        this.side.canvas.renderAll();
+    };
+    Element2D.prototype.show = function () {
+        this.object.visible = true;
+        this.object.selectable = true;
+        this.side.deselect();
+        this.side.canvas.renderAll();
+    };
+    Element2D.prototype.toDataURL = function (size) {
+        if (!size) {
+            return this.object.toDataURL({});
+        }
+        var maxSize = Math.max(this.object.width * this.object.scaleX, this.object.height * this.object.scaleY);
+        var multiplier = size / maxSize;
+        return this.object.toDataURL({ multiplier: multiplier });
     };
     Element2D.prototype.clone = function () {
         var o = this.serialize();
@@ -1417,6 +1498,9 @@ var Side2D = (function (_super) {
         _this.canvas.on(Constants.SELECTION_CLEARED, function () {
             _this.selection = null;
         });
+        _this.canvas.on(Constants.AFTER_RENDER, function () {
+            Constructor.instance.onElementModificationHandler && Constructor.instance.onElementModificationHandler();
+        });
         _this.horizontalGuide = new HorizontalGuide(height);
         _this.verticalGuide = new VerticalGuide(width);
         _this.canvas.add(_this.horizontalGuide);
@@ -1484,6 +1568,13 @@ var Side2D = (function (_super) {
     };
     Side2D.prototype.addElement = function (type) {
         return this.add(new Element2D(type, this));
+    };
+    Side2D.prototype.getLayers = function () {
+        var layers = [];
+        for (var i = 0; i < this.elements.length; i++) {
+            layers.unshift(this.elements[i]);
+        }
+        return layers;
     };
     Side2D.prototype.remove = function (element) {
         this.canvas.remove(element.object);
@@ -1665,6 +1756,15 @@ var Side2D = (function (_super) {
     Side2D.prototype.isEmpty = function () {
         return this.elements.length == 0;
     };
+    Side2D.OBJECT_EVENTS = [
+        Constants.OBJECT_MODIFIED,
+        Constants.OBJECT_MOVED,
+        Constants.OBJECT_SCALED,
+        Constants.OBJECT_ROTATED,
+        Constants.OBJECT_SKEWED,
+        Constants.OBJECT_ADDED,
+        Constants.OBJECT_REMOVED
+    ];
     Side2D.maxZoom = 10;
     Side2D.minZoom = 0.001;
     return Side2D;

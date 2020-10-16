@@ -1,6 +1,16 @@
 /// <reference path="./Side2DState.ts" />
 class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>, Equalable<Side2D> {
 
+    static OBJECT_EVENTS = [
+        Constants.OBJECT_MODIFIED,
+        Constants.OBJECT_MOVED,
+        Constants.OBJECT_SCALED,
+        Constants.OBJECT_ROTATED,
+        Constants.OBJECT_SKEWED,
+        Constants.OBJECT_ADDED,
+        Constants.OBJECT_REMOVED
+    ];
+
     static maxZoom: number = 10;
     static minZoom: number = 0.001;
 
@@ -56,6 +66,11 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
             //Constructor.instance.onDeselectHandler(this.selection);
             this.selection = null;
         });
+        this.canvas.on(Constants.AFTER_RENDER, () => {
+            Constructor.instance.onElementModificationHandler && Constructor.instance.onElementModificationHandler();
+        });
+
+
         this.horizontalGuide = new HorizontalGuide(height);
         this.verticalGuide = new VerticalGuide(width);
         this.canvas.add(this.horizontalGuide);
@@ -133,6 +148,14 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
 
     addElement(type: ElementType): Element2D {
         return this.add(new Element2D(type, this));
+    }
+
+    getLayers(): Element2D[] {
+        let layers = [];
+        for (let i = 0; i < this.elements.length; i++) {
+            layers.unshift(this.elements[i]);
+        }
+        return layers;
     }
 
     remove(element: Element2D) {

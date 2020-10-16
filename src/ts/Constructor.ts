@@ -18,6 +18,12 @@ class Constructor extends View {
     onDeselectHandler: (selection: Element2D) => void;
 
     /** @hidden */
+    onModeChangeHandler: () => void;
+
+    /** @hidden */
+    onElementModificationHandler: () => void;
+
+    /** @hidden */
     clipboard: Element2D;
 
     snapToObjects: boolean;
@@ -74,7 +80,6 @@ class Constructor extends View {
     }
 
     autoSize() {
-        console.log("autoSize");
         this.sides.forEach(side => side.centerPosition());
         this.preview.autoSize();
         this.lastWidth = this.container.clientWidth;
@@ -234,12 +239,14 @@ class Constructor extends View {
             if (mode == Mode.Mode2D) {
                 this.preview.hide();
                 this.getActiveSide().show();
+                if (this.onModeChangeHandler) this.onModeChangeHandler();
             } else if (this.getActiveSide && this.preview) {
                 this.getActiveSide().deselect();
                 this.preview.updateSideMaterials();
                 this.getActiveSide().hide();
                 this.preview.show();
                 this.preview.render();
+                if (this.onModeChangeHandler) this.onModeChangeHandler();
             }
         }
     }
@@ -248,12 +255,20 @@ class Constructor extends View {
         this.setMode(this.getMode() == Mode.Mode2D ? Mode.Mode3D : Mode.Mode2D);
     }
 
-    onSelect(handler: ((selection: Element2D) => void)) {
+    onSelect(handler: ((selection: Element2D) => void)): void {
         this.onSelectHandler = handler;
     }
 
-    onDeselect(handler: ((selection: Element2D) => void)) {
+    onDeselect(handler: ((selection: Element2D) => void)): void {
         this.onDeselectHandler = handler;
+    }
+
+    onModeChange(handler: (() => void)) {
+        this.onModeChangeHandler = handler;
+    }
+
+    onElementModification(handler: (() => void)) {
+        this.onElementModificationHandler = handler;
     }
 
     getSelection(): Element2D {
@@ -428,7 +443,7 @@ class Constructor extends View {
             });
         }
         this.sides.forEach(side => side.saveState());
-        if (this.preview.modelName != state.model){
+        if (this.preview.modelName != state.model) {
             this.loadModel(state.model, () => {
                 if (state.fills) {
                     for (let i = 0; i < state.fills.length; i++) {

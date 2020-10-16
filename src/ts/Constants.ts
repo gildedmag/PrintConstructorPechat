@@ -40,6 +40,14 @@ enum Constants {
     PROGRESS = "progress",
     LOAD = "load",
 
+    OBJECT_MODIFIED = "object:modified",
+    OBJECT_MOVED = "object:moved",
+    OBJECT_SCALED = "object:scaled",
+    OBJECT_ROTATED = "object:rotated",
+    OBJECT_SKEWED = "object:skewed",
+    OBJECT_ADDED = "object:added",
+    OBJECT_REMOVED = "object:removed",
+
     /**
      * THREE events
      * @type {string}
