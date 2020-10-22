@@ -134,22 +134,9 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
     getIndex(): number {
         return Constructor.instance.sides.indexOf(this);
     }
-
+                                 
     fixElementPosition(element: Element2D): void {
-        let o = element.object;
-        let threshold = 15;
-
-        let topLeft = {
-            x: -o.width / 2 + threshold,
-            y: -o.height / 2 + threshold
-        };
-
-        let bottomRight = {
-            x: this.width + o.width / 2 - threshold,
-            y: this.height + o.height / 2 - threshold
-        }
-
-        if (!o.isContainedWithinRect(topLeft, bottomRight)) {
+        if (!element.object.isOnScreen(true)) {
             this.resetElementPosition(element);
         }
     }
@@ -160,7 +147,6 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
     }
 
     add(element: Element2D): Element2D {
-        this.fixElementPosition(element);
         element.side = this;
         this.elements.push(element);
         if (element.type === ElementType.IMAGE) {
@@ -170,6 +156,7 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
         } else {
             this.canvas.add(element.object);
         }
+        setTimeout(() => this.fixElementPosition(element), 200);
         element.fitIntoMargins();
         element.object.setCoords();
         this.canvas.renderAll();
@@ -187,6 +174,11 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
             layers.unshift(this.elements[i]);
         }
         return layers;
+    }
+
+    moveLayer(from: number, to: number){
+        let element: Element2D = this.getLayers()[from];
+        element.toLayer(to);
     }
 
     remove(element: Element2D) {

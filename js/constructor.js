@@ -38,9 +38,12 @@ var Associated = (function () {
     return Associated;
 }());
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -174,7 +177,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "22.10.2020 14:54";
+    Version.version = "22.10.2020 15:26";
     return Version;
 }());
 var View = (function () {
@@ -1004,9 +1007,12 @@ var Element2D = (function () {
         else if (index > this.side.getLayers().length - 1) {
             index = this.side.getLayers().length - 1;
         }
-        this.toLayer(index);
+        this.toLayerInternal(index);
     };
     Element2D.prototype.toLayer = function (index) {
+        this.toLayerInternal(this.side.getLayers().length - index + 1);
+    };
+    Element2D.prototype.toLayerInternal = function (index) {
         this.side.canvas.moveTo(this.object, index + 2);
         this.side.horizontalGuide.sendToBack();
         this.side.verticalGuide.sendToBack();
@@ -1532,17 +1538,7 @@ var Side2D = (function (_super) {
         return Constructor.instance.sides.indexOf(this);
     };
     Side2D.prototype.fixElementPosition = function (element) {
-        var o = element.object;
-        var threshold = 15;
-        var topLeft = {
-            x: -o.width / 2 + threshold,
-            y: -o.height / 2 + threshold
-        };
-        var bottomRight = {
-            x: this.width + o.width / 2 - threshold,
-            y: this.height + o.height / 2 - threshold
-        };
-        if (!o.isContainedWithinRect(topLeft, bottomRight)) {
+        if (!element.object.isOnScreen(true)) {
             this.resetElementPosition(element);
         }
     };
@@ -1552,7 +1548,6 @@ var Side2D = (function (_super) {
     };
     Side2D.prototype.add = function (element) {
         var _this = this;
-        this.fixElementPosition(element);
         element.side = this;
         this.elements.push(element);
         if (element.type === ElementType.IMAGE) {
@@ -1563,6 +1558,7 @@ var Side2D = (function (_super) {
         else {
             this.canvas.add(element.object);
         }
+        setTimeout(function () { return _this.fixElementPosition(element); }, 200);
         element.fitIntoMargins();
         element.object.setCoords();
         this.canvas.renderAll();
@@ -1578,6 +1574,10 @@ var Side2D = (function (_super) {
             layers.unshift(this.elements[i]);
         }
         return layers;
+    };
+    Side2D.prototype.moveLayer = function (from, to) {
+        var element = this.getLayers()[from];
+        element.toLayer(to);
     };
     Side2D.prototype.remove = function (element) {
         this.canvas.remove(element.object);

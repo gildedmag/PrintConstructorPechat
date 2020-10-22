@@ -376,10 +376,14 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         } else if (index > this.side.getLayers().length - 1){
             index = this.side.getLayers().length - 1
         }
-        this.toLayer(index);
+        this.toLayerInternal(index);
     }
 
     toLayer(index: number) {
+        this.toLayerInternal(this.side.getLayers().length - index + 1);
+    }
+
+    toLayerInternal(index: number) {
         this.side.canvas.moveTo(this.object, index + 2);
         this.side.horizontalGuide.sendToBack();
         this.side.verticalGuide.sendToBack();
