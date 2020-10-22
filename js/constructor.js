@@ -1010,7 +1010,7 @@ var Element2D = (function () {
         this.toLayerInternal(index);
     };
     Element2D.prototype.toLayer = function (index) {
-        this.toLayerInternal(this.side.getLayers().length - index + 1);
+        this.toLayerInternal(this.side.getLayers().length - index - 1);
     };
     Element2D.prototype.toLayerInternal = function (index) {
         this.side.canvas.moveTo(this.object, index + 2);

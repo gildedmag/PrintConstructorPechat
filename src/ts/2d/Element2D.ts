@@ -380,7 +380,7 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     }
 
     toLayer(index: number) {
-        this.toLayerInternal(this.side.getLayers().length - index + 1);
+        this.toLayerInternal(this.side.getLayers().length - index - 1);
     }
 
     toLayerInternal(index: number) {
