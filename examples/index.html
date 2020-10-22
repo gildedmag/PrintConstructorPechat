@@ -18,6 +18,10 @@
         + '</b> fabric.version: <b>' + fabric.version + '</b>';
     div.style.fontFamily = 'Helvetica';
     document.body.appendChild(div);
+
+    let pechatJson='{"model":"cup_remastered","fills":[16777215,16777215,16777215],"sides":[{"objects":[{"fill":"rgba(142,69,139,1)","fontFamily":"Helvetica","fontSize":25,"fontStyle":"normal","fontWeight":"normal","height":28.25,"left":299.61,"lineHeight":1.16,"opacity":1,"scaleX":7.31,"scaleY":7.31,"text":"Те5к","textAlign":"left","top":117,"type":"i-text","width":54.02},{"filters":[],"left":282.96,"opacity":1,"scaleX":0.15,"scaleY":0.15,"src":"https://pechat.photo/image/cache//constructor/customer/guest/8518948acb50f82d0781f4f588375330/0f990f7d2c7ee3049b49b13dc314c720-2560x1891-default.jpg","top":154.72,"type":"image"},{"filters":[],"left":202.95,"opacity":1,"scaleX":0.51,"scaleY":0.51,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/bc0d79a14517c2951b18e6d2c68225de.jpg","top":265.09,"type":"image"},{"filters":[],"left":168.65,"opacity":1,"scaleX":0.51,"scaleY":0.51,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/bc0d79a14517c2951b18e6d2c68225de.jpg","top":212.63,"type":"image"},{"filters":[],"left":408.43,"opacity":1,"scaleX":0.45,"scaleY":0.45,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/67a09df46aaa2f23e6ccf8f04f66f4ee.jpg","top":73.7,"type":"image"},{"filters":[],"left":205.77,"opacity":1,"scaleX":0.51,"scaleY":0.51,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/bc0d79a14517c2951b18e6d2c68225de.jpg","top":156.94,"type":"image"},{"filters":[],"left":33.9,"opacity":1,"scaleX":0.45,"scaleY":0.45,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/67a09df46aaa2f23e6ccf8f04f66f4ee.jpg","top":139.95,"type":"image"},{"filters":[],"left":464.95,"opacity":1,"scaleX":0.45,"scaleY":0.45,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/67a09df46aaa2f23e6ccf8f04f66f4ee.jpg","top":298.68,"type":"image"}],"width":630,"height":285,"roundCorners":null}]}';
+
+    let brokenImagesJson = '{"fills":[],"sides":[{"objects":[{"fill":"rgba(229,146,13,1)","fontFamily":"Helvetica","fontSize":25,"fontStyle":"normal","fontWeight":"normal","height":28.25,"left":357.22,"lineHeight":1.16,"opacity":1,"scaleX":7.07,"scaleY":7.07,"text":"Текст","textAlign":"left","top":158.7,"type":"i-text","width":67.87},{"fill":"rgba(62,91,226,1)","height":100,"left":202.51,"opacity":0.3,"scaleX":1.93,"scaleY":1.93,"top":345.72,"type":"triangle","width":100},{"fill":"rgba(17,127,116,1)","height":100,"left":335.18,"opacity":1,"radius":50,"scaleX":1,"scaleY":1,"top":296.46,"type":"circle","width":100},{"fill":"rgba(98,78,150,1)","height":100,"left":83.59,"opacity":1,"radius":50,"scaleX":1,"scaleY":1,"top":251.21,"type":"circle","width":100},{"fill":"rgba(139,93,141,1)","height":100,"left":401.47,"opacity":1,"scaleX":1,"scaleY":1,"top":442.98,"type":"triangle","width":100},{"fill":"rgba(22,104,171,1)","height":100,"left":547.58,"opacity":0.6,"scaleX":1.26,"scaleY":1.26,"top":379.37,"type":"rect","width":100},{"filters":[],"height":493,"left":514.89,"opacity":1,"scaleX":1,"scaleY":1,"src":"http://localhost:63342/render/examples/images/bug.png","top":147.07,"type":"image","width":500}],"width":750,"height":550}]}';
 </script>
 <div class="panel">
     <button value="false" onclick="c.toggleMode();this.value=(c.getMode()===Mode.Mode3D);"><img
@@ -43,8 +47,12 @@
     <button onclick="c.addElement(ElementType.TEXT)" value="add text"><img src="icons/icons8-add_text.png"></button>
     <button onclick="c.addImage('images/bug.png')" value="add image"><img src="icons/icons8-png.png"></button>
     <button onclick="c.addImage('images/duck.jpg')" value="add image 2"><img src="icons/icons8-jpg.png"></button>
-    <button onclick="c.addImage('http://localhost:63342/render/examples/images/hunters.jpg')"
-            value="add image HTTP"><img src="icons/icons8-picture.png"></button>
+    <button onclick="c.addImage('http://localhost:63342/render/examples/images/hunters.jpg')" value="add image HTTP">
+        <img src="icons/icons8-picture.png"></button>
+
+    <button onclick="c.setState(brokenImagesJson)">IMG1</button>
+    <button onclick="c.setState(pechatJson)">IMG2</button>
+
     <button onclick="c.getSelection().toFront()" value="up"><img src="icons/icons8-front_sorting.png"></button>
     <button onclick="c.getSelection().toBack()" value="down"><img src="icons/icons8-transfer.png"></button>
     <button id="locked" type="button" value="false"
@@ -141,14 +149,17 @@
     layers = document.getElementById("layers");
     c.onElementModification(updateLayers);
 
-    function updateLayers(){
+    function updateLayers() {
         layers.innerHTML = "";
+        if (!c.getActiveSide() || !c.getActiveSide().getLayers()) {
+            return;
+        }
         c.getActiveSide().getLayers().forEach(element => {
             let layer = document.createElement("option");
             let text = element.getIndex() + " " + element.type.getName();
             layer.innerText = element.getIndex() + " " + element.type.getName();
             layers.appendChild(layer);
-            if (element === c.getSelection()){
+            if (element === c.getSelection()) {
                 layers.value = text;
             }
         });

@@ -135,14 +135,45 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
         return Constructor.instance.sides.indexOf(this);
     }
 
+    fixElementPosition(element: Element2D): void {
+        let o = element.object;
+        let threshold = 15;
+
+        let topLeft = {
+            x: -o.width / 2 + threshold,
+            y: -o.height / 2 + threshold
+        };
+
+        let bottomRight = {
+            x: this.width + o.width / 2 - threshold,
+            y: this.height + o.height / 2 - threshold
+        }
+
+        if (!o.isContainedWithinRect(topLeft, bottomRight)) {
+            this.resetElementPosition(element);
+        }
+    }
+
+    resetElementPosition(element: Element2D): void {
+        element.object.left = this.width / 2;
+        element.object.top = this.height / 2;
+    }
+
     add(element: Element2D): Element2D {
+        this.fixElementPosition(element);
         element.side = this;
         this.elements.push(element);
-        this.canvas.add(element.object);
+        if (element.type === ElementType.IMAGE) {
+            if (element.object.width != 0 && element.object.height != 0) {
+                this.canvas.add(element.object);
+            }
+        } else {
+            this.canvas.add(element.object);
+        }
         element.fitIntoMargins();
         element.object.setCoords();
-        //this.canvas.renderAll();
-        //setTimeout(() => this.canvas.renderAll(), null);
+        this.canvas.renderAll();
+        setTimeout(() => this.canvas.renderAll(), null);
         return element;
     }
 
@@ -206,11 +237,15 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
     deserialize(state: Side2DState): Side2D {
         let side = new Side2D(Constructor.instance.getElement(), state.width, state.height, state.roundCorners);
         if (state.objects) {
-            for (let object of state.objects) {
-                let options = ObjectOptions.fromObject(object);
-                let element = Element2D.prototype.deserialize(options);
-                side.add(element);
-            }
+            let json = '{"objects":' + JSON.stringify(state.objects) + '}';
+            console.log(json);
+            let objects = Side2DStateObjects.parse(json);
+            side.setState(objects);
+            // for (let object of state.objects) {
+            //     let options = ObjectOptions.fromObject(object);
+            //     let element = Element2D.prototype.deserialize(options);
+            //     side.add(element);
+            // }
         }
         return side;
     }
@@ -241,12 +276,15 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
                 let object = objectOptions.toObject();
                 let side = this;
                 (fabric.Image as any).fromObject(object, image => {
+                    if (image === null) {
+                        return
+                    }
                     let element = new Element2D(ElementType.IMAGE);
                     element.object = image;
-                    image.crossOrigin = "anonymous";
+                    //image.crossOrigin = "anonymous";
                     element.setOptions(element.object);
                     side.add(element);
-                    if (objectOptions.filters){
+                    if (objectOptions.filters) {
                         element.filters = [];
                         for (let filterName of objectOptions.filters) {
                             let filter = Filter.get(filterName);

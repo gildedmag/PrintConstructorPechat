@@ -174,7 +174,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "16.10.2020 17:20";
+    Version.version = "22.10.2020 14:54";
     return Version;
 }());
 var View = (function () {
@@ -329,7 +329,7 @@ var Constructor = (function (_super) {
             this.getActiveSide().hide();
             this.activeSideIndex = index;
             this.getActiveSide().show();
-            this.getActiveSide().canvas.renderAll();
+            this.getActiveSide().canvas.requestRenderAll();
         }
     };
     Constructor.prototype.getActiveSide = function () {
@@ -514,7 +514,7 @@ var Constructor = (function (_super) {
             state.sides.forEach(function (sideState) {
                 var side = Side2D.prototype.deserialize(sideState);
                 _this.insertSide(side, clearHistory);
-                side.canvas.renderAll();
+                side.canvas.requestRenderAll();
             });
         }
         this.sides.forEach(function (side) { return side.saveState(); });
@@ -1179,29 +1179,6 @@ var Element2D = (function () {
         element.object.setOptions(object.toObject());
         if (type === ElementType.IMAGE) {
             var image = element.object;
-            image.crossOrigin = "anonymous";
-            image.setSrc(image.getSrc(), function () {
-                if (filters) {
-                    element.filters = [];
-                    for (var _i = 0, filters_1 = filters; _i < filters_1.length; _i++) {
-                        var filterName = filters_1[_i];
-                        var filter = Filter.get(filterName);
-                        try {
-                            element.addFilter(filter, function () { return element.side.canvas.renderAll(); });
-                        }
-                        catch (e) {
-                            console.error(e.message);
-                        }
-                    }
-                }
-                try {
-                    element.side.canvas.renderAll();
-                    Constructor.instance.preview.updateSideMaterials();
-                }
-                catch (e) {
-                    console.error(e.message);
-                }
-            });
         }
         if (type === ElementType.TEXT && element.object['text']) {
             var o = element.object;
@@ -1554,12 +1531,42 @@ var Side2D = (function (_super) {
     Side2D.prototype.getIndex = function () {
         return Constructor.instance.sides.indexOf(this);
     };
+    Side2D.prototype.fixElementPosition = function (element) {
+        var o = element.object;
+        var threshold = 15;
+        var topLeft = {
+            x: -o.width / 2 + threshold,
+            y: -o.height / 2 + threshold
+        };
+        var bottomRight = {
+            x: this.width + o.width / 2 - threshold,
+            y: this.height + o.height / 2 - threshold
+        };
+        if (!o.isContainedWithinRect(topLeft, bottomRight)) {
+            this.resetElementPosition(element);
+        }
+    };
+    Side2D.prototype.resetElementPosition = function (element) {
+        element.object.left = this.width / 2;
+        element.object.top = this.height / 2;
+    };
     Side2D.prototype.add = function (element) {
+        var _this = this;
+        this.fixElementPosition(element);
         element.side = this;
         this.elements.push(element);
-        this.canvas.add(element.object);
+        if (element.type === ElementType.IMAGE) {
+            if (element.object.width != 0 && element.object.height != 0) {
+                this.canvas.add(element.object);
+            }
+        }
+        else {
+            this.canvas.add(element.object);
+        }
         element.fitIntoMargins();
         element.object.setCoords();
+        this.canvas.renderAll();
+        setTimeout(function () { return _this.canvas.renderAll(); }, null);
         return element;
     };
     Side2D.prototype.addElement = function (type) {
@@ -1611,12 +1618,10 @@ var Side2D = (function (_super) {
     Side2D.prototype.deserialize = function (state) {
         var side = new Side2D(Constructor.instance.getElement(), state.width, state.height, state.roundCorners);
         if (state.objects) {
-            for (var _i = 0, _a = state.objects; _i < _a.length; _i++) {
-                var object = _a[_i];
-                var options = ObjectOptions.fromObject(object);
-                var element = Element2D.prototype.deserialize(options);
-                side.add(element);
-            }
+            var json = '{"objects":' + JSON.stringify(state.objects) + '}';
+            console.log(json);
+            var objects = Side2DStateObjects.parse(json);
+            side.setState(objects);
         }
         return side;
     };
@@ -1641,9 +1646,11 @@ var Side2D = (function (_super) {
                 var object = objectOptions.toObject();
                 var side_1 = this_1;
                 fabric.Image.fromObject(object, function (image) {
+                    if (image === null) {
+                        return;
+                    }
                     var element = new Element2D(ElementType.IMAGE);
                     element.object = image;
-                    image.crossOrigin = "anonymous";
                     element.setOptions(element.object);
                     side_1.add(element);
                     if (objectOptions.filters) {

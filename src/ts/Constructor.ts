@@ -184,7 +184,7 @@ class Constructor extends View {
             this.getActiveSide().hide();
             this.activeSideIndex = index;
             this.getActiveSide().show();
-            this.getActiveSide().canvas.renderAll();
+            this.getActiveSide().canvas.requestRenderAll();
         }
     }
 
@@ -406,7 +406,7 @@ class Constructor extends View {
     }
 
     /**
-     * Load current state from JSON without without resetting localStorage cache
+     * Load current state from JSON without resetting localStorage cache
      * @param {string} json
      * @param {() => void} callback
      */
@@ -439,7 +439,7 @@ class Constructor extends View {
             state.sides.forEach(sideState => {
                 let side = Side2D.prototype.deserialize(sideState);
                 this.insertSide(side, clearHistory);
-                side.canvas.renderAll();
+                side.canvas.requestRenderAll();
             });
         }
         this.sides.forEach(side => side.saveState());
