@@ -1,16 +1,6 @@
 /// <reference path="./Side2DState.ts" />
 class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>, Equalable<Side2D> {
 
-    static OBJECT_EVENTS = [
-        Constants.OBJECT_MODIFIED,
-        Constants.OBJECT_MOVED,
-        Constants.OBJECT_SCALED,
-        Constants.OBJECT_ROTATED,
-        Constants.OBJECT_SKEWED,
-        Constants.OBJECT_ADDED,
-        Constants.OBJECT_REMOVED
-    ];
-
     static maxZoom: number = 10;
     static minZoom: number = 0.001;
 
@@ -149,13 +139,7 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
     add(element: Element2D): Element2D {
         element.side = this;
         this.elements.push(element);
-        if (element.type === ElementType.IMAGE) {
-            if (element.object.width != 0 && element.object.height != 0) {
-                this.canvas.add(element.object);
-            }
-        } else {
-            this.canvas.add(element.object);
-        }
+        this.canvas.add(element.object);
         setTimeout(() => this.fixElementPosition(element), 200);
         element.fitIntoMargins();
         element.object.setCoords();
@@ -229,15 +213,9 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
     deserialize(state: Side2DState): Side2D {
         let side = new Side2D(Constructor.instance.getElement(), state.width, state.height, state.roundCorners);
         if (state.objects) {
-            let json = '{"objects":' + JSON.stringify(state.objects) + '}';
-            console.log(json);
+            let json = '{"objects":' + JSON.stringify(state.objects) + '}'; //TODO: make it look not like a hack!
             let objects = Side2DStateObjects.parse(json);
             side.setState(objects);
-            // for (let object of state.objects) {
-            //     let options = ObjectOptions.fromObject(object);
-            //     let element = Element2D.prototype.deserialize(options);
-            //     side.add(element);
-            // }
         }
         return side;
     }

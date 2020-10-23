@@ -174,7 +174,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "22.10.2020 18:11";
+    Version.version = "23.10.2020 09:12";
     return Version;
 }());
 var View = (function () {
@@ -1547,14 +1547,7 @@ var Side2D = (function (_super) {
         var _this = this;
         element.side = this;
         this.elements.push(element);
-        if (element.type === ElementType.IMAGE) {
-            if (element.object.width != 0 && element.object.height != 0) {
-                this.canvas.add(element.object);
-            }
-        }
-        else {
-            this.canvas.add(element.object);
-        }
+        this.canvas.add(element.object);
         setTimeout(function () { return _this.fixElementPosition(element); }, 200);
         element.fitIntoMargins();
         element.object.setCoords();
@@ -1616,7 +1609,6 @@ var Side2D = (function (_super) {
         var side = new Side2D(Constructor.instance.getElement(), state.width, state.height, state.roundCorners);
         if (state.objects) {
             var json = '{"objects":' + JSON.stringify(state.objects) + '}';
-            console.log(json);
             var objects = Side2DStateObjects.parse(json);
             side.setState(objects);
         }
@@ -1756,15 +1748,6 @@ var Side2D = (function (_super) {
     Side2D.prototype.isEmpty = function () {
         return this.elements.length == 0;
     };
-    Side2D.OBJECT_EVENTS = [
-        Constants.OBJECT_MODIFIED,
-        Constants.OBJECT_MOVED,
-        Constants.OBJECT_SCALED,
-        Constants.OBJECT_ROTATED,
-        Constants.OBJECT_SKEWED,
-        Constants.OBJECT_ADDED,
-        Constants.OBJECT_REMOVED
-    ];
     Side2D.maxZoom = 10;
     Side2D.minZoom = 0.001;
     return Side2D;
