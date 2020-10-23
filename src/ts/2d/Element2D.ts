@@ -416,8 +416,10 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     }
 
     clone(): Element2D {
-        let o = this.serialize();
-        return Element2D.prototype.deserialize(o);
+        let object = fabric.util.object.clone(this.object);
+        let element = new Element2D(this.type, this.side);
+        element.object = object;
+        return element;
     }
 
     remove() {

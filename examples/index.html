@@ -7,7 +7,6 @@
 <link rel="stylesheet" type="text/css"
       href="https://fonts.googleapis.com/css?family=Alegreya|Alegreya+Sans|Arsenal|Bad+Script|Caveat|Comfortaa|Cormorant+Infant|Exo+2|Fira+Sans+Extra+Condensed|Forum|Kurale|Lobster|Marck+Script|Marmelad|Montserrat+Alternates|Old+Standard+TT|Oranienbaum|Oswald|PT+Sans+Narrow|Pacifico|Philosopher|Poiret+One|Prata|Roboto+Condensed|Ruslan+Display|Russo+One|Seymour+One|Underdog|Vollkorn|Yanone+Kaffeesatz&subset=latin,cyrillic"/>
 <link rel="stylesheet" href="style.css" type="text/css">
-<!--<script src="https://raw.githubusercontent.com/AL13/PrintConstructor/master/build/constructor.min.js"></script>-->
 <script src="../js/three.js" type="application/javascript"></script>
 <script src="../js/OrbitControls.js" type="application/javascript"></script>
 <script src="../js/fabric.js" type="application/javascript"></script>
@@ -19,126 +18,139 @@
     div.style.fontFamily = 'Helvetica';
     document.body.appendChild(div);
 
-    let pechatJson='{"model":"cup_remastered","fills":[16777215,16777215,16777215],"sides":[{"objects":[{"fill":"rgba(142,69,139,1)","fontFamily":"Helvetica","fontSize":25,"fontStyle":"normal","fontWeight":"normal","height":28.25,"left":299.61,"lineHeight":1.16,"opacity":1,"scaleX":7.31,"scaleY":7.31,"text":"Те5к","textAlign":"left","top":117,"type":"i-text","width":54.02},{"filters":[],"left":282.96,"opacity":1,"scaleX":0.15,"scaleY":0.15,"src":"https://pechat.photo/image/cache//constructor/customer/guest/8518948acb50f82d0781f4f588375330/0f990f7d2c7ee3049b49b13dc314c720-2560x1891-default.jpg","top":154.72,"type":"image"},{"filters":[],"left":202.95,"opacity":1,"scaleX":0.51,"scaleY":0.51,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/bc0d79a14517c2951b18e6d2c68225de.jpg","top":265.09,"type":"image"},{"filters":[],"left":168.65,"opacity":1,"scaleX":0.51,"scaleY":0.51,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/bc0d79a14517c2951b18e6d2c68225de.jpg","top":212.63,"type":"image"},{"filters":[],"left":408.43,"opacity":1,"scaleX":0.45,"scaleY":0.45,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/67a09df46aaa2f23e6ccf8f04f66f4ee.jpg","top":73.7,"type":"image"},{"filters":[],"left":205.77,"opacity":1,"scaleX":0.51,"scaleY":0.51,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/bc0d79a14517c2951b18e6d2c68225de.jpg","top":156.94,"type":"image"},{"filters":[],"left":33.9,"opacity":1,"scaleX":0.45,"scaleY":0.45,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/67a09df46aaa2f23e6ccf8f04f66f4ee.jpg","top":139.95,"type":"image"},{"filters":[],"left":464.95,"opacity":1,"scaleX":0.45,"scaleY":0.45,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/67a09df46aaa2f23e6ccf8f04f66f4ee.jpg","top":298.68,"type":"image"}],"width":630,"height":285,"roundCorners":null}]}';
+    let pechatJson = '{"model":"cup_remastered","fills":[16777215,16777215,16777215],"sides":[{"objects":[{"fill":"rgba(142,69,139,1)","fontFamily":"Helvetica","fontSize":25,"fontStyle":"normal","fontWeight":"normal","height":28.25,"left":299.61,"lineHeight":1.16,"opacity":1,"scaleX":7.31,"scaleY":7.31,"text":"Те5к","textAlign":"left","top":117,"type":"i-text","width":54.02},{"filters":[],"left":282.96,"opacity":1,"scaleX":0.15,"scaleY":0.15,"src":"https://pechat.photo/image/cache//constructor/customer/guest/8518948acb50f82d0781f4f588375330/0f990f7d2c7ee3049b49b13dc314c720-2560x1891-default.jpg","top":154.72,"type":"image"},{"filters":[],"left":202.95,"opacity":1,"scaleX":0.51,"scaleY":0.51,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/bc0d79a14517c2951b18e6d2c68225de.jpg","top":265.09,"type":"image"},{"filters":[],"left":168.65,"opacity":1,"scaleX":0.51,"scaleY":0.51,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/bc0d79a14517c2951b18e6d2c68225de.jpg","top":212.63,"type":"image"},{"filters":[],"left":408.43,"opacity":1,"scaleX":0.45,"scaleY":0.45,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/67a09df46aaa2f23e6ccf8f04f66f4ee.jpg","top":73.7,"type":"image"},{"filters":[],"left":205.77,"opacity":1,"scaleX":0.51,"scaleY":0.51,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/bc0d79a14517c2951b18e6d2c68225de.jpg","top":156.94,"type":"image"},{"filters":[],"left":33.9,"opacity":1,"scaleX":0.45,"scaleY":0.45,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/67a09df46aaa2f23e6ccf8f04f66f4ee.jpg","top":139.95,"type":"image"},{"filters":[],"left":464.95,"opacity":1,"scaleX":0.45,"scaleY":0.45,"src":"https://pechat.photo/image/constructor/customer/guest/8518948acb50f82d0781f4f588375330/67a09df46aaa2f23e6ccf8f04f66f4ee.jpg","top":298.68,"type":"image"}],"width":630,"height":285,"roundCorners":null}]}';
 
     let brokenImagesJson = '{"fills":[],"sides":[{"objects":[{"fill":"rgba(229,146,13,1)","fontFamily":"Helvetica","fontSize":25,"fontStyle":"normal","fontWeight":"normal","height":28.25,"left":357.22,"lineHeight":1.16,"opacity":1,"scaleX":7.07,"scaleY":7.07,"text":"Текст","textAlign":"left","top":158.7,"type":"i-text","width":67.87},{"fill":"rgba(62,91,226,1)","height":100,"left":202.51,"opacity":0.3,"scaleX":1.93,"scaleY":1.93,"top":345.72,"type":"triangle","width":100},{"fill":"rgba(17,127,116,1)","height":100,"left":335.18,"opacity":1,"radius":50,"scaleX":1,"scaleY":1,"top":296.46,"type":"circle","width":100},{"fill":"rgba(98,78,150,1)","height":100,"left":83.59,"opacity":1,"radius":50,"scaleX":1,"scaleY":1,"top":251.21,"type":"circle","width":100},{"fill":"rgba(139,93,141,1)","height":100,"left":401.47,"opacity":1,"scaleX":1,"scaleY":1,"top":442.98,"type":"triangle","width":100},{"fill":"rgba(22,104,171,1)","height":100,"left":547.58,"opacity":0.6,"scaleX":1.26,"scaleY":1.26,"top":379.37,"type":"rect","width":100},{"filters":[],"height":493,"left":514.89,"opacity":1,"scaleX":1,"scaleY":1,"src":"http://localhost:63342/render/examples/images/bug.png","top":147.07,"type":"image","width":500}],"width":750,"height":550}]}';
 </script>
-<div class="panel">
-    <button value="false" onclick="c.toggleMode();this.value=(c.getMode()===Mode.Mode3D);"><img
-            src="icons/icons8-3d.png"></button>
-    <button onclick="c.zoomIn()" value="zoom in"><img src="icons/icons8-zoom_in.png"></button>
-    <button onclick="c.zoomOut()" value="zoom out"><img src="icons/icons8-zoom_out.png"></button>
-    <button onclick="c.zoomToFit()" value="zoom to fit"><img src="icons/icons8-zoom_to_actual_size.png"></button>
-    <button onclick="c.resetZoom()" value="zoom 1:1"><img src="icons/icons8-search.png"></button>
-    <button onclick="c.setActiveSide(0)" value="side 1"><img src="icons/icons8-1.png"></button>
-    <button onclick="c.setActiveSide(1)" value="side 2"><img src="icons/icons8-2.png"></button>
-    <button onclick="c.setActiveSide(2)" value="side 3"><img src="icons/icons8-3.png"></button>
-    <button onclick="c.setActiveSide(3)" value="side 4"><img src="icons/icons8-4.png"></button>
-    <button onclick="c.getActiveSide().clear()" value="clear"><img src="icons/icons8-delete.png"></button>
-    <button onclick="c.addSide(800, 600)" value="addSide"><img src="icons/icons8-add_book.png"></button>
-    <button onclick="c.paste()" value="paste"><img src="icons/icons8-clipboard.png"></button>
-    <button onclick="c.undo()" value="undo"><img src="icons/icons8-undo.png"></button>
-    <button onclick="c.redo()" value="redo"><img src="icons/icons8-redo.png"></button>
-    <button onclick="c.addElement(ElementType.RECTANGLE)" value="add rectangle"><img src="icons/icons8-rectangular.png">
-    </button>
-    <button onclick="c.addElement(ElementType.CIRCLE)" value="add circle"><img src="icons/icons8-circle.png"></button>
-    <button onclick="c.addElement(ElementType.TRIANGLE)" value="add triangle"><img src="icons/icons8-triangle.png">
-    </button>
-    <button onclick="c.addElement(ElementType.TEXT)" value="add text"><img src="icons/icons8-add_text.png"></button>
-    <button onclick="c.addImage('images/bug.png')" value="add image"><img src="icons/icons8-png.png"></button>
-    <button onclick="c.addImage('images/duck.jpg')" value="add image 2"><img src="icons/icons8-jpg.png"></button>
-    <button onclick="c.addImage('http://localhost:63342/render/examples/images/hunters.jpg')" value="add image HTTP">
-        <img src="icons/icons8-picture.png"></button>
 
-    <button onclick="c.setState(brokenImagesJson)">IMG1</button>
-    <button onclick="c.setState(pechatJson)">IMG2</button>
-
-    <button onclick="c.getSelection().toFront()" value="up"><img src="icons/icons8-front_sorting.png"></button>
-    <button onclick="c.getSelection().toBack()" value="down"><img src="icons/icons8-transfer.png"></button>
-    <button id="locked" type="button" value="false"
-            onclick="c.getSelection().setLocked(!c.getSelection().isLocked());this.value=c.getSelection().isLocked()">
-        <img src="icons/icons8-lock.png"></button>
-    <button id="snap" value="false" onclick="c.snapToObjects=!c.snapToObjects;this.value=c.snapToObjects;"
-            value="snap to objects"><img src="icons/icons8-align_bottom.png"></button>
-    <button id="snapToGrid" value="false" onclick="c.snapToGrid=!c.snapToGrid;this.value=c.snapToGrid;"
-            value="snap to grid"><img src="icons/icons8-data_grid.png"></button>
-
-    <input type="button" onclick="document.getElementById('preview').src = c.preview.exportImage(256)"
-           value="preview"/>
-    <input type="button" onclick="imageRemote()" value="preview remote"/>
-    <input type="button" onclick="exportAnimation()" value="banner"/>
-    <input type="button" onclick="image()" value="image"/>
-
-    <input type="button" onclick="loadFast()" value="loadFast"/>
-    <button onclick="c.applyPreset('cup_remastered', [{width: 400, height: 300}]);">cup</button>
-    <button onclick="c.applyPreset('coffee_cup', [{width: 400, height: 300}]);">cof</button>
-    <button onclick="c.preview.loadModel('ball')">ball</button>
-</div>
 
 <table>
+    <tr>
+        <td>
+            <div class="panel-title">General</div>
+            <div class="panel">
+                <button value="false" onclick="c.toggleMode();this.value=(c.getMode()===Mode.Mode3D);">3d</button>
+                <button onclick="c.zoomIn()" value="zoom in">zoom_in</button>
+                <button onclick="c.zoomOut()" value="zoom out">zoom_out</button>
+                <button onclick="c.zoomToFit()" value="zoom to fit">zoom_to_actual_size</button>
+                <button onclick="c.resetZoom()" value="zoom 1:1">search</button>
+                <button onclick="c.setActiveSide(0)" value="side 1">1</button>
+                <button onclick="c.setActiveSide(1)" value="side 2">2</button>
+                <button onclick="c.setActiveSide(2)" value="side 3">3</button>
+                <button onclick="c.setActiveSide(3)" value="side 4">4</button>
+                <button onclick="c.getActiveSide().clear()" value="clear">delete</button>
+                <button onclick="c.addSide(800, 600)" value="addSide">add_book</button>
+                <button onclick="c.paste()" value="paste">clipboard</button>
+                <button onclick="c.undo()" value="undo">undo</button>
+                <button onclick="c.redo()" value="redo">redo</button>
+                <button onclick="c.addElement(ElementType.RECTANGLE)" value="add rectangle">rectangular
+                </button>
+                <button onclick="c.addElement(ElementType.CIRCLE)" value="add circle">circle</button>
+                <button onclick="c.addElement(ElementType.TRIANGLE)" value="add triangle">triangle
+                </button>
+                <button onclick="c.addElement(ElementType.TEXT)" value="add text">add_text</button>
+                <button onclick="c.addImage('images/bug.png')" value="add image">png</button>
+                <button onclick="c.addImage('images/duck.jpg')" value="add image 2">jpg</button>
+                <button onclick="c.addImage('http://localhost:63342/render/examples/images/hunters.jpg')"
+                        value="add image HTTP">
+                    picture
+                </button>
+
+                <button onclick="c.setState(brokenImagesJson)">IMG1</button>
+                <button onclick="c.setState(pechatJson)">IMG2</button>
+
+                <button onclick="c.getSelection().toFront()" value="up">front_sorting</button>
+                <button onclick="c.getSelection().toBack()" value="down">transfer</button>
+                <button id="locked" type="button" value="false"
+                        onclick="c.getSelection().setLocked(!c.getSelection().isLocked());this.value=c.getSelection().isLocked()">
+                    lock
+                </button>
+                <button id="snap" value="false" onclick="c.snapToObjects=!c.snapToObjects;this.value=c.snapToObjects;"
+                        value="snap to objects">align_bottom
+                </button>
+                <button id="snapToGrid" value="false" onclick="c.snapToGrid=!c.snapToGrid;this.value=c.snapToGrid;"
+                        value="snap to grid">data_grid
+                </button>
+
+                <input type="button" onclick="document.getElementById('preview').src = c.preview.exportImage(256)"
+                       value="preview"/>
+                <input type="button" onclick="imageRemote()" value="preview remote"/>
+                <input type="button" onclick="exportAnimation()" value="banner"/>
+                <input type="button" onclick="image()" value="image"/>
+
+                <input type="button" onclick="loadFast()" value="loadFast"/>
+                <button onclick="c.applyPreset('cup_remastered', [{width: 400, height: 300}]);">cup</button>
+                <button onclick="c.applyPreset('coffee_cup', [{width: 400, height: 300}]);">cof</button>
+                <button onclick="c.preview.loadModel('ball')">ball</button>
+            </div>
+
+            <div class="panel-title">Layers</div>
+            <div class="panel">
+                <button onclick="c.getSelection().bringUp()">UP</button>
+                <button onclick="c.getSelection().bringDown()">DOWN</button>
+
+                <button onclick="c.getSelection().toLayer(0)">0</button>
+                <button onclick="c.getSelection().toLayer(1)">1</button>
+                <button onclick="c.getSelection().toLayer(2)">2</button>
+                <button onclick="c.getSelection().toLayer(3)">3</button>
+                <button onclick="c.getSelection().toLayer(4)">4</button>
+            </div>
+        </td>
+    </tr>
     <tr>
         <td>
             <div id="container"></div>
         </td>
         <td valign="top">
-            <div class="panel">
-                <button onclick="c.getSelection().bringUp()"><img src="icons/icons8-upward_arrow.png"></button>
-                <button onclick="c.getSelection().bringDown()"><img src="icons/icons8-scroll_down.png"></button>
-
-                <button onclick="c.getSelection().toLayerInternal(0)">0</button>
-                <button onclick="c.getSelection().toLayerInternal(1)"><img src="icons/icons8-1.png"></button>
-                <button onclick="c.getSelection().toLayerInternal(2)"><img src="icons/icons8-2.png"></button>
-                <button onclick="c.getSelection().toLayerInternal(3)"><img src="icons/icons8-3.png"></button>
-                <button onclick="c.getSelection().toLayerInternal(4)"><img src="icons/icons8-4.png"></button>
+            <select id="layers" multiple style="width: 200px; height: 500px;"></select>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div id="selectionPanel" class="panel" style="display: none">
+                <button onclick="c.copy()" value="copy">copy_to_clipboard</button>
+                <button onclick="c.cut()" value="cut">cut</button>
+                <button onclick="c.duplicate()" value="duplicate">duplicate</button>
+                <button id="deleteBtn" onclick="c.remove()">trash_can</button>
+                <input id="color" type="color" onchange="c.getSelection().setColor(this.value)"/>
+                <input id="alpha" type="range" min="0.0" max="1.0" step="0.1"
+                       oninput="c.getSelection().setAlpha(this.value)" />
+                <input id="shadow" type="range" min="0.0" max="100.0" step="1.0"
+                       oninput="c.getSelection().setShadow(this.value)"/>
+            </div>
+            <div id="panel3d" class="panel" style="display: none">
+                <button onclick="c.preview.setFills('green', 0)">0</button>
+                <button onclick="c.preview.setFills('green', 1)">1</button>
+                <button onclick="c.preview.setFills('green', 2)">2</button>
+                <button onclick="c.preview.setFills('green', 0, 1)">0, 1</button>
+                <button onclick="c.preview.setFills('green', 0, 2)">0, 2</button>
+                <button onclick="c.preview.setFills('green', 1, 2)">1, 2</button>
+                <button onclick="c.preview.setFills('green', 0, 1, 2)">0, 1, 2</button>
+                <button onclick="c.preview.clearFills()">clear fills</button>
 
             </div>
-            <select id="layers" multiple style="width: 200px; height: 500px;"></select>
+            <div id="imagePanel" class="panel" style="display: none">
+                <button onclick="c.getSelection().addFilter(Filter.INVERT)">invert_selection</button>
+                <button onclick="c.getSelection().addFilter(Filter.GRAYSCALE)">black_and_white</button>
+                <button onclick="c.getSelection().addFilter(Filter.BRIGHTNESS)">sun</button>
+                <button onclick="c.getSelection().addFilter(Filter.BLUR)">blur</button>
+                <button onclick="c.getSelection().addFilter(Filter.SHARPEN)">starburst_shape</button>
+                <button onclick="c.getSelection().addFilter(Filter.EMBOSS)">bubble</button>
+                <button onclick="c.getSelection().resetFilters()">clear_filters</button>
+            </div>
+            <div id="textPanel" class="panel" style="display: none">
+                <button onclick="c.getSelection().setBold(true)" value="bold">bold</button>
+                <button onclick="c.getSelection().setItalic(true)" value="italic">italic</button>
+                <button onclick="c.getSelection().setTextDecoration(TextDecoration.UNDERLINE)">underline</button>
+                <input type="button" onclick="c.getSelection().setFontFamily('Times')" value="times"/>
+                <input type="button" onclick="c.getSelection().setFontFamily('Lobster')" value="Lobster"/>
+                <input type="button" onclick="c.getSelection().setFontFamily('Oranienbaum')" value="Oranienbaum"/>
+                <input type="button" onclick="c.getSelection().setFontFamily('Seymour One')" value="Seymour"/>
+            </div>
         </td>
     </tr>
 </table>
 
-<div id="selectionPanel" class="panel" style="display: none">
-    <button onclick="c.copy()" value="copy"><img src="icons/icons8-copy_to_clipboard.png"></button>
-    <button onclick="c.cut()" value="cut"><img src="icons/icons8-cut.png"></button>
-    <button onclick="c.duplicate()" value="duplicate"><img src="icons/icons8-duplicate.png"></button>
-    <button id="deleteBtn" onclick="c.remove()"><img src="icons/icons8-trash_can.png"></button>
-    <img src="icons/icons8-color_dropper.png">
-    <input id="color" type="color" onchange="c.getSelection().setColor(this.value)"/>
-    <img src="icons/icons8-opacity.png">
-    <input id="alpha" type="range" min="0.0" max="1.0" step="0.1" oninput="c.getSelection().setAlpha(this.value)"/>
-    <img src="icons/icons8-gallery.png">
-    <input id="shadow" type="range" min="0.0" max="100.0" step="1.0" oninput="c.getSelection().setShadow(this.value)"/>
-</div>
-<div id="panel3d" class="panel" style="display: none">
-    <button onclick="c.preview.setFills('green', 0)"><img src="icons/icons8-30_degrees.png"></button>
-    <button onclick="c.preview.setFills('green', 1)"><img src="icons/icons8-60_degrees.png"></button>
-    <button onclick="c.preview.setFills('green', 2)"><img src="icons/icons8-90_degrees.png"></button>
-    <button onclick="c.preview.setFills('green', 0, 1)"><img src="icons/icons8-150_degrees.png"></button>
-    <button onclick="c.preview.setFills('green', 0, 2)"><img src="icons/icons8-180_degree.png"></button>
-    <button onclick="c.preview.setFills('green', 1, 2)"><img src="icons/icons8-270_degrees.png"></button>
-    <button onclick="c.preview.setFills('green', 0, 1, 2)"><img src="icons/icons8-360_degrees.png"></button>
-    <button onclick="c.preview.clearFills()"><img src="icons/icons8-0_degrees.png"></button>
-
-</div>
-<div id="imagePanel" class="panel" style="display: none">
-    <button onclick="c.getSelection().addFilter(Filter.INVERT)"><img src="icons/icons8-invert_selection.png"></button>
-    <button onclick="c.getSelection().addFilter(Filter.GRAYSCALE)"><img src="icons/icons8-black_and_white.png"></button>
-    <button onclick="c.getSelection().addFilter(Filter.BRIGHTNESS)"><img src="icons/icons8-sun.png"></button>
-    <button onclick="c.getSelection().addFilter(Filter.BLUR)"><img src="icons/icons8-blur.png"></button>
-    <button onclick="c.getSelection().addFilter(Filter.SHARPEN)"><img src="icons/icons8-starburst_shape.png"></button>
-    <button onclick="c.getSelection().addFilter(Filter.EMBOSS)"><img src="icons/icons8-bubble.png"></button>
-    <button onclick="c.getSelection().resetFilters()"><img src="icons/icons8-clear_filters.png"></button>
-</div>
-<div id="textPanel" class="panel" style="display: none">
-    <button onclick="c.getSelection().setBold(true)" value="bold"><img src="icons/icons8-bold.png"></button>
-    <button onclick="c.getSelection().setItalic(true)" value="italic"><img src="icons/icons8-italic.png"></button>
-    <button onclick="c.getSelection().setTextDecoration(TextDecoration.UNDERLINE)"><img
-            src="icons/icons8-underline.png"></button>
-    <input type="button" onclick="c.getSelection().setFontFamily('Times')" value="times"/>
-    <input type="button" onclick="c.getSelection().setFontFamily('Lobster')" value="Lobster"/>
-    <input type="button" onclick="c.getSelection().setFontFamily('Oranienbaum')" value="Oranienbaum"/>
-    <input type="button" onclick="c.getSelection().setFontFamily('Seymour One')" value="Seymour"/>
-</div>
 
 <script>
     //Constructor.settings.localStorage.enabled = false;

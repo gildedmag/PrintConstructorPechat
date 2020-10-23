@@ -174,7 +174,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "23.10.2020 09:12";
+    Version.version = "23.10.2020 12:36";
     return Version;
 }());
 var View = (function () {
@@ -1038,8 +1038,10 @@ var Element2D = (function () {
         return this.object.toDataURL({ multiplier: multiplier });
     };
     Element2D.prototype.clone = function () {
-        var o = this.serialize();
-        return Element2D.prototype.deserialize(o);
+        var object = fabric.util.object.clone(this.object);
+        var element = new Element2D(this.type, this.side);
+        element.object = object;
+        return element;
     };
     Element2D.prototype.remove = function () {
         this.side.remove(this);
@@ -1627,39 +1629,42 @@ var Side2D = (function (_super) {
         }
         this.saveState();
     };
+    Side2D.prototype.addImageFromObjectOptions = function (objectOptions) {
+        var object = objectOptions.toObject();
+        var side = this;
+        fabric.Image.fromObject(object, function (image) {
+            if (image === null) {
+                return;
+            }
+            var element = new Element2D(ElementType.IMAGE);
+            element.object = image;
+            element.setOptions(element.object);
+            side.add(element);
+            if (objectOptions.filters) {
+                element.filters = [];
+                for (var _i = 0, _a = objectOptions.filters; _i < _a.length; _i++) {
+                    var filterName = _a[_i];
+                    var filter = Filter.get(filterName);
+                    try {
+                        element.addFilter(filter, function () { return element.side.canvas.renderAll(); });
+                    }
+                    catch (e) {
+                        console.error(e.message);
+                    }
+                }
+                element.applyFilters(function (imageElement) {
+                    imageElement.object.dirty = true;
+                    imageElement.side.canvas.requestRenderAll();
+                });
+            }
+        });
+    };
     Side2D.prototype.setState = function (state) {
         this.history.lock();
         this.clear();
         var _loop_1 = function (objectOptions) {
             if (objectOptions.type === 'image') {
-                var object = objectOptions.toObject();
-                var side_1 = this_1;
-                fabric.Image.fromObject(object, function (image) {
-                    if (image === null) {
-                        return;
-                    }
-                    var element = new Element2D(ElementType.IMAGE);
-                    element.object = image;
-                    element.setOptions(element.object);
-                    side_1.add(element);
-                    if (objectOptions.filters) {
-                        element.filters = [];
-                        for (var _i = 0, _a = objectOptions.filters; _i < _a.length; _i++) {
-                            var filterName = _a[_i];
-                            var filter = Filter.get(filterName);
-                            try {
-                                element.addFilter(filter, function () { return element.side.canvas.renderAll(); });
-                            }
-                            catch (e) {
-                                console.error(e.message);
-                            }
-                        }
-                        element.applyFilters(function (imageElement) {
-                            imageElement.object.dirty = true;
-                            imageElement.side.canvas.requestRenderAll();
-                        });
-                    }
-                });
+                this_1.addImageFromObjectOptions(objectOptions);
             }
             else {
                 var element_1 = Element2D.prototype.deserialize(objectOptions);

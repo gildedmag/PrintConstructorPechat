@@ -12,15 +12,28 @@ body {
 }
 
 .panel {
+    width: 800px;
     display: block;
     height: 38px;
     text-align: left;
-    padding: 2px;
-    margin: 2px;
+    padding: 4px;
+    margin: 0;
+}
+
+.panel-title {
+    clear: left;
+    font-family: monospace;
+    padding: 8px 0 2px 0;
+    width: 800px;
+}
+
+td {
+    /*width: 800px;*/
 }
 
 input {
-    display: inline-block;
+    /*display: inline-block;*/
+    float: left;
     height: 32px;
     font-size: 12pt;
     background: #eeeeee;
@@ -29,20 +42,43 @@ input {
 }
 
 label {
-    
     font-family: sans-serif;
     font-size: 8pt;
+    float: left;
 }
 
-button {
-    width: 32px;
-    height: 32px;
+button, input[type=button], input[type=color], input[type=range] {
+    float: left;
+    width: 80px;
+    height: 20px;
     padding: 0;
     margin: 0;
+    font-size: 10pt;
+    box-shadow: none;
+    border-top: 1px solid #fff;
+    border-left: 1px solid #fff;
+    border-bottom: 1px solid #aaa;
+    border-right: 1px solid #aaa;
 }
 
-button[value=false] {
-    opacity: 0.5;
+button:focus {
+    outline: 0;
+}
+
+button:active {
+    border-top: 1px solid #aaa;
+    border-left: 1px solid #aaa;
+    border-bottom: 1px solid #fff;
+    border-right: 1px solid #fff;
+    background: #ccc;
+}
+
+button[value=true] {
+    border-top: 1px solid #aaa;
+    border-left: 1px solid #aaa;
+    border-bottom: 1px solid #fff;
+    border-right: 1px solid #fff;
+    background: #ccc;
 }
 
 #container {
