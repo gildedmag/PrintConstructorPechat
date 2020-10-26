@@ -174,7 +174,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "26.10.2020 12:58";
+    Version.version = "26.10.2020 13:17";
     return Version;
 }());
 var View = (function () {
