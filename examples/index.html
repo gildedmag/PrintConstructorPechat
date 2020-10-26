@@ -30,25 +30,25 @@
             <div class="panel-title">General</div>
             <div class="panel">
                 <button value="false" onclick="c.toggleMode();this.value=(c.getMode()===Mode.Mode3D);">3d</button>
-                <button onclick="c.zoomIn()" value="zoom in">zoom_in</button>
-                <button onclick="c.zoomOut()" value="zoom out">zoom_out</button>
+                <button onclick="c.zoomIn()" value="zoom in">zoom +</button>
+                <button onclick="c.zoomOut()" value="zoom out">zoom –</button>
                 <button onclick="c.zoomToFit()" value="zoom to fit">zoom_to_actual_size</button>
                 <button onclick="c.resetZoom()" value="zoom 1:1">search</button>
                 <button onclick="c.setActiveSide(0)" value="side 1">1</button>
                 <button onclick="c.setActiveSide(1)" value="side 2">2</button>
                 <button onclick="c.setActiveSide(2)" value="side 3">3</button>
                 <button onclick="c.setActiveSide(3)" value="side 4">4</button>
-                <button onclick="c.getActiveSide().clear()" value="clear">delete</button>
-                <button onclick="c.addSide(800, 600)" value="addSide">add_book</button>
+                <button onclick="c.getActiveSide().clear()">clear</button>
+                <button onclick="c.addSide(800, 600)" value="addSide">add side</button>
                 <button onclick="c.paste()" value="paste">clipboard</button>
-                <button onclick="c.undo()" value="undo">undo</button>
-                <button onclick="c.redo()" value="redo">redo</button>
-                <button onclick="c.addElement(ElementType.RECTANGLE)" value="add rectangle">rectangular
+                <button onclick="c.undo()" value="undo">⤺</button>
+                <button onclick="c.redo()" value="redo">⤻</button>
+                <button onclick="c.addElement(ElementType.RECTANGLE)" value="add rectangle">▢
                 </button>
-                <button onclick="c.addElement(ElementType.CIRCLE)" value="add circle">circle</button>
-                <button onclick="c.addElement(ElementType.TRIANGLE)" value="add triangle">triangle
+                <button onclick="c.addElement(ElementType.CIRCLE)" value="add circle">◯</button>
+                <button onclick="c.addElement(ElementType.TRIANGLE)" value="add triangle">△
                 </button>
-                <button onclick="c.addElement(ElementType.TEXT)" value="add text">add_text</button>
+                <button onclick="c.addElement(ElementType.TEXT)" value="add text">A</button>
                 <button onclick="c.addImage('images/bug.png')" value="add image">png</button>
                 <button onclick="c.addImage('images/duck.jpg')" value="add image 2">jpg</button>
                 <button onclick="c.addImage('http://localhost:63342/render/examples/images/hunters.jpg')"
@@ -59,21 +59,22 @@
                 <button onclick="c.setState(brokenImagesJson)">IMG1</button>
                 <button onclick="c.setState(pechatJson)">IMG2</button>
 
-                <button onclick="c.getSelection().toFront()" value="up">front_sorting</button>
-                <button onclick="c.getSelection().toBack()" value="down">transfer</button>
+                <button onclick="c.getSelection().toFront()">to front</button>
+                <button onclick="c.getSelection().toBack()">to back</button>
                 <button id="locked" type="button" value="false"
                         onclick="c.getSelection().setLocked(!c.getSelection().isLocked());this.value=c.getSelection().isLocked()">
                     lock
                 </button>
                 <button id="snap" value="false" onclick="c.snapToObjects=!c.snapToObjects;this.value=c.snapToObjects;"
-                        value="snap to objects">align_bottom
+                        value="snap to objects">snap
                 </button>
                 <button id="snapToGrid" value="false" onclick="c.snapToGrid=!c.snapToGrid;this.value=c.snapToGrid;"
-                        value="snap to grid">data_grid
-                </button>
+                        value="snap to grid">data</button>
 
                 <input type="button" onclick="document.getElementById('preview').src = c.preview.exportImage(256)"
                        value="preview"/>
+                <input type="button" onclick="document.getElementById('preview').src = c.getActiveSide().exportImage(256, ImageType.JPG)"
+                       value="preview side"/>
                 <input type="button" onclick="imageRemote()" value="preview remote"/>
                 <input type="button" onclick="exportAnimation()" value="banner"/>
                 <input type="button" onclick="image()" value="image"/>
@@ -86,8 +87,8 @@
 
             <div class="panel-title">Layers</div>
             <div class="panel">
-                <button onclick="c.getSelection().bringUp()">UP</button>
-                <button onclick="c.getSelection().bringDown()">DOWN</button>
+                <button onclick="c.getSelection().bringUp()">⬆︎</button>
+                <button onclick="c.getSelection().bringDown()">⬇︎</button>
 
                 <button onclick="c.getSelection().toLayer(0)">0</button>
                 <button onclick="c.getSelection().toLayer(1)">1</button>
@@ -108,10 +109,10 @@
     <tr>
         <td>
             <div id="selectionPanel" class="panel" style="display: none">
-                <button onclick="c.copy()" value="copy">copy_to_clipboard</button>
-                <button onclick="c.cut()" value="cut">cut</button>
-                <button onclick="c.duplicate()" value="duplicate">duplicate</button>
-                <button id="deleteBtn" onclick="c.remove()">trash_can</button>
+                <button onclick="c.copy()">copy</button>
+                <button onclick="c.cut()">✄</button>
+                <button onclick="c.duplicate()">clone</button>
+                <button id="deleteBtn" onclick="c.remove()">╳</button>
                 <input id="color" type="color" onchange="c.getSelection().setColor(this.value)"/>
                 <input id="alpha" type="range" min="0.0" max="1.0" step="0.1"
                        oninput="c.getSelection().setAlpha(this.value)" />
