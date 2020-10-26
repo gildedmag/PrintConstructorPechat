@@ -174,7 +174,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "26.10.2020 12:01";
+    Version.version = "26.10.2020 12:58";
     return Version;
 }());
 var View = (function () {
@@ -1200,7 +1200,7 @@ var Element2D = (function () {
         hasBorders: false,
         cornerColor: Color.TRANSPARENT_BLACK.toRgba(),
         transparentCorners: false,
-        cornerSize: 8 * window.devicePixelRatio * window.devicePixelRatio,
+        cornerSize: 8 * window.devicePixelRatio,
         originX: Constants.CENTER,
         originY: Constants.CENTER,
         rotatingPointOffset: 30 * window.devicePixelRatio
