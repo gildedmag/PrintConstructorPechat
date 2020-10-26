@@ -5,7 +5,7 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         hasBorders: false,
         cornerColor: Color.TRANSPARENT_BLACK.toRgba(),
         transparentCorners: false,
-        cornerSize: 8,
+        cornerSize: 8 * window.devicePixelRatio,
         originX: Constants.CENTER,
         originY: Constants.CENTER,
         rotatingPointOffset: 30
