@@ -283,7 +283,7 @@ class Constructor extends View {
         return element;
     }
 
-    addImage(src: string): Element2D {
+    addImage(src: string, callback?: (Element2D) => void): Element2D {
         let element = this.getActiveSide().addElement(ElementType.IMAGE);
         let image = element.object as fabric.Image;
         image.setSrc(src, () => {
@@ -294,6 +294,7 @@ class Constructor extends View {
             element.randomizePosition();
             side.canvas.renderAll();
             side.saveState();
+            callback && callback(element)
         });
         return element;
     }

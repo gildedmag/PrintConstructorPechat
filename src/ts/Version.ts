@@ -1,5 +1,5 @@
 class Version {
 
-    static version = "23.10.2020 12:36";
+    static version = "26.10.2020 11:16";
 
 }

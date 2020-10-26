@@ -292,7 +292,9 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
     }
 
     saveToLocalStorage(state: Side2DStateObjects) {
-        localStorage.setItem(this.getLocalStorageKey(), JSON.stringify(state));
+        if (!this.history.isLocked()){
+            localStorage.setItem(this.getLocalStorageKey(), JSON.stringify(state));
+        }
     }
 
     loadFromLocalStorage() {
@@ -328,6 +330,7 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
         let multiplier = maxSize ? maxSize / Math.max(w, h) : 1;
         if (!format) format = ImageType.PNG;
         if (format == ImageType.JPG) {
+            this.history.lock();
             let background = this.addElement(ElementType.RECTANGLE);
             background.setColor(Color.WHITE);
             background.object.width = w;
@@ -340,6 +343,7 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
             let src = this.canvas.toDataURL({format: Constants.JPG, multiplier: multiplier});
             background.remove();
             this.canvas.renderAll();
+            this.history.unlock();
             return src;
         }
         if (format == ImageType.SVG) {

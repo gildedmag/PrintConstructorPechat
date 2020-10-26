@@ -174,7 +174,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "23.10.2020 12:36";
+    Version.version = "26.10.2020 11:16";
     return Version;
 }());
 var View = (function () {
@@ -415,7 +415,7 @@ var Constructor = (function (_super) {
         element.setColor(Color.random());
         return element;
     };
-    Constructor.prototype.addImage = function (src) {
+    Constructor.prototype.addImage = function (src, callback) {
         var element = this.getActiveSide().addElement(ElementType.IMAGE);
         var image = element.object;
         image.setSrc(src, function () {
@@ -427,6 +427,7 @@ var Constructor = (function (_super) {
             element.randomizePosition();
             side.canvas.renderAll();
             side.saveState();
+            callback && callback(element);
         });
         return element;
     };
@@ -578,6 +579,9 @@ var HistoryList = (function () {
         this.locked = false;
         this.state = new DoubleLinkedNode(value);
     }
+    HistoryList.prototype.isLocked = function () {
+        return this.locked === true;
+    };
     HistoryList.prototype.lock = function () {
         this.locked = true;
     };
@@ -1688,7 +1692,9 @@ var Side2D = (function (_super) {
         return Constructor.settings.localStorage.keyPrefix + this.getIndex();
     };
     Side2D.prototype.saveToLocalStorage = function (state) {
-        localStorage.setItem(this.getLocalStorageKey(), JSON.stringify(state));
+        if (!this.history.isLocked()) {
+            localStorage.setItem(this.getLocalStorageKey(), JSON.stringify(state));
+        }
     };
     Side2D.prototype.loadFromLocalStorage = function () {
         if (Constructor.settings.localStorage.enabled) {
@@ -1722,6 +1728,7 @@ var Side2D = (function (_super) {
         if (!format)
             format = ImageType.PNG;
         if (format == ImageType.JPG) {
+            this.history.lock();
             var background = this.addElement(ElementType.RECTANGLE);
             background.setColor(Color.WHITE);
             background.object.width = w;
@@ -1734,6 +1741,7 @@ var Side2D = (function (_super) {
             var src = this.canvas.toDataURL({ format: Constants.JPG, multiplier: multiplier });
             background.remove();
             this.canvas.renderAll();
+            this.history.unlock();
             return src;
         }
         if (format == ImageType.SVG) {

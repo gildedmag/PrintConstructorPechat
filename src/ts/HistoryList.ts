@@ -9,6 +9,10 @@ class HistoryList<T extends Equalable<T>> {
         this.state = new DoubleLinkedNode(value);
     }
 
+    public isLocked(): boolean {
+        return this.locked === true;
+    }
+
     lock() {
         this.locked = true;
     }
