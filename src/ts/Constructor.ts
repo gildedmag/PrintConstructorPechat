@@ -36,6 +36,8 @@ class Constructor extends View {
     lastWidth: number;
     lastHeight: number;
 
+    public isExplicitlyLoaded: boolean = false;
+
     static version = Version.version;
     static settings: Settings = new Settings();
     static instance: Constructor;
@@ -80,6 +82,7 @@ class Constructor extends View {
     }
 
     autoSize() {
+        Utils.logMethodName();
         this.sides.forEach(side => side.centerPosition());
         this.preview.autoSize();
         this.lastWidth = this.container.clientWidth;
@@ -92,10 +95,12 @@ class Constructor extends View {
      * @param {function} callback
      */
     loadModel(modelName: string, callback?: () => void) {
+        Utils.logMethodName();
         this.preview.loadModel(modelName, callback);
     }
 
     addSide(width: number, height: number): Side2D {
+        Utils.logMethodName();
         let side = new Side2D(this.container, width, height);
         this.insertSide(side);
         return side;
@@ -143,12 +148,14 @@ class Constructor extends View {
     }
 
     loadState(url: string, callback?: () => void) {
+        Utils.logMethodName();
         Utils.loadJSON(url, json => {
             this.setStateInternal(json, callback);
         });
     }
 
     private deleteAllSides() {
+        Utils.logMethodName();
         this.sides.forEach(side => {
             side.getElement().parentElement.removeChild(side.getElement());
         });
@@ -167,6 +174,7 @@ class Constructor extends View {
      * Clear all sides and browser cache
      */
     clearAllSides() {
+        Utils.logMethodName();
         this.sides.forEach(side => side.clear());
         localStorage.clear();
     }
@@ -236,6 +244,7 @@ class Constructor extends View {
 
     setMode(mode: Mode) {
         if (this.preview) {
+            Utils.logMethodName();
             if (mode == Mode.Mode2D) {
                 this.preview.hide();
                 this.getActiveSide().show();
@@ -276,6 +285,7 @@ class Constructor extends View {
     }
 
     addElement(type: ElementType): Element2D {
+        Utils.logMethodName();
         let element = this.getActiveSide().addElement(type);
         element.object.setOptions(Constructor.settings.elementDefaults[type.getNativeTypeName()]);
         element.randomizePosition();
@@ -284,6 +294,7 @@ class Constructor extends View {
     }
 
     addImage(src: string, callback?: (Element2D) => void): Element2D {
+        Utils.logMethodName();
         let element = this.getActiveSide().addElement(ElementType.IMAGE);
         let image = element.object as fabric.Image;
         image.setSrc(src, () => {
@@ -430,6 +441,7 @@ class Constructor extends View {
      * @param {() => void} callback
      */
     setStateInternal(json: string | object, callback?: () => void, clearHistory?: boolean) {
+        Utils.logMethodName();
         let state: any;
         if (typeof json === Constants.STRING) {
             state = JSON.parse(json as string);
@@ -439,7 +451,12 @@ class Constructor extends View {
         if (state.sides) {
             state.sides.forEach(sideState => {
                 let side = Side2D.prototype.deserialize(sideState);
-                this.insertSide(side, clearHistory);
+                if (side.elements && side.elements.length > 0){
+                    //this.isExplicitlyLoaded = true;
+                    this.insertSide(side, true);
+                } else {
+                    this.insertSide(side, clearHistory);
+                }
                 side.canvas.requestRenderAll();
             });
         }

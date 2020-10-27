@@ -1,6 +1,7 @@
 /** Constructor settings */
 class Settings {
 
+    debug = false;
     urls = {
         textures: "textures/",
         maps: "textures/maps/",

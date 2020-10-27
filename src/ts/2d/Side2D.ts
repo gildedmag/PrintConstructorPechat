@@ -137,18 +137,20 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
     }
 
     add(element: Element2D): Element2D {
+        Utils.logMethodName();
         element.side = this;
         this.elements.push(element);
         this.canvas.add(element.object);
         setTimeout(() => this.fixElementPosition(element), 200);
         element.fitIntoMargins();
         element.object.setCoords();
-        this.canvas.renderAll();
+        this.canvas.requestRenderAll();
         setTimeout(() => this.canvas.renderAll(), null);
         return element;
     }
 
     addElement(type: ElementType): Element2D {
+        Utils.logMethodName();
         return this.add(new Element2D(type, this));
     }
 
@@ -224,6 +226,7 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
      * Remove all objects
      */
     clear() {
+        Utils.logMethodName();
         this.elements = [];
         this.selection = null;
         this.canvas.clear();
@@ -232,6 +235,7 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
     }
 
     removeElements() {
+        Utils.logMethodName();
         while (this.elements.length) {
             this.elements[0].remove();
         }
@@ -239,6 +243,7 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
     }
 
     addImageFromObjectOptions(objectOptions: ObjectOptions): void {
+        Utils.logMethodName();
         let object = objectOptions.toObject();
         let side = this;
         (fabric.Image as any).fromObject(object, image => {
@@ -246,6 +251,7 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
                 return
             }
             let element = new Element2D(ElementType.IMAGE);
+            element.side = this;
             element.object = image;
             element.setOptions(element.object);
             side.add(element);
@@ -268,6 +274,7 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
     }
 
     setState(state: Side2DStateObjects) {
+        Utils.logMethodName();
         this.history.lock();
         this.clear();
         for (let objectOptions of state.objects) {
@@ -293,12 +300,14 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
 
     saveToLocalStorage(state: Side2DStateObjects) {
         if (!this.history.isLocked()){
+            Utils.logMethodName();
             localStorage.setItem(this.getLocalStorageKey(), JSON.stringify(state));
         }
     }
 
     loadFromLocalStorage() {
-        if (Constructor.settings.localStorage.enabled) {
+        if (Constructor.settings.localStorage.enabled && !Constructor.instance.isExplicitlyLoaded) {
+            Utils.logMethodName();
             let key = this.getLocalStorageKey();
             let state = localStorage.getItem(key);
             if (state) {
@@ -309,6 +318,7 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
     }
 
     saveState() {
+        Utils.logMethodName();
         let state = new Side2DStateObjects(this);
         this.history.add(state);
         this.saveToLocalStorage(state);
