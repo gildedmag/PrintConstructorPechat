@@ -38,9 +38,12 @@ var Associated = (function () {
     return Associated;
 }());
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -174,7 +177,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "27.10.2020 13:18";
+    Version.version = "29.10.2020 11:57";
     return Version;
 }());
 var View = (function () {
@@ -1717,6 +1720,7 @@ var Side2D = (function (_super) {
         });
     };
     Side2D.prototype.setState = function (state) {
+        var _this = this;
         Utils.logMethodName();
         this.history.lock();
         this.clear();
@@ -1740,7 +1744,7 @@ var Side2D = (function (_super) {
         }
         this.saveToLocalStorage(state);
         this.canvas.requestRenderAll();
-        this.history.unlock();
+        setTimeout(function () { return _this.history.unlock(); }, 50);
     };
     Side2D.prototype.getLocalStorageKey = function () {
         return Constructor.settings.localStorage.keyPrefix + this.getIndex();

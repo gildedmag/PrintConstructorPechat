@@ -291,7 +291,7 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
         }
         this.saveToLocalStorage(state);
         this.canvas.requestRenderAll();
-        this.history.unlock();
+        setTimeout(() => this.history.unlock(), 50);
     }
 
     getLocalStorageKey(): string {
