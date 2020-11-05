@@ -1,9 +1,9 @@
-body {
-    margin: 0;
-    padding: 0;
-    background: #333;
-    color: #aaa;
-}
+/*body {*/
+/*    margin: 0;*/
+/*    padding: 0;*/
+/*    background: #333;*/
+/*    color: #aaa;*/
+/*}*/
 
 #container {
     float: left;
@@ -29,10 +29,6 @@ body {
     width: 800px;
 }
 
-td {
-    /*width: 800px;*/
-}
-
 input {
     /*display: inline-block;*/
     float: left;
@@ -40,7 +36,7 @@ input {
     font-size: 12pt;
     margin: 0;
     padding: 0;
-    background: #333;
+    /*background: #333;*/
 }
 
 label {
@@ -62,8 +58,8 @@ button, input[type=button], input[type=color], input[type=range] {
     border-left: 1px solid #fff;
     border-bottom: 1px solid #aaa;
     border-right: 1px solid #aaa;
-    background: #333;
-    color: #aaa;
+    /*background: #333;*/
+    /*color: #aaa;*/
 }
 
 button:focus {
@@ -92,5 +88,46 @@ button[value=true] {
 }
 
 select {
-    background: #333;
+    background: #eee;
+}
+
+.constructor-layers-panel-control {
+    height: 600px;
+    border: 1px solid black;
+}
+.constructor-layer-control {
+    clear: left;
+    width: 300px;
+    height: 50px;
+    border: 1px solid black;
+    margin: 4px;
+}
+.constructor-layer-control div {
+    float: left;
+    padding: 8px;
+    font-family: sans-serif;
+    font-size: 18px;
+}
+.constructor-layer-control-icon-frame {
+    border: 1px solid black;
+    margin: 4px;
+
+    background-color: white;
+    background-image: linear-gradient(45deg, #dddddd 25%, transparent 25%), linear-gradient(-45deg, #dddddd 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #dddddd 75%), linear-gradient(-45deg, transparent 75%, #dddddd 75%);
+    background-size: 10px 10px;
+    background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+
+}
+.layer-drag-over {
+    background: #aaa;
+}
+.layer-select {
+    background: #eee;
+}
+.constructor-layer-control-visibility, .constructor-layer-control-lock {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    border: none;
+    background: none;
 }

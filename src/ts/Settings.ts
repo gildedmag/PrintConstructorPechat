@@ -2,6 +2,9 @@
 class Settings {
 
     debug = false;
+    ui = {
+        layerIconSize: 24
+    };
     urls = {
         textures: "textures/",
         maps: "textures/maps/",

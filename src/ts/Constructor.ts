@@ -43,6 +43,8 @@ class Constructor extends View {
     static instance: Constructor;
     private static zoomStep: number = 0.05;
 
+    layersPanelControl: LayersPanelUIControl;
+
     /**
      * Create new {@link Constructor} instance for an {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement|HTMLElement}
      * ```
@@ -79,6 +81,16 @@ class Constructor extends View {
             }, 500);
         }
         console.log("Constructor.version: ", Constructor.version);
+        this.bindControls();
+    }
+
+    bindControls() {
+        let layersElements = document.getElementsByTagName("layers");
+        if (layersElements && layersElements.length > 0) {
+            let container = layersElements[0] as HTMLElement
+            this.layersPanelControl = new LayersPanelUIControl(this);
+            container.appendChild(this.layersPanelControl.getElement())
+        }
     }
 
     autoSize() {
@@ -451,7 +463,7 @@ class Constructor extends View {
         if (state.sides) {
             state.sides.forEach(sideState => {
                 let side = Side2D.prototype.deserialize(sideState);
-                if (side.elements && side.elements.length > 0){
+                if (side.elements && side.elements.length > 0) {
                     //this.isExplicitlyLoaded = true;
                     this.insertSide(side, true);
                 } else {

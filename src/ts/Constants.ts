@@ -11,6 +11,7 @@ enum Constants {
     CANVAS = "canvas",
     DIV = "div",
     IMG = "img",
+    BUTTON = "button",
     LINE_STYLE_PREFIX = "1px solid ",
     PX = "px",
     STYLE = "style",
@@ -72,7 +73,7 @@ enum Constants {
     MATERIAL_NAME_SEPARATOR = "_",
 
     PNG = "png",
-    JPG = "jpg"
+    JPG = "jpg",
 
 
 }

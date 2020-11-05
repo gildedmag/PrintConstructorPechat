@@ -25,6 +25,8 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     /** @hidden */
     filtersCache: string[];
 
+    layerControl: Element2DLayerUIControl;
+
     private verticalGuides: number[];
 
     private horizontalGuides: number[];
@@ -50,6 +52,7 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
             });
         }
         this.setOptions(this.object);
+        this.object.on(Constants.MODIFIED, this.updateControl);
     }
 
     /** @hidden */
@@ -74,15 +77,35 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         object.on(Constants.SELECTED, () => {
             this.side.selection = this;
             Constructor.instance.onSelectHandler((this));
+            this.layerControl.select();
         });
         object.on(Constants.DESELECTED, () => {
             Constructor.instance.onDeselectHandler((this));
             this.side.selection = null;
+            this.layerControl.deselect();
         });
         object.on(Constants.REMOVED, () => {
             this.side.selection = null;
         });
         object.setOptions(Element2D.commonDefaults);
+    }
+
+    updateControl(clear?: boolean) {
+        if (!this.side) {
+            return;
+        }
+        let sideLayersControl = this.side.layersControl;
+        if (!sideLayersControl) {
+            return;
+        }
+        if (clear) {
+            this.layerControl = null;
+        }
+        if (!this.layerControl) {
+            this.layerControl = new Element2DLayerUIControl(this);
+            sideLayersControl.getElement().appendChild(this.layerControl.getElement());
+        }
+        this.layerControl.update();
     }
 
     /** @hidden */
@@ -330,6 +353,10 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         this.object.rotate(angle)
     }
 
+    toggleLock(){
+        this.setLocked(!this.isLocked());
+    }
+
     setLocked(locked: boolean) {
         this.object.lockScalingX
             = this.object.lockScalingY
@@ -373,7 +400,7 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         let index = this.getIndex() + delta;
         if (index < 0) {
             index = 0;
-        } else if (index > this.side.getLayers().length - 1){
+        } else if (index > this.side.getLayers().length - 1) {
             index = this.side.getLayers().length - 1
         }
         this.toLayerInternal(index);
@@ -390,6 +417,16 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         Utils.arrayMove(this.side.elements, this.getIndex(), index);
         this.side.deselect();
         this.side.canvas.renderAll();
+        this.side.layersControl.container.innerHTML = "";
+        this.side.updateControl(true);
+    }
+
+    isVisible(): boolean {
+        return this.object.visible == true;
+    }
+
+    toggleVisibility(){
+        this.isVisible() ? this.hide() : this.show();
     }
 
     hide() {
@@ -397,13 +434,15 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         this.object.selectable = false;
         this.side.deselect();
         this.side.canvas.renderAll();
+        this.side.saveState();
     }
 
     show() {
-        this.object.visible = true;
         this.object.selectable = true;
         this.side.deselect();
         this.side.canvas.renderAll();
+        this.object.visible = true;
+        this.side.saveState();
     }
 
     toDataURL(size?: number): String {
@@ -557,6 +596,10 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
 
     getIndex(): number {
         return this.side.elements.indexOf(this);
+    }
+
+    getLayerIndex(): number {
+        return this.side.getLayers().indexOf(this);
     }
 
     serialize(): ObjectOptions {

@@ -29,6 +29,8 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
 
     private needsHistoryUpdate;
 
+    layersControl: SideLayersUIControl;
+
     /**
      *
      * @param {HTMLElement} htmlElement
@@ -72,6 +74,7 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
         this.roundCorners = roundCorners;
         if (roundCorners) this.setRoundCorners();
         this.canvasElement.style.border = Constants.LINE_STYLE_PREFIX + Color.GRAY.toHex();
+        this.updateControl();
     }
 
     setRoundCorners() {
@@ -291,7 +294,10 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
         }
         this.saveToLocalStorage(state);
         this.canvas.requestRenderAll();
-        setTimeout(() => this.history.unlock(), 50);
+        setTimeout(() => {
+            this.updateControl();
+            this.history.unlock()
+        }, 50);
     }
 
     getLocalStorageKey(): string {
@@ -322,6 +328,24 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
         let state = new Side2DStateObjects(this);
         this.history.add(state);
         this.saveToLocalStorage(state);
+        this.updateControl();
+    }
+
+    updateControl(clear?: boolean) {
+        let layersPanel = Constructor.instance.layersPanelControl;
+        if (!layersPanel){
+            return;
+        }
+        if (!this.layersControl) {
+            this.layersControl = new SideLayersUIControl(this);
+            layersPanel.getElement().appendChild(this.layersControl.getElement());
+        }
+        if (clear){
+            this.layersControl.clear();
+        }
+        this.getLayers().forEach(element => {
+            element.updateControl(clear);
+        })
     }
 
     undo() {

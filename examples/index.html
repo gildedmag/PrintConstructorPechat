@@ -6,6 +6,7 @@
 <body>
 <link rel="stylesheet" type="text/css"
       href="https://fonts.googleapis.com/css?family=Alegreya|Alegreya+Sans|Arsenal|Bad+Script|Caveat|Comfortaa|Cormorant+Infant|Exo+2|Fira+Sans+Extra+Condensed|Forum|Kurale|Lobster|Marck+Script|Marmelad|Montserrat+Alternates|Old+Standard+TT|Oranienbaum|Oswald|PT+Sans+Narrow|Pacifico|Philosopher|Poiret+One|Prata|Roboto+Condensed|Ruslan+Display|Russo+One|Seymour+One|Underdog|Vollkorn|Yanone+Kaffeesatz&subset=latin,cyrillic"/>
+
 <link rel="stylesheet" href="style.css" type="text/css">
 <script src="../js/three.js" type="application/javascript"></script>
 <script src="../js/OrbitControls.js" type="application/javascript"></script>
@@ -23,8 +24,15 @@
     let brokenImagesJson = '{"fills":[],"sides":[{"objects":[{"fill":"rgba(229,146,13,1)","fontFamily":"Helvetica","fontSize":25,"fontStyle":"normal","fontWeight":"normal","height":28.25,"left":357.22,"lineHeight":1.16,"opacity":1,"scaleX":7.07,"scaleY":7.07,"text":"Текст","textAlign":"left","top":158.7,"type":"i-text","width":67.87},{"fill":"rgba(62,91,226,1)","height":100,"left":202.51,"opacity":0.3,"scaleX":1.93,"scaleY":1.93,"top":345.72,"type":"triangle","width":100},{"fill":"rgba(17,127,116,1)","height":100,"left":335.18,"opacity":1,"radius":50,"scaleX":1,"scaleY":1,"top":296.46,"type":"circle","width":100},{"fill":"rgba(98,78,150,1)","height":100,"left":83.59,"opacity":1,"radius":50,"scaleX":1,"scaleY":1,"top":251.21,"type":"circle","width":100},{"fill":"rgba(139,93,141,1)","height":100,"left":401.47,"opacity":1,"scaleX":1,"scaleY":1,"top":442.98,"type":"triangle","width":100},{"fill":"rgba(22,104,171,1)","height":100,"left":547.58,"opacity":0.6,"scaleX":1.26,"scaleY":1.26,"top":379.37,"type":"rect","width":100},{"filters":[],"height":493,"left":514.89,"opacity":1,"scaleX":1,"scaleY":1,"src":"http://localhost:63342/render/examples/images/bug.png","top":147.07,"type":"image","width":500}],"width":750,"height":550}]}';
 </script>
 
-
 <table>
+    <tr>
+        <td>
+            <div id="container"></div>
+        </td>
+        <td>
+            <layers></layers>
+        </td>
+    </tr>
     <tr>
         <td>
             <div class="panel-title">General</div>
@@ -85,7 +93,6 @@
                 <button onclick="c.preview.loadModel('ball')">ball</button>
             </div>
 
-            <div class="panel-title">Layers</div>
             <div class="panel">
                 <button onclick="c.getSelection().bringUp()">⬆︎</button>
                 <button onclick="c.getSelection().bringDown()">⬇︎</button>
@@ -98,14 +105,7 @@
             </div>
         </td>
     </tr>
-    <tr>
-        <td>
-            <div id="container"></div>
-        </td>
-        <td valign="top">
-            <select id="layers" multiple style="width: 200px; height: 500px;"></select>
-        </td>
-    </tr>
+
     <tr>
         <td>
             <div id="selectionPanel" class="panel" style="display: none">
@@ -158,27 +158,6 @@
     c = new Constructor(document.getElementById('container'));
     //c.setState('{"model":"mug1","sides":[{"width":600,"height":500}]}');
     preview = document.getElementById("preview");
-
-    layers = document.getElementById("layers");
-    c.onElementModification(updateLayers);
-
-    function updateLayers() {
-        layers.innerHTML = "";
-        if (!c.getActiveSide() || !c.getActiveSide().getLayers()) {
-            return;
-        }
-        c.getActiveSide().getLayers().forEach(element => {
-            let layer = document.createElement("option");
-            let text = element.getIndex() + " " + element.type.getName();
-            layer.innerText = element.getIndex() + " " + element.type.getName();
-            layers.appendChild(layer);
-            if (element === c.getSelection()) {
-                layers.value = text;
-            }
-        });
-    }
-
-    updateLayers();
 </script>
 <img src="" id="preview">
 <script>

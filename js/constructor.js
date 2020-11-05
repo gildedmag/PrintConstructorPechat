@@ -128,6 +128,7 @@ var Constants;
     Constants["CANVAS"] = "canvas";
     Constants["DIV"] = "div";
     Constants["IMG"] = "img";
+    Constants["BUTTON"] = "button";
     Constants["LINE_STYLE_PREFIX"] = "1px solid ";
     Constants["PX"] = "px";
     Constants["STYLE"] = "style";
@@ -177,7 +178,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "29.10.2020 11:57";
+    Version.version = "05.11.2020 17:37";
     return Version;
 }());
 var View = (function () {
@@ -200,6 +201,9 @@ var View = (function () {
 var Settings = (function () {
     function Settings() {
         this.debug = false;
+        this.ui = {
+            layerIconSize: 24
+        };
         this.urls = {
             textures: "textures/",
             maps: "textures/maps/",
@@ -275,8 +279,17 @@ var Constructor = (function (_super) {
             }, 500);
         }
         console.log("Constructor.version: ", Constructor.version);
+        _this.bindControls();
         return _this;
     }
+    Constructor.prototype.bindControls = function () {
+        var layersElements = document.getElementsByTagName("layers");
+        if (layersElements && layersElements.length > 0) {
+            var container = layersElements[0];
+            this.layersPanelControl = new LayersPanelUIControl(this);
+            container.appendChild(this.layersPanelControl.getElement());
+        }
+    };
     Constructor.prototype.autoSize = function () {
         Utils.logMethodName();
         this.sides.forEach(function (side) { return side.centerPosition(); });
@@ -764,6 +777,7 @@ var Element2D = (function () {
             });
         }
         this.setOptions(this.object);
+        this.object.on(Constants.MODIFIED, this.updateControl);
     }
     Element2D.prototype.setOptions = function (object) {
         var _this = this;
@@ -786,15 +800,34 @@ var Element2D = (function () {
         object.on(Constants.SELECTED, function () {
             _this.side.selection = _this;
             Constructor.instance.onSelectHandler((_this));
+            _this.layerControl.select();
         });
         object.on(Constants.DESELECTED, function () {
             Constructor.instance.onDeselectHandler((_this));
             _this.side.selection = null;
+            _this.layerControl.deselect();
         });
         object.on(Constants.REMOVED, function () {
             _this.side.selection = null;
         });
         object.setOptions(Element2D.commonDefaults);
+    };
+    Element2D.prototype.updateControl = function (clear) {
+        if (!this.side) {
+            return;
+        }
+        var sideLayersControl = this.side.layersControl;
+        if (!sideLayersControl) {
+            return;
+        }
+        if (clear) {
+            this.layerControl = null;
+        }
+        if (!this.layerControl) {
+            this.layerControl = new Element2DLayerUIControl(this);
+            sideLayersControl.getElement().appendChild(this.layerControl.getElement());
+        }
+        this.layerControl.update();
     };
     Element2D.prototype.randomizePosition = function () {
         var width = this.side.canvas.getWidth();
@@ -1016,6 +1049,9 @@ var Element2D = (function () {
         angle = Math.round(angle / Constructor.settings.rotationStep) * Constructor.settings.rotationStep;
         this.object.rotate(angle);
     };
+    Element2D.prototype.toggleLock = function () {
+        this.setLocked(!this.isLocked());
+    };
     Element2D.prototype.setLocked = function (locked) {
         this.object.lockScalingX
             = this.object.lockScalingY
@@ -1069,18 +1105,28 @@ var Element2D = (function () {
         Utils.arrayMove(this.side.elements, this.getIndex(), index);
         this.side.deselect();
         this.side.canvas.renderAll();
+        this.side.layersControl.container.innerHTML = "";
+        this.side.updateControl(true);
+    };
+    Element2D.prototype.isVisible = function () {
+        return this.object.visible == true;
+    };
+    Element2D.prototype.toggleVisibility = function () {
+        this.isVisible() ? this.hide() : this.show();
     };
     Element2D.prototype.hide = function () {
         this.object.visible = false;
         this.object.selectable = false;
         this.side.deselect();
         this.side.canvas.renderAll();
+        this.side.saveState();
     };
     Element2D.prototype.show = function () {
-        this.object.visible = true;
         this.object.selectable = true;
         this.side.deselect();
         this.side.canvas.renderAll();
+        this.object.visible = true;
+        this.side.saveState();
     };
     Element2D.prototype.toDataURL = function (size) {
         if (!size) {
@@ -1222,6 +1268,9 @@ var Element2D = (function () {
     };
     Element2D.prototype.getIndex = function () {
         return this.side.elements.indexOf(this);
+    };
+    Element2D.prototype.getLayerIndex = function () {
+        return this.side.getLayers().indexOf(this);
     };
     Element2D.prototype.serialize = function () {
         return new ObjectOptions(this);
@@ -1544,6 +1593,7 @@ var Side2D = (function (_super) {
         if (roundCorners)
             _this.setRoundCorners();
         _this.canvasElement.style.border = Constants.LINE_STYLE_PREFIX + Color.GRAY.toHex();
+        _this.updateControl();
         return _this;
     }
     Side2D.prototype.setRoundCorners = function () {
@@ -1744,7 +1794,10 @@ var Side2D = (function (_super) {
         }
         this.saveToLocalStorage(state);
         this.canvas.requestRenderAll();
-        setTimeout(function () { return _this.history.unlock(); }, 50);
+        setTimeout(function () {
+            _this.updateControl();
+            _this.history.unlock();
+        }, 50);
     };
     Side2D.prototype.getLocalStorageKey = function () {
         return Constructor.settings.localStorage.keyPrefix + this.getIndex();
@@ -1771,6 +1824,23 @@ var Side2D = (function (_super) {
         var state = new Side2DStateObjects(this);
         this.history.add(state);
         this.saveToLocalStorage(state);
+        this.updateControl();
+    };
+    Side2D.prototype.updateControl = function (clear) {
+        var layersPanel = Constructor.instance.layersPanelControl;
+        if (!layersPanel) {
+            return;
+        }
+        if (!this.layersControl) {
+            this.layersControl = new SideLayersUIControl(this);
+            layersPanel.getElement().appendChild(this.layersControl.getElement());
+        }
+        if (clear) {
+            this.layersControl.clear();
+        }
+        this.getLayers().forEach(function (element) {
+            element.updateControl(clear);
+        });
     };
     Side2D.prototype.undo = function () {
         var state = this.history.back();
@@ -2135,4 +2205,118 @@ var Preview = (function (_super) {
     Preview.objectLoader = new THREE.ObjectLoader();
     return Preview;
 }(View));
+var UIControl = (function (_super) {
+    __extends(UIControl, _super);
+    function UIControl(model) {
+        var _this = this;
+        var element = document.createElement(Constants.DIV);
+        _this = _super.call(this, element) || this;
+        _this.model = model;
+        element.className = _this.getClassName();
+        return _this;
+    }
+    UIControl.prototype.getElement = function () {
+        return this.container;
+    };
+    return UIControl;
+}(View));
+var LayersPanelUIControl = (function (_super) {
+    __extends(LayersPanelUIControl, _super);
+    function LayersPanelUIControl() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    LayersPanelUIControl.prototype.getClassName = function () {
+        return "constructor-layers-panel-control";
+    };
+    return LayersPanelUIControl;
+}(UIControl));
+var SideLayersUIControl = (function (_super) {
+    __extends(SideLayersUIControl, _super);
+    function SideLayersUIControl() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    SideLayersUIControl.prototype.getClassName = function () {
+        return "constructor-side-layers-control";
+    };
+    SideLayersUIControl.prototype.clear = function () {
+        this.getElement().innerHTML = "";
+    };
+    return SideLayersUIControl;
+}(UIControl));
+var Element2DLayerUIControl = (function (_super) {
+    __extends(Element2DLayerUIControl, _super);
+    function Element2DLayerUIControl(model) {
+        var _this = _super.call(this, model) || this;
+        _this.container.onclick = function (e) { return _this.model.side.select(_this.model); };
+        _this.labelElement = document.createElement(Constants.DIV);
+        _this.iconContainerElement = document.createElement(Constants.DIV);
+        _this.container.style.userSelect = "none";
+        _this.container.draggable = true;
+        _this.container.ondragend = function (e) {
+            _this.model.side.moveLayer(_this.model.getLayerIndex(), Element2DLayerUIControl.dragTo);
+            _this.model.side.updateControl(true);
+            _this.model.side.select(_this.model);
+        };
+        _this.container.ondragover = function (e) {
+            e.preventDefault();
+            Element2DLayerUIControl.dragTo = _this.model.getLayerIndex();
+            _this.container.classList.add("layer-drag-over");
+        };
+        _this.container.ondragleave = function (e) {
+            _this.container.classList.remove("layer-drag-over");
+        };
+        _this.iconElement = document.createElement(Constants.IMG);
+        _this.iconContainerElement.className = "constructor-layer-control-icon-frame";
+        _this.iconContainerElement.style.width = Constructor.settings.ui.layerIconSize + "px";
+        _this.iconContainerElement.style.height = Constructor.settings.ui.layerIconSize + "px";
+        _this.iconContainerElement.style.textAlign = "center";
+        _this.visibilityElement = document.createElement(Constants.BUTTON);
+        _this.visibilityElement.className = "constructor-layer-control-visibility";
+        _this.visibilityElement.style.float = "right";
+        _this.visibilityElement.onclick = function () {
+            _this.model.toggleVisibility();
+            _this.model.updateControl();
+        };
+        _this.lockElement = document.createElement(Constants.BUTTON);
+        _this.lockElement.className = "constructor-layer-control-lock";
+        _this.lockElement.style.float = "right";
+        _this.lockElement.onclick = function () {
+            _this.model.toggleLock();
+            _this.model.updateControl();
+        };
+        _this.container.appendChild(_this.iconContainerElement);
+        _this.iconContainerElement.appendChild(_this.iconElement);
+        _this.container.appendChild(_this.labelElement);
+        _this.container.appendChild(_this.visibilityElement);
+        _this.container.appendChild(_this.lockElement);
+        _this.update();
+        return _this;
+    }
+    Element2DLayerUIControl.prototype.getClassName = function () {
+        return "constructor-layer-control";
+    };
+    Element2DLayerUIControl.prototype.select = function () {
+        this.container.classList.add("layer-select");
+    };
+    Element2DLayerUIControl.prototype.deselect = function () {
+        this.container.classList.remove("layer-select");
+    };
+    Element2DLayerUIControl.prototype.update = function () {
+        this.labelElement.innerText = this.model.type.getName();
+        var maxSize = Math.max(this.model.object.width * this.model.object.scaleX, this.model.object.height * this.model.object.scaleY);
+        if (this.model.isVisible()) {
+            var multiplier = Constructor.settings.ui.layerIconSize / maxSize;
+            var options = {
+                format: "png",
+                multiplier: multiplier
+            };
+            var src = this.model.object.toDataURL(options).toString();
+            this.iconElement.src = src;
+        }
+        this.visibilityElement.innerText = this.model.isVisible() ? "👓" : "🕶";
+        this.lockElement.innerText = this.model.isLocked() ? "🔒" : "🔓";
+    };
+    Element2DLayerUIControl.dragTo = 0;
+    return Element2DLayerUIControl;
+}(UIControl));
 //# sourceMappingURL=constructor.js.map
