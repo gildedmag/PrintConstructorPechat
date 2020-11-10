@@ -17,6 +17,10 @@ abstract class View {
         this.getElement().style.display = Constants.NONE;
     }
 
+    clear() {
+        this.getElement().innerHTML = "";
+    }
+
     isVisible(): boolean {
         return this.getElement() != null
             && this.getElement().style != null

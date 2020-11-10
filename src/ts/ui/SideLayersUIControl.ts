@@ -4,8 +4,4 @@ class SideLayersUIControl extends UIControl<Side2D> {
         return "constructor-side-layers-control";
     }
 
-    clear() {
-        this.getElement().innerHTML = "";
-    }
-
 }

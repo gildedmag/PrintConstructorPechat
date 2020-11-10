@@ -364,10 +364,11 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
             = this.object.lockMovementX
             = this.object.lockMovementY
             = locked;
+        this.updateControl();
     }
 
     isLocked(): boolean {
-        return this.object.lockScalingX;
+        return this.object && this.object.lockScalingX;
     }
 
     toFront() {
@@ -422,7 +423,7 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     }
 
     isVisible(): boolean {
-        return this.object.visible == true;
+        return this.object && this.object.visible == true;
     }
 
     toggleVisibility(){

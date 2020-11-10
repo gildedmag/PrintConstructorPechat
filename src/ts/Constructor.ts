@@ -12,16 +12,16 @@ class Constructor extends View {
     spinner: Spinner;
 
     /** @hidden */
-    onSelectHandler: (selection: Element2D) => void;
+    onSelectHandler: (selection: Element2D) => void = () => {};
 
     /** @hidden */
-    onDeselectHandler: (selection: Element2D) => void;
+    onDeselectHandler: (selection: Element2D) => void = () => {};
 
     /** @hidden */
-    onModeChangeHandler: () => void;
+    onModeChangeHandler: () => void = () => {};
 
     /** @hidden */
-    onElementModificationHandler: () => void;
+    onElementModificationHandler: () => void = () => {};
 
     /** @hidden */
     clipboard: Element2D;
@@ -44,6 +44,7 @@ class Constructor extends View {
     private static zoomStep: number = 0.05;
 
     layersPanelControl: LayersPanelUIControl;
+    toolbarControl: ToolbarUIControl;
 
     /**
      * Create new {@link Constructor} instance for an {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement|HTMLElement}
@@ -73,6 +74,7 @@ class Constructor extends View {
         this.container.style.background = null;
         this.lastWidth = this.container.clientWidth;
         this.lastHeight = this.container.clientHeight;
+        //window.onresize = () => this.autoSize();
         if (Constructor.settings.autoSize) {
             setInterval(() => {
                 if (this.lastWidth != this.container.clientWidth || this.lastHeight != this.container.clientHeight) {
@@ -85,12 +87,18 @@ class Constructor extends View {
     }
 
     bindControls() {
-        let layersElements = document.getElementsByTagName("layers");
-        if (layersElements && layersElements.length > 0) {
-            let container = layersElements[0] as HTMLElement
+        let layersContainer = document.getElementById("constructor-layers-container");
+        if (layersContainer){
             this.layersPanelControl = new LayersPanelUIControl(this);
-            container.appendChild(this.layersPanelControl.getElement())
+            layersContainer.appendChild(this.layersPanelControl.getElement())
         }
+
+        let toolbarContainer = document.getElementById("constructor-toolbar");
+        if (toolbarContainer){
+            this.toolbarControl = new ToolbarUIControl(this);
+            toolbarContainer.appendChild(this.toolbarControl.getElement())
+        }
+
     }
 
     autoSize() {

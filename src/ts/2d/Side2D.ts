@@ -173,6 +173,9 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
     remove(element: Element2D) {
         this.canvas.remove(element.object);
         this.elements.splice(this.elements.indexOf(element), 1);
+        this.updateControl(true);
+        this.deselect();
+        this.canvas.renderAll();
     }
 
     getPointSize(): number {

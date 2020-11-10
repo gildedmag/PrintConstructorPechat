@@ -5,12 +5,18 @@
 /*    color: #aaa;*/
 /*}*/
 
+@media print {
+    html, body, * {
+        display: none;
+    }
+}
+
 #container {
     float: left;
     border: 1px solid #808080;
     position: relative;
-    width: 800px;
-    height: 600px;
+    width: 100%;
+    /*height: 600px;*/
 }
 
 .panel {
@@ -91,16 +97,29 @@ select {
     background: #eee;
 }
 
-.constructor-layers-panel-control {
+#constructor-container {
+    float: left;
+    width: 400px;
     height: 600px;
     border: 1px solid black;
 }
+#constructor-layers-container {
+    float: left;
+    width: 300px;
+}
+.constructor-layers-panel-control {
+    /*width: 100px;*/
+    height: 600px;
+    border: 1px solid black;
+    overflow: auto;
+}
 .constructor-layer-control {
     clear: left;
-    width: 300px;
+    /*width: 300px;*/
     height: 50px;
-    border: 1px solid black;
+    /*border: 1px solid black;*/
     margin: 4px;
+    background: #ddd;
 }
 .constructor-layer-control div {
     float: left;
@@ -109,7 +128,7 @@ select {
     font-size: 18px;
 }
 .constructor-layer-control-icon-frame {
-    border: 1px solid black;
+    border: 1px solid #aaa;
     margin: 4px;
 
     background-color: white;
@@ -124,10 +143,20 @@ select {
 .layer-select {
     background: #eee;
 }
-.constructor-layer-control-visibility, .constructor-layer-control-lock {
-    width: 50px;
-    height: 50px;
-    font-size: 24px;
-    border: none;
-    background: none;
+.constructor-toolbar-control {
+    float: left;
+    width: 100%;
+    padding: 2px;
+}
+.constructor-button-control {
+    float: left;
+    width: 20px;
+    padding: 8px;
+    margin: 6px;
+    background: #eee;
+    text-align: center;
+    user-select: none;
+}
+.constructor-button-control i {
+    font-size: 12px;
 }
