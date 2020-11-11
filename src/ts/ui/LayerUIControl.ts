@@ -1,6 +1,8 @@
 /// <reference path="UIControl.ts" />
+/// <reference path="TriggeredUIControl.ts" />
 /// <reference path="../Icon.ts" />
-class Element2DLayerUIControl extends UIControl<Element2D> {
+
+class LayerUIControl extends TriggeredUIControl<Element2D> {
 
     iconElement: HTMLImageElement;
     iconContainerElement: HTMLDivElement;
@@ -9,8 +11,6 @@ class Element2DLayerUIControl extends UIControl<Element2D> {
     lockButton: ToggleButtonUIControl;
     deleteButton: ButtonUIControl;
     cachedIcon: string;
-
-    private height: number;
 
     static dragTo = 0;
 
@@ -29,7 +29,7 @@ class Element2DLayerUIControl extends UIControl<Element2D> {
     constructor(element: Element2D) {
         super(element);
 
-        this.container.onclick = e => this.model.side.select(this.model);
+        this.container.onclick = e => this.trigger.side.select(this.trigger);
 
         this.labelElement = document.createElement(Constants.DIV);
         this.iconContainerElement = document.createElement(Constants.DIV);
@@ -37,13 +37,12 @@ class Element2DLayerUIControl extends UIControl<Element2D> {
         this.container.style.userSelect = "none";
         this.container.draggable = true;
         this.container.ondragend = e => {
-            this.model.side.moveLayer(this.model.getLayerIndex(), Element2DLayerUIControl.dragTo);
-            this.model.side.updateControl(true);
-            this.model.side.select(this.model);
+            this.trigger.side.moveLayer(this.trigger.getLayerIndex(), LayerUIControl.dragTo);
+            this.trigger.side.select(this.trigger);
         };
         this.container.ondragover = e => {
             e.preventDefault();
-            Element2DLayerUIControl.dragTo = this.model.getLayerIndex();
+            LayerUIControl.dragTo = this.trigger.getLayerIndex();
             this.container.classList.add("layer-drag-over");
         };
         this.container.ondragleave = e => {
@@ -89,22 +88,46 @@ class Element2DLayerUIControl extends UIControl<Element2D> {
     }
 
     update() {
-        this.labelElement.innerText = this.model.type.getName();
-        let maxSize = Math.max(this.model.object.width * this.model.object.scaleX, this.model.object.height * this.model.object.scaleY);
-        if (this.model.isVisible()) {
+        this.labelElement.innerText = this.trigger.type.getName();
+        let maxSize = Math.max(this.trigger.object.width * this.trigger.object.scaleX, this.trigger.object.height * this.trigger.object.scaleY);
+        if (this.trigger.isVisible()) {
             let multiplier = Constructor.settings.ui.layerIconSize / maxSize;
             let options = {
                 format: "png",
                 multiplier: multiplier
             };
-            let src = this.model.object.toDataURL(options).toString();
+            let src = this.trigger.object.toDataURL(options).toString();
             this.iconElement.src = src;
             this.cachedIcon = src;
         } else {
             this.iconElement.src = this.cachedIcon;
         }
-        this.visibilityButton.update();
         this.lockButton.update();
+        this.updateVisibility();
     }
+
+    updateVisibility() {
+        this.visibilityButton.update();
+    }
+
+
+
+    // updateControl(){
+    //     if (!this.side) {
+    //         return;
+    //     }
+    //     let sideLayersControl = this.side.layersControl;
+    //     if (!sideLayersControl) {
+    //         return;
+    //     }
+    //     if (clear) {
+    //         this.layerControl = null;
+    //     }
+    //     if (!this.layerControl) {
+    //         this.layerControl = new LayerUIControl(this);
+    //         sideLayersControl.getElement().appendChild(this.layerControl.getElement());
+    //     }
+    //     this.layerControl.update();
+    // }
 
 }

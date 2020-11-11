@@ -1,5 +1,5 @@
 /// <reference path="./Side2DState.ts" />
-class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>, Equalable<Side2D> {
+class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2DState>, Equalable<Side2D> {
 
     static maxZoom: number = 10;
     static minZoom: number = 0.001;
@@ -28,8 +28,6 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
     private history: HistoryList<Side2DStateObjects>;
 
     private needsHistoryUpdate;
-
-    layersControl: SideLayersUIControl;
 
     /**
      *
@@ -74,7 +72,6 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
         this.roundCorners = roundCorners;
         if (roundCorners) this.setRoundCorners();
         this.canvasElement.style.border = Constants.LINE_STYLE_PREFIX + Color.GRAY.toHex();
-        this.updateControl();
     }
 
     setRoundCorners() {
@@ -168,14 +165,15 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
     moveLayer(from: number, to: number){
         let element: Element2D = this.getLayers()[from];
         element.toLayer(to);
+        this.changed();
     }
 
     remove(element: Element2D) {
         this.canvas.remove(element.object);
         this.elements.splice(this.elements.indexOf(element), 1);
-        this.updateControl(true);
         this.deselect();
         this.canvas.renderAll();
+        this.changed();
     }
 
     getPointSize(): number {
@@ -238,6 +236,7 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
         this.canvas.clear();
         this.canvas.add(this.horizontalGuide);
         this.canvas.add(this.verticalGuide);
+        this.changed();
     }
 
     removeElements() {
@@ -298,7 +297,6 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
         this.saveToLocalStorage(state);
         this.canvas.requestRenderAll();
         setTimeout(() => {
-            this.updateControl();
             this.history.unlock()
         }, 50);
     }
@@ -331,24 +329,6 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
         let state = new Side2DStateObjects(this);
         this.history.add(state);
         this.saveToLocalStorage(state);
-        this.updateControl();
-    }
-
-    updateControl(clear?: boolean) {
-        let layersPanel = Constructor.instance.layersPanelControl;
-        if (!layersPanel){
-            return;
-        }
-        if (!this.layersControl) {
-            this.layersControl = new SideLayersUIControl(this);
-            layersPanel.getElement().appendChild(this.layersControl.getElement());
-        }
-        if (clear){
-            this.layersControl.clear();
-        }
-        this.getLayers().forEach(element => {
-            element.updateControl(clear);
-        })
     }
 
     undo() {
@@ -403,6 +383,5 @@ class Side2D extends View implements Indexed, Serializable<Side2D, Side2DState>,
     public isEmpty(): boolean {
         return this.elements.length == 0;
     }
-
 
 }

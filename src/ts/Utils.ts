@@ -96,4 +96,8 @@ class Utils {
         this.arrayMove(arr, from, arr.length - 1)
     }
 
+    public static div(): HTMLDivElement {
+        return document.createElement(Constants.DIV)
+    }
+
 }

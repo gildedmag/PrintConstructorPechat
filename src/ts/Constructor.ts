@@ -1,8 +1,9 @@
 /// <reference path="Version.ts" />
 /// <reference path="View.ts" />
+/// <reference path="3d/Preview.ts" />
 /// <reference path="Settings.ts" />
 
-class Constructor extends View {
+class Constructor extends View<Constructor> {
 
     sides: Side2D[];
     activeSideIndex: number;
@@ -82,33 +83,8 @@ class Constructor extends View {
                 }
             }, 500);
         }
-        if (Constructor.settings.bindDeleteKey) {
-            document.addEventListener("keydown", e => {
-                if (e.keyCode == 46) {
-                    let selection = this.getSelection();
-                    if (selection){
-                        selection.remove();
-                    }
-                }
-            }, false);
 
-        }
         console.log("Constructor.version: ", Constructor.version);
-        this.bindControls();
-    }
-
-    bindControls() {
-        let sidebarContainer = document.getElementById("constructor-sidebar");
-        if (sidebarContainer){
-            this.sidebarControl = new SidebarUIControl(this);
-            sidebarContainer.appendChild(this.sidebarControl.getElement())
-        }
-
-        let toolbarContainer = document.getElementById("constructor-toolbar");
-        if (toolbarContainer){
-            this.toolbarControl = new ToolbarUIControl(this);
-            toolbarContainer.appendChild(this.toolbarControl.getElement())
-        }
     }
 
     autoSize() {
@@ -143,6 +119,7 @@ class Constructor extends View {
             this.activeSideIndex = 0;
             this.getActiveSide().show();
         }
+        this.changed();
     }
 
     /**
@@ -190,6 +167,7 @@ class Constructor extends View {
             side.getElement().parentElement.removeChild(side.getElement());
         });
         this.sides = [];
+        this.changed();
     }
 
     /**
@@ -207,6 +185,7 @@ class Constructor extends View {
         Utils.logMethodName();
         this.sides.forEach(side => side.clear());
         localStorage.clear();
+        this.changed();
     }
 
     /** @hidden */
@@ -223,6 +202,7 @@ class Constructor extends View {
             this.activeSideIndex = index;
             this.getActiveSide().show();
             this.getActiveSide().canvas.requestRenderAll();
+            this.visibilityChanged();
         }
     }
 

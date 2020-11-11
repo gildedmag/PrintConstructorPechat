@@ -1,5 +1,5 @@
 /// <reference path="../Color.ts" />
-class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
+class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Element2D, ObjectOptions> {
 
     private static commonDefaults = {
         hasBorders: false,
@@ -25,7 +25,7 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
     /** @hidden */
     filtersCache: string[];
 
-    layerControl: Element2DLayerUIControl;
+    layerControl: LayerUIControl;
 
     private verticalGuides: number[];
 
@@ -33,6 +33,7 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
 
     /** @hidden */
     constructor(type: ElementType, side?: Side2D) {
+        super();
         this.type = type;
         this.side = side;
         if (type === ElementType.IMAGE) {
@@ -52,7 +53,6 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
             });
         }
         this.setOptions(this.object);
-        this.object.on(Constants.MODIFIED, () => this.updateControl());
     }
 
     /** @hidden */
@@ -88,24 +88,6 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
             this.side.selection = null;
         });
         object.setOptions(Element2D.commonDefaults);
-    }
-
-    updateControl(clear?: boolean) {
-        if (!this.side) {
-            return;
-        }
-        let sideLayersControl = this.side.layersControl;
-        if (!sideLayersControl) {
-            return;
-        }
-        if (clear) {
-            this.layerControl = null;
-        }
-        if (!this.layerControl) {
-            this.layerControl = new Element2DLayerUIControl(this);
-            sideLayersControl.getElement().appendChild(this.layerControl.getElement());
-        }
-        this.layerControl.update();
     }
 
     /** @hidden */
@@ -364,7 +346,6 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
             = this.object.lockMovementX
             = this.object.lockMovementY
             = locked;
-        this.updateControl();
     }
 
     isLocked(): boolean {
@@ -418,8 +399,6 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         Utils.arrayMove(this.side.elements, this.getIndex(), index);
         this.side.deselect();
         this.side.canvas.renderAll();
-        this.side.layersControl.container.innerHTML = "";
-        this.side.updateControl(true);
     }
 
     isVisible(): boolean {

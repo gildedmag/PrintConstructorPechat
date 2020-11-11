@@ -1,4 +1,4 @@
-class Preview extends View {
+class Preview extends View<Preview> {
 
     static instance: Preview;
 

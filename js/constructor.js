@@ -181,15 +181,44 @@ var Version = (function () {
     Version.version = "05.11.2020 17:37";
     return Version;
 }());
-var View = (function () {
+var Trigger = (function () {
+    function Trigger() {
+        this.actions = [];
+        this.visibilityActions = [];
+    }
+    Trigger.prototype.changed = function () {
+        var _this = this;
+        this.actions.forEach(function (action) { return action(_this); });
+    };
+    Trigger.prototype.visibilityChanged = function () {
+        var _this = this;
+        this.visibilityActions.forEach(function (action) { return action(_this); });
+    };
+    Trigger.prototype.onChange = function (action) {
+        this.actions.push(action);
+    };
+    Trigger.prototype.onVisibilityChange = function (action) {
+        this.visibilityActions.push(action);
+    };
+    return Trigger;
+}());
+var View = (function (_super) {
+    __extends(View, _super);
     function View(container) {
-        this.container = container;
+        var _this = _super.call(this) || this;
+        _this.container = container;
+        return _this;
     }
     View.prototype.show = function () {
         this.getElement().style.display = Constants.BLOCK;
     };
     View.prototype.hide = function () {
         this.getElement().style.display = Constants.NONE;
+    };
+    View.prototype.setVisible = function (value) {
+        if (value != this.isVisible()) {
+            value ? this.show() : this.hide();
+        }
     };
     View.prototype.clear = function () {
         this.getElement().innerHTML = "";
@@ -199,12 +228,290 @@ var View = (function () {
             && this.getElement().style != null
             && this.getElement().style.display != Constants.NONE;
     };
+    View.prototype.getClassName = function () {
+        return "";
+    };
     return View;
-}());
+}(Trigger));
+var Preview = (function (_super) {
+    __extends(Preview, _super);
+    function Preview(constructor) {
+        var _this = _super.call(this, constructor.container) || this;
+        _this.sides = [];
+        _this.fills = [];
+        _this.originalFillColors = [];
+        Preview.instance = _this;
+        _this.exportRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+        _this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+        try {
+            _this.renderer.setClearColor(Constructor.settings.previewBackgroundColor);
+        }
+        catch (e) {
+            _this.renderer.setClearColor(Color.BACKGROUND_GRAY.toHex());
+        }
+        _this.renderer.setPixelRatio(window.devicePixelRatio);
+        _this.renderer.setSize(constructor.container.clientWidth, constructor.container.clientHeight);
+        _this.camera = new THREE.PerspectiveCamera(70, _this.renderer.getSize().width / _this.renderer.getSize().height, 0.1);
+        _this.scene = new THREE.Scene();
+        _this.scene.add(_this.camera);
+        _this.setupControls();
+        _this.showMargins = false;
+        constructor.container.appendChild(_this.renderer.domElement);
+        _this.render();
+        return _this;
+    }
+    Preview.prototype.autoSize = function () {
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setSize(Constructor.instance.getElement().clientWidth, Constructor.instance.getElement().clientHeight);
+        this.camera.aspect = this.renderer.getSize().width / this.renderer.getSize().height;
+        this.camera.updateProjectionMatrix();
+        this.render();
+    };
+    Preview.prototype.getElement = function () {
+        return Preview.instance.renderer.domElement;
+    };
+    Preview.prototype.animate = function () {
+        requestAnimationFrame(this.animate);
+        Preview.instance.controls.update();
+        this.render();
+    };
+    Preview.prototype.render = function () {
+        Preview.instance.camera.lookAt(Preview.instance.scene.position);
+        Preview.instance.camera.updateMatrixWorld(true);
+        Preview.instance.renderer.render(Preview.instance.scene, Preview.instance.camera);
+    };
+    Preview.prototype.clear = function () {
+        this.sides = [];
+        this.fills = [];
+        this.originalFillColors = [];
+        while (this.scene.children.length > 0) {
+            this.scene.remove(this.scene.children[0]);
+        }
+    };
+    Preview.prototype.setScene = function (scene) {
+        Preview.instance.clear();
+        Preview.instance.scene = scene;
+        scene.background = Color.WHITE.toHex();
+        Preview.instance.setupScene();
+        Preview.instance.updateSideMaterials();
+        Constructor.instance.spinner.hide();
+        Preview.instance.render();
+    };
+    Preview.prototype.loadModel = function (modelName, callback) {
+        var _this = this;
+        Constructor.instance.spinner.show();
+        this.modelName = modelName;
+        Preview.objectLoader.manager.onError = function () { return Constructor.instance.spinner.hide(); };
+        Preview.objectLoader.load(Constructor.settings.urls.models + this.modelName + Constructor.settings.fileExtensions.model, function (object) {
+            _this.setScene(object);
+            Constructor.instance.spinner.hide();
+            if (callback)
+                callback();
+        });
+    };
+    Preview.prototype.setupScene = function () {
+        var _this = this;
+        this.scene.traverse(function (object) {
+            if (object.type && object.type === Constants.PERSPECTIVE_CAMERA) {
+                _this.camera = object;
+                _this.camera.near = 0.1;
+                _this.camera.aspect = _this.renderer.domElement.width / _this.renderer.domElement.height;
+                _this.camera.updateProjectionMatrix();
+                _this.setupControls();
+            }
+            else if (object.material && object.material.type && object.material.name) {
+                var material = object.material;
+                var materialNames = material.name.split(Constants.MULTI_MATERIAL_NAME_SEPARATOR);
+                for (var i = 0; i < materialNames.length; i++) {
+                    object.renderOrder = 100;
+                    var nameParts = material.name.split(Constants.MATERIAL_NAME_SEPARATOR);
+                    var type = nameParts[0];
+                    var index = nameParts.length ? parseInt(nameParts[1]) - 1 : 0;
+                    if (material.envMap) {
+                        material.envMap.mapping = THREE.EquirectangularReflectionMapping;
+                        material.envMap.magFilter = THREE.LinearFilter;
+                        material.envMap.minFilter = THREE.LinearMipMapLinearFilter;
+                        material.needsUpdate = true;
+                    }
+                    if (type === Constants.SIDE) {
+                        object.renderOrder = 0;
+                        _this.sides[index] = material;
+                    }
+                    else if (type === Constants.FILL) {
+                        _this.fills[index] = material;
+                        _this.originalFillColors[index] = material.color.getHex();
+                    }
+                }
+            }
+        });
+    };
+    Preview.prototype.setupControls = function () {
+        var cameraDistance = Math.max(this.camera.position.x, this.camera.position.y, this.camera.position.z);
+        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.addEventListener(Constants.CHANGE, this.render);
+        this.controls.minPolarAngle = 0;
+        this.controls.maxPolarAngle = Math.PI / 2;
+        this.controls.minDistance = cameraDistance / 2;
+        this.controls.maxDistance = cameraDistance * 2;
+        this.controls.zoomSpeed = 1;
+        this.controls.enablePan = false;
+        this.controls.update();
+    };
+    Preview.prototype.clearFills = function () {
+        for (var i = 0; i < this.fills.length; i++) {
+            this.setFills(null, i);
+        }
+    };
+    Preview.prototype.setFills = function (color) {
+        var indices = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            indices[_i - 1] = arguments[_i];
+        }
+        if (this.fills && this.fills.length) {
+            for (var _a = 0, indices_1 = indices; _a < indices_1.length; _a++) {
+                var index = indices_1[_a];
+                if (this.fills.length > index) {
+                    if (!this.fills[index]) {
+                        continue;
+                    }
+                    if (color === null) {
+                        this.fills[index].color = new THREE.Color(this.originalFillColors[index]);
+                    }
+                    else {
+                        this.fills[index].color = new THREE.Color(color);
+                    }
+                }
+            }
+            this.render();
+        }
+    };
+    Preview.prototype.setShowMargin = function (value) {
+        var _this = this;
+        this.scene.traverse(function (mesh) {
+            if (mesh.material && mesh.material.name && mesh.material.name === Constants.MARGIN) {
+                mesh.visible = value;
+                _this.render();
+            }
+        });
+    };
+    Preview.prototype.updateSideMaterials = function (callback) {
+        var _this = this;
+        if (this.sides && this.sides.length) {
+            var _loop_1 = function (i) {
+                var map;
+                var side = Constructor.instance.sides[i];
+                if (!side || !side.canvas)
+                    return "continue";
+                var w = side.canvas.getWidth() / side.getZoom();
+                var h = side.canvas.getHeight() / side.getZoom();
+                var multiplier = Constructor.settings.previewTextureSize / Math.max(w, h);
+                try {
+                    var src = side.canvas.toDataURL({ format: Constants.PNG, multiplier: multiplier });
+                    this_1.sides[i].userData = null;
+                    var image_1 = document.createElement(Constants.IMG);
+                    image_1.crossOrigin = "anonymous";
+                    image_1.src = src;
+                    image_1.onload = function () {
+                        map = new THREE.Texture(image_1);
+                        map.wrapS = map.wrapT = THREE.ClampToEdgeWrapping;
+                        map.minFilter = THREE.NearestMipMapNearestFilter;
+                        map.anisotropy = Constructor.instance.preview.renderer.capabilities.getMaxAnisotropy();
+                        map.needsUpdate = true;
+                        var side = Constructor.instance.preview.sides[i];
+                        side.map = map;
+                        side.transparent = true;
+                        side.needsUpdate = true;
+                        side.userData = true;
+                        Constructor.instance.preview.render();
+                    };
+                }
+                catch (e) {
+                    console.error("failed to update side", side.getIndex());
+                }
+            };
+            var this_1 = this;
+            for (var i = 0; i < this.sides.length; i++) {
+                _loop_1(i);
+            }
+            this.render();
+            this.waitUntilSidesUpdate(function () {
+                _this.render();
+                if (callback)
+                    callback();
+            });
+        }
+    };
+    Preview.prototype.waitUntilSidesUpdate = function (callback, max) {
+        var _this = this;
+        if (!max)
+            max = new Date().getMilliseconds() + 100;
+        if (this.sides && this.sides.length) {
+            for (var i = 0; i < this.sides.length; i++) {
+                if (this.sides[i].userData != 1) {
+                    if (new Date().getMilliseconds() < max) {
+                        setTimeout(function () { return _this.waitUntilSidesUpdate(callback, max); }, 10);
+                    }
+                    else {
+                        callback();
+                    }
+                    return;
+                }
+            }
+        }
+        callback();
+    };
+    Preview.prototype.exportImage = function (callback, maxSize, format, quality) {
+        var _this = this;
+        this.updateSideMaterials(function () {
+            callback(_this.exportImageSync(maxSize, format, quality));
+        });
+    };
+    Preview.prototype.exportImageSync = function (maxSize, format, quality) {
+        if (!format)
+            format = ImageType.PNG;
+        if (!quality)
+            quality = 0.9;
+        var w = this.renderer.domElement.width;
+        var h = this.renderer.domElement.height;
+        var multiplier = maxSize ? maxSize / Math.max(w, h) : 1;
+        w *= multiplier;
+        h *= multiplier;
+        if (format == ImageType.JPG) {
+            this.exportRenderer.setClearColor(Color.WHITE.toHex());
+        }
+        else {
+            this.exportRenderer.setClearColor(Color.TRANSPARENT.toRgba(), 0);
+        }
+        if (this.exportRenderer.getSize().width != w && this.exportRenderer.getSize().height != h) {
+            this.exportRenderer.setSize(w, h);
+        }
+        this.exportRenderer.render(this.scene, this.camera);
+        return this.exportRenderer.domElement.toDataURL(format, quality);
+    };
+    Preview.prototype.setBackgroundColor = function (value) {
+        var color;
+        if (value instanceof Color) {
+            color = value.toRgb();
+        }
+        else {
+            color = new THREE.Color(value);
+        }
+        this.renderer.setClearColor(color);
+        this.render();
+    };
+    Preview.marginMaterial = new THREE.LineBasicMaterial({
+        name: Constants.MARGIN,
+        color: Color.GUIDE.toNumber(),
+        transparent: true,
+        linewidth: 4,
+        opacity: 0.5
+    });
+    Preview.objectLoader = new THREE.ObjectLoader();
+    return Preview;
+}(View));
 var Settings = (function () {
     function Settings() {
         this.debug = false;
-        this.bindDeleteKey = true;
         this.ui = {
             layerIconSize: 24
         };
@@ -286,32 +593,9 @@ var Constructor = (function (_super) {
                 }
             }, 500);
         }
-        if (Constructor.settings.bindDeleteKey) {
-            document.addEventListener("keydown", function (e) {
-                if (e.keyCode == 46) {
-                    var selection = _this.getSelection();
-                    if (selection) {
-                        selection.remove();
-                    }
-                }
-            }, false);
-        }
         console.log("Constructor.version: ", Constructor.version);
-        _this.bindControls();
         return _this;
     }
-    Constructor.prototype.bindControls = function () {
-        var sidebarContainer = document.getElementById("constructor-sidebar");
-        if (sidebarContainer) {
-            this.sidebarControl = new SidebarUIControl(this);
-            sidebarContainer.appendChild(this.sidebarControl.getElement());
-        }
-        var toolbarContainer = document.getElementById("constructor-toolbar");
-        if (toolbarContainer) {
-            this.toolbarControl = new ToolbarUIControl(this);
-            toolbarContainer.appendChild(this.toolbarControl.getElement());
-        }
-    };
     Constructor.prototype.autoSize = function () {
         Utils.logMethodName();
         this.sides.forEach(function (side) { return side.centerPosition(); });
@@ -337,6 +621,7 @@ var Constructor = (function (_super) {
             this.activeSideIndex = 0;
             this.getActiveSide().show();
         }
+        this.changed();
     };
     Constructor.prototype.loadPreset = function (filename, callback) {
         this.loadState(Constructor.settings.urls.presets + filename + Constructor.settings.fileExtensions.presets, callback);
@@ -354,6 +639,7 @@ var Constructor = (function (_super) {
             side.getElement().parentElement.removeChild(side.getElement());
         });
         this.sides = [];
+        this.changed();
     };
     Constructor.prototype.clear = function () {
         localStorage.clear();
@@ -363,6 +649,7 @@ var Constructor = (function (_super) {
         Utils.logMethodName();
         this.sides.forEach(function (side) { return side.clear(); });
         localStorage.clear();
+        this.changed();
     };
     Constructor.prototype.getElement = function () {
         return this.container;
@@ -376,6 +663,7 @@ var Constructor = (function (_super) {
             this.activeSideIndex = index;
             this.getActiveSide().show();
             this.getActiveSide().canvas.requestRenderAll();
+            this.visibilityChanged();
         }
     };
     Constructor.prototype.getActiveSide = function () {
@@ -767,6 +1055,9 @@ var Utils = (function () {
     Utils.arrayMoveToEnd = function (arr, from) {
         this.arrayMove(arr, from, arr.length - 1);
     };
+    Utils.div = function () {
+        return document.createElement(Constants.DIV);
+    };
     return Utils;
 }());
 var Dimensions = (function () {
@@ -776,13 +1067,14 @@ var Dimensions = (function () {
     }
     return Dimensions;
 }());
-var Element2D = (function () {
+var Element2D = (function (_super) {
+    __extends(Element2D, _super);
     function Element2D(type, side) {
-        var _this = this;
-        this.type = type;
-        this.side = side;
+        var _this = _super.call(this) || this;
+        _this.type = type;
+        _this.side = side;
         if (type === ElementType.IMAGE) {
-            this.object = new type.nativeType();
+            _this.object = new type.nativeType();
         }
         else {
             var defaults = Constructor.settings.elementDefaults[type.getNativeTypeName()];
@@ -798,8 +1090,8 @@ var Element2D = (function () {
                 }
             });
         }
-        this.setOptions(this.object);
-        this.object.on(Constants.MODIFIED, function () { return _this.updateControl(); });
+        _this.setOptions(_this.object);
+        return _this;
     }
     Element2D.prototype.setOptions = function (object) {
         var _this = this;
@@ -833,23 +1125,6 @@ var Element2D = (function () {
             _this.side.selection = null;
         });
         object.setOptions(Element2D.commonDefaults);
-    };
-    Element2D.prototype.updateControl = function (clear) {
-        if (!this.side) {
-            return;
-        }
-        var sideLayersControl = this.side.layersControl;
-        if (!sideLayersControl) {
-            return;
-        }
-        if (clear) {
-            this.layerControl = null;
-        }
-        if (!this.layerControl) {
-            this.layerControl = new Element2DLayerUIControl(this);
-            sideLayersControl.getElement().appendChild(this.layerControl.getElement());
-        }
-        this.layerControl.update();
     };
     Element2D.prototype.randomizePosition = function () {
         var width = this.side.canvas.getWidth();
@@ -1081,7 +1356,6 @@ var Element2D = (function () {
                     = this.object.lockMovementX
                         = this.object.lockMovementY
                             = locked;
-        this.updateControl();
     };
     Element2D.prototype.isLocked = function () {
         return this.object && this.object.lockScalingX;
@@ -1128,8 +1402,6 @@ var Element2D = (function () {
         Utils.arrayMove(this.side.elements, this.getIndex(), index);
         this.side.deselect();
         this.side.canvas.renderAll();
-        this.side.layersControl.container.innerHTML = "";
-        this.side.updateControl(true);
     };
     Element2D.prototype.isVisible = function () {
         return this.object && this.object.visible == true;
@@ -1327,7 +1599,7 @@ var Element2D = (function () {
         rotatingPointOffset: 30 * window.devicePixelRatio
     };
     return Element2D;
-}());
+}(Trigger));
 var ElementType = (function (_super) {
     __extends(ElementType, _super);
     function ElementType(nativeType) {
@@ -1616,7 +1888,6 @@ var Side2D = (function (_super) {
         if (roundCorners)
             _this.setRoundCorners();
         _this.canvasElement.style.border = Constants.LINE_STYLE_PREFIX + Color.GRAY.toHex();
-        _this.updateControl();
         return _this;
     }
     Side2D.prototype.setRoundCorners = function () {
@@ -1698,13 +1969,14 @@ var Side2D = (function (_super) {
     Side2D.prototype.moveLayer = function (from, to) {
         var element = this.getLayers()[from];
         element.toLayer(to);
+        this.changed();
     };
     Side2D.prototype.remove = function (element) {
         this.canvas.remove(element.object);
         this.elements.splice(this.elements.indexOf(element), 1);
-        this.updateControl(true);
         this.deselect();
         this.canvas.renderAll();
+        this.changed();
     };
     Side2D.prototype.getPointSize = function () {
         return 96 / 72 * this.getZoom();
@@ -1754,6 +2026,7 @@ var Side2D = (function (_super) {
         this.canvas.clear();
         this.canvas.add(this.horizontalGuide);
         this.canvas.add(this.verticalGuide);
+        this.changed();
     };
     Side2D.prototype.removeElements = function () {
         Utils.logMethodName();
@@ -1800,28 +2073,27 @@ var Side2D = (function (_super) {
         Utils.logMethodName();
         this.history.lock();
         this.clear();
-        var _loop_1 = function (objectOptions) {
+        var _loop_2 = function (objectOptions) {
             if (objectOptions.type === 'image') {
-                this_1.addImageFromObjectOptions(objectOptions);
+                this_2.addImageFromObjectOptions(objectOptions);
             }
             else {
                 var element_1 = Element2D.prototype.deserialize(objectOptions);
-                this_1.add(element_1);
+                this_2.add(element_1);
                 element_1.object.dirty = true;
                 if (element_1.type === ElementType.TEXT) {
                     setTimeout(function () { return element_1.setFontFamily(element_1.getFontFamily()); }, 0);
                 }
             }
         };
-        var this_1 = this;
+        var this_2 = this;
         for (var _i = 0, _a = state.objects; _i < _a.length; _i++) {
             var objectOptions = _a[_i];
-            _loop_1(objectOptions);
+            _loop_2(objectOptions);
         }
         this.saveToLocalStorage(state);
         this.canvas.requestRenderAll();
         setTimeout(function () {
-            _this.updateControl();
             _this.history.unlock();
         }, 50);
     };
@@ -1850,23 +2122,6 @@ var Side2D = (function (_super) {
         var state = new Side2DStateObjects(this);
         this.history.add(state);
         this.saveToLocalStorage(state);
-        this.updateControl();
-    };
-    Side2D.prototype.updateControl = function (clear) {
-        var layersPanel = Constructor.instance.layersPanelControl;
-        if (!layersPanel) {
-            return;
-        }
-        if (!this.layersControl) {
-            this.layersControl = new SideLayersUIControl(this);
-            layersPanel.getElement().appendChild(this.layersControl.getElement());
-        }
-        if (clear) {
-            this.layersControl.clear();
-        }
-        this.getLayers().forEach(function (element) {
-            element.updateControl(clear);
-        });
     };
     Side2D.prototype.undo = function () {
         var state = this.history.back();
@@ -1955,297 +2210,47 @@ var VerticalGuide = (function (_super) {
     };
     return VerticalGuide;
 }(Guide));
-var Preview = (function (_super) {
-    __extends(Preview, _super);
-    function Preview(constructor) {
-        var _this = _super.call(this, constructor.container) || this;
-        _this.sides = [];
-        _this.fills = [];
-        _this.originalFillColors = [];
-        Preview.instance = _this;
-        _this.exportRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
-        _this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
-        try {
-            _this.renderer.setClearColor(Constructor.settings.previewBackgroundColor);
-        }
-        catch (e) {
-            _this.renderer.setClearColor(Color.BACKGROUND_GRAY.toHex());
-        }
-        _this.renderer.setPixelRatio(window.devicePixelRatio);
-        _this.renderer.setSize(constructor.container.clientWidth, constructor.container.clientHeight);
-        _this.camera = new THREE.PerspectiveCamera(70, _this.renderer.getSize().width / _this.renderer.getSize().height, 0.1);
-        _this.scene = new THREE.Scene();
-        _this.scene.add(_this.camera);
-        _this.setupControls();
-        _this.showMargins = false;
-        constructor.container.appendChild(_this.renderer.domElement);
-        _this.render();
-        return _this;
-    }
-    Preview.prototype.autoSize = function () {
-        this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.setSize(Constructor.instance.getElement().clientWidth, Constructor.instance.getElement().clientHeight);
-        this.camera.aspect = this.renderer.getSize().width / this.renderer.getSize().height;
-        this.camera.updateProjectionMatrix();
-        this.render();
-    };
-    Preview.prototype.getElement = function () {
-        return Preview.instance.renderer.domElement;
-    };
-    Preview.prototype.animate = function () {
-        requestAnimationFrame(this.animate);
-        Preview.instance.controls.update();
-        this.render();
-    };
-    Preview.prototype.render = function () {
-        Preview.instance.camera.lookAt(Preview.instance.scene.position);
-        Preview.instance.camera.updateMatrixWorld(true);
-        Preview.instance.renderer.render(Preview.instance.scene, Preview.instance.camera);
-    };
-    Preview.prototype.clear = function () {
-        this.sides = [];
-        this.fills = [];
-        this.originalFillColors = [];
-        while (this.scene.children.length > 0) {
-            this.scene.remove(this.scene.children[0]);
-        }
-    };
-    Preview.prototype.setScene = function (scene) {
-        Preview.instance.clear();
-        Preview.instance.scene = scene;
-        scene.background = Color.WHITE.toHex();
-        Preview.instance.setupScene();
-        Preview.instance.updateSideMaterials();
-        Constructor.instance.spinner.hide();
-        Preview.instance.render();
-    };
-    Preview.prototype.loadModel = function (modelName, callback) {
-        var _this = this;
-        Constructor.instance.spinner.show();
-        this.modelName = modelName;
-        Preview.objectLoader.manager.onError = function () { return Constructor.instance.spinner.hide(); };
-        Preview.objectLoader.load(Constructor.settings.urls.models + this.modelName + Constructor.settings.fileExtensions.model, function (object) {
-            _this.setScene(object);
-            Constructor.instance.spinner.hide();
-            if (callback)
-                callback();
-        });
-    };
-    Preview.prototype.setupScene = function () {
-        var _this = this;
-        this.scene.traverse(function (object) {
-            if (object.type && object.type === Constants.PERSPECTIVE_CAMERA) {
-                _this.camera = object;
-                _this.camera.near = 0.1;
-                _this.camera.aspect = _this.renderer.domElement.width / _this.renderer.domElement.height;
-                _this.camera.updateProjectionMatrix();
-                _this.setupControls();
-            }
-            else if (object.material && object.material.type && object.material.name) {
-                var material = object.material;
-                var materialNames = material.name.split(Constants.MULTI_MATERIAL_NAME_SEPARATOR);
-                for (var i = 0; i < materialNames.length; i++) {
-                    object.renderOrder = 100;
-                    var nameParts = material.name.split(Constants.MATERIAL_NAME_SEPARATOR);
-                    var type = nameParts[0];
-                    var index = nameParts.length ? parseInt(nameParts[1]) - 1 : 0;
-                    if (material.envMap) {
-                        material.envMap.mapping = THREE.EquirectangularReflectionMapping;
-                        material.envMap.magFilter = THREE.LinearFilter;
-                        material.envMap.minFilter = THREE.LinearMipMapLinearFilter;
-                        material.needsUpdate = true;
-                    }
-                    if (type === Constants.SIDE) {
-                        object.renderOrder = 0;
-                        _this.sides[index] = material;
-                    }
-                    else if (type === Constants.FILL) {
-                        _this.fills[index] = material;
-                        _this.originalFillColors[index] = material.color.getHex();
-                    }
-                }
-            }
-        });
-    };
-    Preview.prototype.setupControls = function () {
-        var cameraDistance = Math.max(this.camera.position.x, this.camera.position.y, this.camera.position.z);
-        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.addEventListener(Constants.CHANGE, this.render);
-        this.controls.minPolarAngle = 0;
-        this.controls.maxPolarAngle = Math.PI / 2;
-        this.controls.minDistance = cameraDistance / 2;
-        this.controls.maxDistance = cameraDistance * 2;
-        this.controls.zoomSpeed = 1;
-        this.controls.enablePan = false;
-        this.controls.update();
-    };
-    Preview.prototype.clearFills = function () {
-        for (var i = 0; i < this.fills.length; i++) {
-            this.setFills(null, i);
-        }
-    };
-    Preview.prototype.setFills = function (color) {
-        var indices = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            indices[_i - 1] = arguments[_i];
-        }
-        if (this.fills && this.fills.length) {
-            for (var _a = 0, indices_1 = indices; _a < indices_1.length; _a++) {
-                var index = indices_1[_a];
-                if (this.fills.length > index) {
-                    if (!this.fills[index]) {
-                        continue;
-                    }
-                    if (color === null) {
-                        this.fills[index].color = new THREE.Color(this.originalFillColors[index]);
-                    }
-                    else {
-                        this.fills[index].color = new THREE.Color(color);
-                    }
-                }
-            }
-            this.render();
-        }
-    };
-    Preview.prototype.setShowMargin = function (value) {
-        var _this = this;
-        this.scene.traverse(function (mesh) {
-            if (mesh.material && mesh.material.name && mesh.material.name === Constants.MARGIN) {
-                mesh.visible = value;
-                _this.render();
-            }
-        });
-    };
-    Preview.prototype.updateSideMaterials = function (callback) {
-        var _this = this;
-        if (this.sides && this.sides.length) {
-            var _loop_2 = function (i) {
-                var map;
-                var side = Constructor.instance.sides[i];
-                if (!side || !side.canvas)
-                    return "continue";
-                var w = side.canvas.getWidth() / side.getZoom();
-                var h = side.canvas.getHeight() / side.getZoom();
-                var multiplier = Constructor.settings.previewTextureSize / Math.max(w, h);
-                try {
-                    var src = side.canvas.toDataURL({ format: Constants.PNG, multiplier: multiplier });
-                    this_2.sides[i].userData = null;
-                    var image_1 = document.createElement(Constants.IMG);
-                    image_1.crossOrigin = "anonymous";
-                    image_1.src = src;
-                    image_1.onload = function () {
-                        map = new THREE.Texture(image_1);
-                        map.wrapS = map.wrapT = THREE.ClampToEdgeWrapping;
-                        map.minFilter = THREE.NearestMipMapNearestFilter;
-                        map.anisotropy = Constructor.instance.preview.renderer.capabilities.getMaxAnisotropy();
-                        map.needsUpdate = true;
-                        var side = Constructor.instance.preview.sides[i];
-                        side.map = map;
-                        side.transparent = true;
-                        side.needsUpdate = true;
-                        side.userData = true;
-                        Constructor.instance.preview.render();
-                    };
-                }
-                catch (e) {
-                    console.error("failed to update side", side.getIndex());
-                }
-            };
-            var this_2 = this;
-            for (var i = 0; i < this.sides.length; i++) {
-                _loop_2(i);
-            }
-            this.render();
-            this.waitUntilSidesUpdate(function () {
-                _this.render();
-                if (callback)
-                    callback();
-            });
-        }
-    };
-    Preview.prototype.waitUntilSidesUpdate = function (callback, max) {
-        var _this = this;
-        if (!max)
-            max = new Date().getMilliseconds() + 100;
-        if (this.sides && this.sides.length) {
-            for (var i = 0; i < this.sides.length; i++) {
-                if (this.sides[i].userData != 1) {
-                    if (new Date().getMilliseconds() < max) {
-                        setTimeout(function () { return _this.waitUntilSidesUpdate(callback, max); }, 10);
-                    }
-                    else {
-                        callback();
-                    }
-                    return;
-                }
-            }
-        }
-        callback();
-    };
-    Preview.prototype.exportImage = function (callback, maxSize, format, quality) {
-        var _this = this;
-        this.updateSideMaterials(function () {
-            callback(_this.exportImageSync(maxSize, format, quality));
-        });
-    };
-    Preview.prototype.exportImageSync = function (maxSize, format, quality) {
-        if (!format)
-            format = ImageType.PNG;
-        if (!quality)
-            quality = 0.9;
-        var w = this.renderer.domElement.width;
-        var h = this.renderer.domElement.height;
-        var multiplier = maxSize ? maxSize / Math.max(w, h) : 1;
-        w *= multiplier;
-        h *= multiplier;
-        if (format == ImageType.JPG) {
-            this.exportRenderer.setClearColor(Color.WHITE.toHex());
-        }
-        else {
-            this.exportRenderer.setClearColor(Color.TRANSPARENT.toRgba(), 0);
-        }
-        if (this.exportRenderer.getSize().width != w && this.exportRenderer.getSize().height != h) {
-            this.exportRenderer.setSize(w, h);
-        }
-        this.exportRenderer.render(this.scene, this.camera);
-        return this.exportRenderer.domElement.toDataURL(format, quality);
-    };
-    Preview.prototype.setBackgroundColor = function (value) {
-        var color;
-        if (value instanceof Color) {
-            color = value.toRgb();
-        }
-        else {
-            color = new THREE.Color(value);
-        }
-        this.renderer.setClearColor(color);
-        this.render();
-    };
-    Preview.marginMaterial = new THREE.LineBasicMaterial({
-        name: Constants.MARGIN,
-        color: Color.GUIDE.toNumber(),
-        transparent: true,
-        linewidth: 4,
-        opacity: 0.5
-    });
-    Preview.objectLoader = new THREE.ObjectLoader();
-    return Preview;
-}(View));
 var UIControl = (function (_super) {
     __extends(UIControl, _super);
-    function UIControl(model) {
-        var _this = this;
-        var element = document.createElement(Constants.DIV);
-        _this = _super.call(this, element) || this;
-        _this.model = model;
-        element.className = _this.getClassName();
+    function UIControl() {
+        var _this = _super.call(this, Utils.div()) || this;
+        _this.children = [];
+        _this.c = Constructor.instance;
+        _this.container.className = _this.getClassName();
         return _this;
     }
+    UIControl.prototype.update = function () {
+    };
     UIControl.prototype.getElement = function () {
         return this.container;
     };
+    UIControl.prototype.appendChild = function (control) {
+        this.children.push(control);
+        this.container.appendChild(control.container);
+        return this;
+    };
+    UIControl.prototype.append = function () {
+        var _this = this;
+        var controls = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            controls[_i] = arguments[_i];
+        }
+        controls.forEach(function (control) { return _this.appendChild(control); });
+        return this;
+    };
     return UIControl;
 }(View));
+var TriggeredUIControl = (function (_super) {
+    __extends(TriggeredUIControl, _super);
+    function TriggeredUIControl(trigger) {
+        var _this = _super.call(this) || this;
+        trigger.onChange(function () { return _this.update(); });
+        trigger.onVisibilityChange(function () { return _this.updateVisibility(); });
+        _this.trigger = trigger;
+        return _this;
+    }
+    return TriggeredUIControl;
+}(UIControl));
 var Icon;
 (function (Icon) {
     Icon["_500PX"] = "<i class=\"fa fa-500px\"></i>";
@@ -3035,23 +3040,145 @@ var Icon;
     Icon["YOUTUBE_PLAY"] = "<i class=\"fa fa-youtube-play\"></i>";
     Icon["YOUTUBE_SQUARE"] = "<i class=\"fa fa-youtube-square\"></i>";
 })(Icon || (Icon = {}));
-var Element2DLayerUIControl = (function (_super) {
-    __extends(Element2DLayerUIControl, _super);
-    function Element2DLayerUIControl(element) {
+var LayersPanelUIControl = (function (_super) {
+    __extends(LayersPanelUIControl, _super);
+    function LayersPanelUIControl(c) {
+        var _this = _super.call(this, c) || this;
+        _this.update();
+        return _this;
+    }
+    LayersPanelUIControl.prototype.getClassName = function () {
+        return "constructor-layers-panel-control";
+    };
+    LayersPanelUIControl.prototype.update = function () {
+        this.clear();
+        for (var i = 0; i < this.trigger.sides.length; i++) {
+            var side = this.trigger.sides[i];
+            console.log(side);
+            this.append(new LayersUIControl(side));
+        }
+    };
+    LayersPanelUIControl.prototype.updateVisibility = function () {
+        this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
+    };
+    return LayersPanelUIControl;
+}(TriggeredUIControl));
+var Loader = (function () {
+    function Loader() {
+    }
+    Loader.init = function () {
+        document.addEventListener("DOMContentLoaded", function () {
+            var element = document.getElementById("constructor-container");
+            new Constructor(element);
+        });
+        return null;
+    };
+    Loader.load = Loader.init();
+    return Loader;
+}());
+var ButtonUIControl = (function (_super) {
+    __extends(ButtonUIControl, _super);
+    function ButtonUIControl(action, icon) {
+        var _this = _super.call(this) || this;
+        _this.container.innerHTML = icon;
+        _this.container.onclick = function () { return action(); };
+        return _this;
+    }
+    ButtonUIControl.prototype.getClassName = function () {
+        return "button-control";
+    };
+    ButtonUIControl.prototype.update = function () {
+    };
+    return ButtonUIControl;
+}(UIControl));
+var ToggleButtonUIControl = (function (_super) {
+    __extends(ToggleButtonUIControl, _super);
+    function ToggleButtonUIControl(action, check, iconOn, iconOff) {
+        var _this = _super.call(this, action, iconOn) || this;
+        _this.action = action;
+        _this.check = check;
+        _this.iconOn = iconOn;
+        _this.iconOn = iconOn;
+        _this.iconOff = iconOff;
+        _this.container.onclick = function () { return _this.action(); };
+        _this.update();
+        return _this;
+    }
+    ToggleButtonUIControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " toggle-button-control";
+    };
+    ToggleButtonUIControl.prototype.update = function () {
+        this.container.innerHTML = this.check() ? this.iconOn : this.iconOff;
+    };
+    return ToggleButtonUIControl;
+}(ButtonUIControl));
+var ToolbarUIControl = (function (_super) {
+    __extends(ToolbarUIControl, _super);
+    function ToolbarUIControl() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    ToolbarUIControl.prototype.getClassName = function () {
+        return "toolbar-control";
+    };
+    ToolbarUIControl.prototype.update = function () {
+    };
+    return ToolbarUIControl;
+}(UIControl));
+var SidebarUIControl = (function (_super) {
+    __extends(SidebarUIControl, _super);
+    function SidebarUIControl() {
+        var _this = _super.call(this) || this;
+        var verticalToolbar = new ToolbarUIControl()
+            .append(new ButtonUIControl(function () { return _this.switch(0); }, Icon.HOME), new ButtonUIControl(function () { return _this.switch(1); }, Icon.PLUS_CIRCLE), new ButtonUIControl(function () { return _this.switch(2); }, Icon.TH_LARGE));
+        _this.toolbar = new ToolbarUIControl()
+            .append(new ButtonUIControl(function () { return _this.c.addElement(ElementType.CIRCLE); }, Icon.CIRCLE))
+            .append(new ButtonUIControl(function () { return _this.c.addElement(ElementType.RECTANGLE); }, Icon.SQUARE))
+            .append(new ButtonUIControl(function () { return _this.c.addElement(ElementType.TRIANGLE); }, Icon.CARET_UP))
+            .append(new ButtonUIControl(function () { return _this.c.addElement(ElementType.TEXT); }, Icon.FONT));
+        _this.left = new LeftPaneUIControl();
+        _this.right = new RightPaneUIControl();
+        _this.layersPanel = new LayersPanelUIControl(_this.c);
+        _this.left.append(verticalToolbar);
+        _this.right.append(_this.toolbar);
+        _this.right.append(_this.layersPanel);
+        _this.append(_this.left);
+        _this.append(_this.right);
+        _this.switch(1);
+        return _this;
+    }
+    SidebarUIControl.prototype.getClassName = function () {
+        return "sidebar-control";
+    };
+    SidebarUIControl.prototype.switch = function (index) {
+        for (var i = 0; i < this.right.children.length; i++) {
+            if (i == index) {
+                this.right.children[i].show();
+            }
+            else {
+                this.right.children[i].hide();
+            }
+        }
+    };
+    SidebarUIControl.prototype.update = function () {
+    };
+    return SidebarUIControl;
+}(ToolbarUIControl));
+var LayerUIControl = (function (_super) {
+    __extends(LayerUIControl, _super);
+    function LayerUIControl(element) {
         var _this = _super.call(this, element) || this;
-        _this.container.onclick = function (e) { return _this.model.side.select(_this.model); };
+        _this.container.onclick = function (e) { return _this.trigger.side.select(_this.trigger); };
         _this.labelElement = document.createElement(Constants.DIV);
         _this.iconContainerElement = document.createElement(Constants.DIV);
         _this.container.style.userSelect = "none";
         _this.container.draggable = true;
         _this.container.ondragend = function (e) {
-            _this.model.side.moveLayer(_this.model.getLayerIndex(), Element2DLayerUIControl.dragTo);
-            _this.model.side.updateControl(true);
-            _this.model.side.select(_this.model);
+            _this.trigger.side.moveLayer(_this.trigger.getLayerIndex(), LayerUIControl.dragTo);
+            _this.trigger.side.select(_this.trigger);
         };
         _this.container.ondragover = function (e) {
             e.preventDefault();
-            Element2DLayerUIControl.dragTo = _this.model.getLayerIndex();
+            LayerUIControl.dragTo = _this.trigger.getLayerIndex();
             _this.container.classList.add("layer-drag-over");
         };
         _this.container.ondragleave = function (e) {
@@ -3077,159 +3204,118 @@ var Element2DLayerUIControl = (function (_super) {
         _this.update();
         return _this;
     }
-    Element2DLayerUIControl.prototype.getClassName = function () {
+    LayerUIControl.prototype.getClassName = function () {
         return "constructor-layer-control";
     };
-    Element2DLayerUIControl.prototype.select = function () {
+    LayerUIControl.prototype.select = function () {
         this.container.classList.add("layer-select");
     };
-    Element2DLayerUIControl.prototype.deselect = function () {
+    LayerUIControl.prototype.deselect = function () {
         this.container.classList.remove("layer-select");
     };
-    Element2DLayerUIControl.prototype.update = function () {
-        this.labelElement.innerText = this.model.type.getName();
-        var maxSize = Math.max(this.model.object.width * this.model.object.scaleX, this.model.object.height * this.model.object.scaleY);
-        if (this.model.isVisible()) {
+    LayerUIControl.prototype.update = function () {
+        this.labelElement.innerText = this.trigger.type.getName();
+        var maxSize = Math.max(this.trigger.object.width * this.trigger.object.scaleX, this.trigger.object.height * this.trigger.object.scaleY);
+        if (this.trigger.isVisible()) {
             var multiplier = Constructor.settings.ui.layerIconSize / maxSize;
             var options = {
                 format: "png",
                 multiplier: multiplier
             };
-            var src = this.model.object.toDataURL(options).toString();
+            var src = this.trigger.object.toDataURL(options).toString();
             this.iconElement.src = src;
             this.cachedIcon = src;
         }
         else {
             this.iconElement.src = this.cachedIcon;
         }
-        this.visibilityButton.update();
         this.lockButton.update();
+        this.updateVisibility();
     };
-    Element2DLayerUIControl.dragTo = 0;
-    return Element2DLayerUIControl;
-}(UIControl));
-var LayersPanelUIControl = (function (_super) {
-    __extends(LayersPanelUIControl, _super);
-    function LayersPanelUIControl() {
-        return _super !== null && _super.apply(this, arguments) || this;
+    LayerUIControl.prototype.updateVisibility = function () {
+        this.visibilityButton.update();
+    };
+    LayerUIControl.dragTo = 0;
+    return LayerUIControl;
+}(TriggeredUIControl));
+var ConstructorUI = (function () {
+    function ConstructorUI() {
+        this.c = Constructor.instance;
+        console.log(this.c);
+        this.bindDelKey();
+        var sidebarContainer = document.getElementById("constructor-sidebar");
+        if (sidebarContainer) {
+            this.sidebarControl = new SidebarUIControl();
+            sidebarContainer.appendChild(this.sidebarControl.getElement());
+        }
+        var toolbarContainer = document.getElementById("constructor-toolbar");
+        if (toolbarContainer) {
+            this.toolbarControl = new ToolbarUIControl();
+            toolbarContainer.appendChild(this.toolbarControl.getElement());
+        }
     }
-    LayersPanelUIControl.prototype.getClassName = function () {
-        return "constructor-layers-panel-control";
+    ConstructorUI.init = function () {
+        document.addEventListener("DOMContentLoaded", function () {
+            ConstructorUI.instance = new ConstructorUI();
+        });
     };
-    return LayersPanelUIControl;
-}(UIControl));
-var SideLayersUIControl = (function (_super) {
-    __extends(SideLayersUIControl, _super);
-    function SideLayersUIControl() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    SideLayersUIControl.prototype.getClassName = function () {
-        return "constructor-side-layers-control";
+    ConstructorUI.prototype.bindDelKey = function () {
+        var _this = this;
+        document.addEventListener("keydown", function (e) {
+            if (e.keyCode == 46) {
+                var selection = _this.c.getSelection();
+                if (selection) {
+                    selection.remove();
+                }
+            }
+        }, false);
     };
-    return SideLayersUIControl;
-}(UIControl));
-var Loader = (function () {
-    function Loader() {
-    }
-    Loader.init = function () {
-        window.onload = function () {
-            var element = document.getElementById("constructor-container");
-            new Constructor(element);
-        };
-        return null;
-    };
-    Loader.load = Loader.init();
-    return Loader;
+    ConstructorUI.test = ConstructorUI.init();
+    return ConstructorUI;
 }());
-var ButtonUIControl = (function (_super) {
-    __extends(ButtonUIControl, _super);
-    function ButtonUIControl(model, icon) {
-        var _this = _super.call(this, model) || this;
-        _this.container.innerHTML = icon;
-        _this.container.onclick = function () { return model(); };
-        return _this;
-    }
-    ButtonUIControl.prototype.getClassName = function () {
-        return "constructor-button-control";
-    };
-    return ButtonUIControl;
-}(UIControl));
-var ToggleButtonUIControl = (function (_super) {
-    __extends(ToggleButtonUIControl, _super);
-    function ToggleButtonUIControl(action, check, iconOn, iconOff) {
-        var _this = _super.call(this, null) || this;
-        _this.action = action;
-        _this.check = check;
-        _this.iconOn = iconOn;
-        _this.iconOn = iconOn;
-        _this.iconOff = iconOff;
-        _this.container.onclick = function () { return _this.action(); };
+var LayersUIControl = (function (_super) {
+    __extends(LayersUIControl, _super);
+    function LayersUIControl(side) {
+        var _this = _super.call(this, side) || this;
         _this.update();
         return _this;
     }
-    ToggleButtonUIControl.prototype.getClassName = function () {
-        return "constructor-button-control constructor-toggle-button-control";
+    LayersUIControl.prototype.getClassName = function () {
+        return "constructor-layers-control";
     };
-    ToggleButtonUIControl.prototype.update = function () {
-        this.container.innerHTML = this.check() ? this.iconOn : this.iconOff;
-    };
-    return ToggleButtonUIControl;
-}(UIControl));
-var ToolbarUIControl = (function (_super) {
-    __extends(ToolbarUIControl, _super);
-    function ToolbarUIControl(model) {
-        var _this = _super.call(this, model) || this;
-        _this.buttons = [];
-        _this.addCircleButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.CIRCLE); }, Icon.CIRCLE);
-        _this.container.appendChild(_this.addCircleButton.container);
-        _this.addRectButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.RECTANGLE); }, Icon.SQUARE);
-        _this.container.appendChild(_this.addRectButton.container);
-        _this.addTriangleButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.TRIANGLE); }, Icon.CARET_UP);
-        _this.container.appendChild(_this.addTriangleButton.container);
-        _this.addTextButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.TEXT); }, Icon.FONT);
-        _this.container.appendChild(_this.addTextButton.container);
-        (function () { return _this.model.addElement(ElementType.CIRCLE); },
-            Icon.CIRCLE());
-        _this.model.addElement(ElementType.RECTANGLE),
-            Icon.SQUARE();
-        _this.model.addElement(ElementType.TRIANGLE),
-            Icon.CARET_UP();
-        _this.model.addElement(ElementType.TEXT),
-            Icon.FONT;
-        return _this;
-    }
-    ToolbarUIControl.prototype.getClassName = function () {
-        return "constructor-toolbar-control";
-    };
-    ToolbarUIControl.prototype.addButton = function (icon, action) {
+    LayersUIControl.prototype.update = function () {
         var _this = this;
-        this.addCircleButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.CIRCLE); }, Icon.CIRCLE);
-        this.container.appendChild(this.addCircleButton.container);
+        this.clear();
+        this.trigger.getLayers().forEach(function (layer) {
+            _this.append(new LayerUIControl(layer));
+        });
+        this.updateVisibility();
     };
-    return ToolbarUIControl;
-}(UIControl));
-var SidebarUIControl = (function (_super) {
-    __extends(SidebarUIControl, _super);
-    function SidebarUIControl(model) {
-        var _this = _super.call(this, model) || this;
-        var layersContainer = document.getElementById("constructor-layers-container");
-        if (layersContainer) {
-            _this.layersPanelControl = new LayersPanelUIControl(_this.model);
-            layersContainer.appendChild(_this.layersPanelControl.getElement());
+    LayersUIControl.prototype.updateVisibility = function () {
+        if (this.isVisible() != this.trigger.isVisible()) {
+            this.setVisible(this.trigger.isVisible());
         }
-        _this.addCircleButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.CIRCLE); }, Icon.CIRCLE);
-        _this.container.appendChild(_this.addCircleButton.container);
-        _this.addRectButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.RECTANGLE); }, Icon.SQUARE);
-        _this.container.appendChild(_this.addRectButton.container);
-        _this.addTriangleButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.TRIANGLE); }, Icon.CARET_UP);
-        _this.container.appendChild(_this.addTriangleButton.container);
-        _this.addTextButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.TEXT); }, Icon.FONT);
-        _this.container.appendChild(_this.addTextButton.container);
-        return _this;
-    }
-    SidebarUIControl.prototype.getClassName = function () {
-        return "constructor-sidebar-control";
     };
-    return SidebarUIControl;
+    return LayersUIControl;
+}(TriggeredUIControl));
+var LeftPaneUIControl = (function (_super) {
+    __extends(LeftPaneUIControl, _super);
+    function LeftPaneUIControl() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    LeftPaneUIControl.prototype.getClassName = function () {
+        return "left-pane-control";
+    };
+    return LeftPaneUIControl;
+}(UIControl));
+var RightPaneUIControl = (function (_super) {
+    __extends(RightPaneUIControl, _super);
+    function RightPaneUIControl() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    RightPaneUIControl.prototype.getClassName = function () {
+        return "right-pane-control";
+    };
+    return RightPaneUIControl;
 }(UIControl));
 //# sourceMappingURL=constructor.js.map

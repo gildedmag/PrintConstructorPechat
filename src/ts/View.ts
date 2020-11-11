@@ -1,11 +1,13 @@
 /** @hidden */
-abstract class View {
+/// <reference path="./Trigger.ts" />
+abstract class View<T> extends Trigger<T> {
 
     container: HTMLElement;
 
     abstract getElement(): HTMLElement;
 
-    public constructor(container: HTMLElement) {
+    constructor(container: HTMLElement) {
+        super();
         this.container = container;
     }
 
@@ -17,6 +19,12 @@ abstract class View {
         this.getElement().style.display = Constants.NONE;
     }
 
+    setVisible(value: boolean): void {
+        if (value != this.isVisible()){
+            value ? this.show() : this.hide();
+        }
+    }
+
     clear() {
         this.getElement().innerHTML = "";
     }
@@ -25,6 +33,10 @@ abstract class View {
         return this.getElement() != null
             && this.getElement().style != null
             && this.getElement().style.display != Constants.NONE;
+    }
+
+    getClassName(): string {
+        return "";
     }
 
 }

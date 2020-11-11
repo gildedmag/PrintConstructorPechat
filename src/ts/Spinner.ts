@@ -1,5 +1,5 @@
 /** @hidden */
-class Spinner extends View {
+class Spinner extends View<Spinner> {
 
     bar: HTMLElement;
     style: HTMLStyleElement;

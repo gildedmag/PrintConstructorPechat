@@ -148,7 +148,7 @@ select {
     width: 100%;
     padding: 2px;
 }
-.constructor-button-control {
+.button-control {
     float: left;
     width: 20px;
     padding: 8px;
@@ -159,4 +159,16 @@ select {
 }
 .constructor-button-control i {
     font-size: 12px;
+}
+
+.left-pane-control, .right-pane-control {
+    float: left;
+}
+
+.right-pane-control {
+    width: 300px;
+}
+
+.left-pane-control .button-control {
+   float: none;
 }

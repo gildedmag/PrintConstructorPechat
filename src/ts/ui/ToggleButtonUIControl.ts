@@ -1,4 +1,4 @@
-class ToggleButtonUIControl extends UIControl<() => {}> {
+class ToggleButtonUIControl extends ButtonUIControl {
 
     action: () => void;
     check: () => boolean;
@@ -6,16 +6,16 @@ class ToggleButtonUIControl extends UIControl<() => {}> {
     iconOff: Icon;
 
     getClassName(): string {
-        return "constructor-button-control constructor-toggle-button-control";
+        return super.getClassName() + " toggle-button-control";
     }
 
     constructor(
-        action: () => void,
+        action: () => any,
         check: () => boolean,
         iconOn: Icon,
         iconOff: Icon
     ) {
-        super(null);
+        super(action, iconOn);
         this.action = action;
         this.check = check;
         this.iconOn = iconOn;

@@ -2,7 +2,6 @@
 class Settings {
 
     debug = false;
-    bindDeleteKey = true;
     ui = {
         layerIconSize: 24
     };

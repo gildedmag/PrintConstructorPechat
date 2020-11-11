@@ -1,13 +1,18 @@
-class ButtonUIControl extends UIControl<() => void> {
+class ButtonUIControl extends UIControl {
 
     getClassName(): string {
-        return "constructor-button-control";
+        return "button-control";
     }
 
-    constructor(model: () => void, icon: Icon) {
-        super(model);
+    constructor(action: () => void, icon: Icon) {
+        super();
         this.container.innerHTML = icon;
-        this.container.onclick = () => model();
+        this.container.onclick = () => action();
     }
+
+    update() {
+    }
+
+    
 
 }

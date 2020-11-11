@@ -1,19 +1,33 @@
-abstract class UIControl<T> extends View {
+abstract class UIControl extends View<UIControl> {
 
-    abstract getClassName(): string;
-    model: T;
+    c: Constructor;
+    children: UIControl[] = [];
+
+    abstract getClassName(): string
+
+    update(){
+
+    }
 
     getElement(): HTMLElement {
         return this.container;
     }
 
-    constructor(model: T) {
-        let element: HTMLElement = document.createElement(Constants.DIV);
-        //element.style.display = "block";
-        //element.style.float = "left";
-        super(element);
-        this.model = model;
-        element.className = this.getClassName();
+    constructor() {
+        super(Utils.div());
+        this.c = Constructor.instance;
+        this.container.className = this.getClassName();
+    }
+
+    private appendChild(control: UIControl): UIControl {
+        this.children.push(control);
+        this.container.appendChild(control.container);
+        return this;
+    }
+
+    append(...controls: UIControl[]): UIControl {
+        controls.forEach(control => this.appendChild(control));
+        return this;
     }
 
 }

@@ -4,10 +4,10 @@ class Loader {
     static load = Loader.init();
 
     static init() {
-        window.onload = () => {
+        document.addEventListener("DOMContentLoaded", function(){
             let element = document.getElementById("constructor-container");
             new Constructor(element);
-        };
+        });
         return null;
     }
 }
