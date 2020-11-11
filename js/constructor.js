@@ -204,6 +204,7 @@ var View = (function () {
 var Settings = (function () {
     function Settings() {
         this.debug = false;
+        this.bindDeleteKey = true;
         this.ui = {
             layerIconSize: 24
         };
@@ -285,15 +286,25 @@ var Constructor = (function (_super) {
                 }
             }, 500);
         }
+        if (Constructor.settings.bindDeleteKey) {
+            document.addEventListener("keydown", function (e) {
+                if (e.keyCode == 46) {
+                    var selection = _this.getSelection();
+                    if (selection) {
+                        selection.remove();
+                    }
+                }
+            }, false);
+        }
         console.log("Constructor.version: ", Constructor.version);
         _this.bindControls();
         return _this;
     }
     Constructor.prototype.bindControls = function () {
-        var layersContainer = document.getElementById("constructor-layers-container");
-        if (layersContainer) {
-            this.layersPanelControl = new LayersPanelUIControl(this);
-            layersContainer.appendChild(this.layersPanelControl.getElement());
+        var sidebarContainer = document.getElementById("constructor-sidebar");
+        if (sidebarContainer) {
+            this.sidebarControl = new SidebarUIControl(this);
+            sidebarContainer.appendChild(this.sidebarControl.getElement());
         }
         var toolbarContainer = document.getElementById("constructor-toolbar");
         if (toolbarContainer) {
@@ -788,7 +799,7 @@ var Element2D = (function () {
             });
         }
         this.setOptions(this.object);
-        this.object.on(Constants.MODIFIED, this.updateControl);
+        this.object.on(Constants.MODIFIED, function () { return _this.updateControl(); });
     }
     Element2D.prototype.setOptions = function (object) {
         var _this = this;
@@ -811,12 +822,12 @@ var Element2D = (function () {
         object.on(Constants.SELECTED, function () {
             _this.side.selection = _this;
             Constructor.instance.onSelectHandler((_this));
-            _this.layerControl.select();
+            _this.layerControl && _this.layerControl.select();
         });
         object.on(Constants.DESELECTED, function () {
             Constructor.instance.onDeselectHandler((_this));
             _this.side.selection = null;
-            _this.layerControl.deselect();
+            _this.layerControl && _this.layerControl.deselect();
         });
         object.on(Constants.REMOVED, function () {
             _this.side.selection = null;
@@ -3143,25 +3154,6 @@ var ButtonUIControl = (function (_super) {
     };
     return ButtonUIControl;
 }(UIControl));
-var ToolbarUIControl = (function (_super) {
-    __extends(ToolbarUIControl, _super);
-    function ToolbarUIControl(model) {
-        var _this = _super.call(this, model) || this;
-        _this.addCircleButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.CIRCLE); }, Icon.CIRCLE);
-        _this.container.appendChild(_this.addCircleButton.container);
-        _this.addRectButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.RECTANGLE); }, Icon.SQUARE);
-        _this.container.appendChild(_this.addRectButton.container);
-        _this.addTriangleButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.TRIANGLE); }, Icon.CARET_UP);
-        _this.container.appendChild(_this.addTriangleButton.container);
-        _this.addTextButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.TEXT); }, Icon.FONT);
-        _this.container.appendChild(_this.addTextButton.container);
-        return _this;
-    }
-    ToolbarUIControl.prototype.getClassName = function () {
-        return "constructor-toolbar-control";
-    };
-    return ToolbarUIControl;
-}(UIControl));
 var ToggleButtonUIControl = (function (_super) {
     __extends(ToggleButtonUIControl, _super);
     function ToggleButtonUIControl(action, check, iconOn, iconOff) {
@@ -3182,5 +3174,62 @@ var ToggleButtonUIControl = (function (_super) {
         this.container.innerHTML = this.check() ? this.iconOn : this.iconOff;
     };
     return ToggleButtonUIControl;
+}(UIControl));
+var ToolbarUIControl = (function (_super) {
+    __extends(ToolbarUIControl, _super);
+    function ToolbarUIControl(model) {
+        var _this = _super.call(this, model) || this;
+        _this.buttons = [];
+        _this.addCircleButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.CIRCLE); }, Icon.CIRCLE);
+        _this.container.appendChild(_this.addCircleButton.container);
+        _this.addRectButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.RECTANGLE); }, Icon.SQUARE);
+        _this.container.appendChild(_this.addRectButton.container);
+        _this.addTriangleButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.TRIANGLE); }, Icon.CARET_UP);
+        _this.container.appendChild(_this.addTriangleButton.container);
+        _this.addTextButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.TEXT); }, Icon.FONT);
+        _this.container.appendChild(_this.addTextButton.container);
+        (function () { return _this.model.addElement(ElementType.CIRCLE); },
+            Icon.CIRCLE());
+        _this.model.addElement(ElementType.RECTANGLE),
+            Icon.SQUARE();
+        _this.model.addElement(ElementType.TRIANGLE),
+            Icon.CARET_UP();
+        _this.model.addElement(ElementType.TEXT),
+            Icon.FONT;
+        return _this;
+    }
+    ToolbarUIControl.prototype.getClassName = function () {
+        return "constructor-toolbar-control";
+    };
+    ToolbarUIControl.prototype.addButton = function (icon, action) {
+        var _this = this;
+        this.addCircleButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.CIRCLE); }, Icon.CIRCLE);
+        this.container.appendChild(this.addCircleButton.container);
+    };
+    return ToolbarUIControl;
+}(UIControl));
+var SidebarUIControl = (function (_super) {
+    __extends(SidebarUIControl, _super);
+    function SidebarUIControl(model) {
+        var _this = _super.call(this, model) || this;
+        var layersContainer = document.getElementById("constructor-layers-container");
+        if (layersContainer) {
+            _this.layersPanelControl = new LayersPanelUIControl(_this.model);
+            layersContainer.appendChild(_this.layersPanelControl.getElement());
+        }
+        _this.addCircleButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.CIRCLE); }, Icon.CIRCLE);
+        _this.container.appendChild(_this.addCircleButton.container);
+        _this.addRectButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.RECTANGLE); }, Icon.SQUARE);
+        _this.container.appendChild(_this.addRectButton.container);
+        _this.addTriangleButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.TRIANGLE); }, Icon.CARET_UP);
+        _this.container.appendChild(_this.addTriangleButton.container);
+        _this.addTextButton = new ButtonUIControl(function () { return _this.model.addElement(ElementType.TEXT); }, Icon.FONT);
+        _this.container.appendChild(_this.addTextButton.container);
+        return _this;
+    }
+    SidebarUIControl.prototype.getClassName = function () {
+        return "constructor-sidebar-control";
+    };
+    return SidebarUIControl;
 }(UIControl));
 //# sourceMappingURL=constructor.js.map

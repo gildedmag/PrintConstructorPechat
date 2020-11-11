@@ -52,7 +52,7 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
             });
         }
         this.setOptions(this.object);
-        this.object.on(Constants.MODIFIED, this.updateControl);
+        this.object.on(Constants.MODIFIED, () => this.updateControl());
     }
 
     /** @hidden */
@@ -77,12 +77,12 @@ class Element2D implements Indexed, Serializable<Element2D, ObjectOptions> {
         object.on(Constants.SELECTED, () => {
             this.side.selection = this;
             Constructor.instance.onSelectHandler((this));
-            this.layerControl.select();
+            this.layerControl && this.layerControl.select();
         });
         object.on(Constants.DESELECTED, () => {
             Constructor.instance.onDeselectHandler((this));
             this.side.selection = null;
-            this.layerControl.deselect();
+            this.layerControl && this.layerControl.deselect();
         });
         object.on(Constants.REMOVED, () => {
             this.side.selection = null;

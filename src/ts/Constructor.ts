@@ -43,7 +43,7 @@ class Constructor extends View {
     static instance: Constructor;
     private static zoomStep: number = 0.05;
 
-    layersPanelControl: LayersPanelUIControl;
+    sidebarControl: SidebarUIControl;
     toolbarControl: ToolbarUIControl;
 
     /**
@@ -82,15 +82,26 @@ class Constructor extends View {
                 }
             }, 500);
         }
+        if (Constructor.settings.bindDeleteKey) {
+            document.addEventListener("keydown", e => {
+                if (e.keyCode == 46) {
+                    let selection = this.getSelection();
+                    if (selection){
+                        selection.remove();
+                    }
+                }
+            }, false);
+
+        }
         console.log("Constructor.version: ", Constructor.version);
         this.bindControls();
     }
 
     bindControls() {
-        let layersContainer = document.getElementById("constructor-layers-container");
-        if (layersContainer){
-            this.layersPanelControl = new LayersPanelUIControl(this);
-            layersContainer.appendChild(this.layersPanelControl.getElement())
+        let sidebarContainer = document.getElementById("constructor-sidebar");
+        if (sidebarContainer){
+            this.sidebarControl = new SidebarUIControl(this);
+            sidebarContainer.appendChild(this.sidebarControl.getElement())
         }
 
         let toolbarContainer = document.getElementById("constructor-toolbar");
@@ -98,7 +109,6 @@ class Constructor extends View {
             this.toolbarControl = new ToolbarUIControl(this);
             toolbarContainer.appendChild(this.toolbarControl.getElement())
         }
-
     }
 
     autoSize() {

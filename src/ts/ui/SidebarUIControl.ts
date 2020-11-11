@@ -1,17 +1,26 @@
-class ToolbarUIControl extends UIControl<Constructor> {
+class SidebarUIControl extends UIControl<Constructor> {
+
+    toolbar: ToolbarUIControl
+    layersPanelControl: LayersPanelUIControl;
 
     private addCircleButton: ButtonUIControl;
     private addRectButton: ButtonUIControl;
     private addTriangleButton: ButtonUIControl;
     private addTextButton: ButtonUIControl;
-    buttons: ButtonUIControl[] = []
 
     getClassName(): string {
-        return "constructor-toolbar-control";
+        return "constructor-sidebar-control";
     }
 
     constructor(model: Constructor) {
         super(model);
+
+        let layersContainer = document.getElementById("constructor-layers-container");
+        if (layersContainer){
+            this.layersPanelControl = new LayersPanelUIControl(this.model);
+            layersContainer.appendChild(this.layersPanelControl.getElement())
+        }
+
         this.addCircleButton = new ButtonUIControl(
             () => this.model.addElement(ElementType.CIRCLE),
             Icon.CIRCLE
@@ -36,22 +45,6 @@ class ToolbarUIControl extends UIControl<Constructor> {
         );
         this.container.appendChild(this.addTextButton.container);
 
-        () => this.model.addElement(ElementType.CIRCLE),
-        Icon.CIRCLE
-        () => this.model.addElement(ElementType.RECTANGLE),
-        Icon.SQUARE
-        () => this.model.addElement(ElementType.TRIANGLE),
-        Icon.CARET_UP
-        () => this.model.addElement(ElementType.TEXT),
-        Icon.FONT
-    }
-
-    addButton(icon: String, action: () => void) {
-        this.addCircleButton = new ButtonUIControl(
-            () => this.model.addElement(ElementType.CIRCLE),
-            Icon.CIRCLE
-        );
-        this.container.appendChild(this.addCircleButton.container);
     }
 
 }
