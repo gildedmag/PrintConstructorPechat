@@ -7,23 +7,23 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
     iconElement: HTMLImageElement;
     iconContainerElement: HTMLDivElement;
     labelElement: HTMLDivElement;
-    visibilityButton: ToggleButtonUIControl;
-    lockButton: ToggleButtonUIControl;
-    deleteButton: ButtonUIControl;
+    visibilityButton: ToggleButton;
+    lockButton: ToggleButton;
+    deleteButton: Button;
     cachedIcon: string;
 
     static dragTo = 0;
 
     getClassName(): string {
-        return "constructor-layer-control";
+        return super.getClassName() + " layer";
     }
 
     select() {
-        this.container.classList.add("layer-select");
+        this.addClass("select");
     }
 
     deselect() {
-        this.container.classList.remove("layer-select");
+        this.removeClass("select");
     }
 
     constructor(element: Element2D) {
@@ -43,43 +43,40 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
         this.container.ondragover = e => {
             e.preventDefault();
             LayerUIControl.dragTo = this.trigger.getLayerIndex();
-            this.container.classList.add("layer-drag-over");
+            this.addClass("layer-drag-over");
         };
         this.container.ondragleave = e => {
-            this.container.classList.remove("layer-drag-over");
+            this.removeClass("layer-drag-over");
         };
 
         this.iconElement = document.createElement(Constants.IMG);
         this.iconContainerElement.className = "constructor-layer-control-icon-frame";
         this.iconContainerElement.style.width = Constructor.settings.ui.layerIconSize + "px";
         this.iconContainerElement.style.height = Constructor.settings.ui.layerIconSize + "px";
-        this.iconContainerElement.style.textAlign = "center";
 
-        this.visibilityButton = new ToggleButtonUIControl(
+        this.visibilityButton = new ToggleButton(
             () => element.toggleVisibility(),
             () => element.isVisible(),
             Icon.EYE,
             Icon.EYE_SLASH
         );
-        this.visibilityButton.getElement().style.float = "right";
 
-        this.lockButton = new ToggleButtonUIControl(
+        this.lockButton = new ToggleButton(
             () => element.toggleLock(),
             () => element.isLocked(),
             Icon.LOCK,
             Icon.UNLOCK_ALT
         );
-        this.lockButton.getElement().style.float = "right";
 
-        this.deleteButton = new ButtonUIControl(
+        this.deleteButton = new Button(
             () => element.remove(),
             Icon.TRASH
         );
-        this.deleteButton.getElement().style.float = "right";
 
         this.container.appendChild(this.iconContainerElement);
         this.iconContainerElement.appendChild(this.iconElement);
         this.container.appendChild(this.labelElement);
+        this.append(new Spacer());
         this.container.appendChild(this.deleteButton.getElement());
         this.container.appendChild(this.visibilityButton.getElement());
         this.container.appendChild(this.lockButton.getElement());

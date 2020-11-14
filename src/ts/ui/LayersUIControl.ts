@@ -3,7 +3,7 @@
 class LayersUIControl extends TriggeredUIControl<Side2D> {
 
     getClassName(): string {
-        return "constructor-layers-control";
+        return super.getClassName() + " layers vertical";
     }
 
     constructor(side: Side2D) {
@@ -15,7 +15,7 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
         this.clear();
         this.trigger.getLayers().forEach(layer => {
             this.append(new LayerUIControl(layer));
-        })
+        });
         this.updateVisibility();
     }
 

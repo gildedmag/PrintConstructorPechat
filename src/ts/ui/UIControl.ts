@@ -3,7 +3,9 @@ abstract class UIControl extends View<UIControl> {
     c: Constructor;
     children: UIControl[] = [];
 
-    abstract getClassName(): string
+    getClassName(): string {
+        return "control"
+    }
 
     update(){
 

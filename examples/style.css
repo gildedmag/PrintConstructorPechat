@@ -1,132 +1,116 @@
-/*body {*/
-/*    margin: 0;*/
-/*    padding: 0;*/
-/*    background: #333;*/
-/*    color: #aaa;*/
-/*}*/
-
-@media print {
-    html, body, * {
-        display: none;
-    }
-}
-
-#container {
-    float: left;
-    border: 1px solid #808080;
-    position: relative;
+body {
+    margin: 0;
+    padding: 0;
+    background: #eee;
     width: 100%;
-    /*height: 600px;*/
+    height: 100%;
 }
 
-.panel {
-    width: 800px;
-    display: block;
-    height: 38px;
-    text-align: left;
-    padding: 4px;
-    margin: 0;
+#constructor-ui {
+
 }
 
-.panel-title {
-    clear: left;
-    font-family: monospace;
-    padding: 8px 0 2px 0;
-    width: 800px;
+.spacer {
+    display: flex;
+    flex: auto;
 }
 
-input {
-    /*display: inline-block;*/
-    float: left;
-    height: 32px;
-    font-size: 12pt;
-    margin: 0;
-    padding: 0;
-    /*background: #333;*/
-}
-
-label {
+.control {
+    display: flex;
+    flex-flow: row;
+    align-items: stretch;
     font-family: sans-serif;
-    font-size: 8pt;
-    float: left;
-    color: #aaa;
 }
 
-button, input[type=button], input[type=color], input[type=range] {
-    float: left;
-    width: 80px;
-    height: 20px;
-    padding: 0;
-    margin: 0;
-    font-size: 10pt;
-    box-shadow: none;
-    border-top: 1px solid #fff;
-    border-left: 1px solid #fff;
-    border-bottom: 1px solid #aaa;
-    border-right: 1px solid #aaa;
-    /*background: #333;*/
-    /*color: #aaa;*/
+.vertical {
+    flex-flow: column;
 }
 
-button:focus {
-    outline: 0;
+.constructor-ui-container {
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 36px 236px 1fr;
+    grid-template-rows: 36px 1fr 48px;
+    gap: 0;
+    grid-template-areas:
+            "a b c"
+            "a b d"
+            "a b e";
 }
 
-button:active {
-    border-top: 1px solid #aaa;
-    border-left: 1px solid #aaa;
-    border-bottom: 1px solid #fff;
-    border-right: 1px solid #fff;
-    background: #ccc;
+.constructor-ui-container.expanded {
+    grid-template-columns: 36px 0 1fr;
+    grid-template-areas:
+            "a c c"
+            "d d d"
+            "e e e";
 }
 
-button[value=true] {
-    border-top: 1px solid #aaa;
-    border-left: 1px solid #aaa;
-    border-bottom: 1px solid #fff;
-    border-right: 1px solid #fff;
-    background: #ccc;
+.control.sidebar {
+    background: #222;
+    grid-area: a;
+    text-align: center;
 }
 
-#container {
-    display: block;
-    float: none;
+.control.sidebar .control.button {
+    float: top;
 }
 
-select {
+.control.toolbar.top {
+    background: #eee;
+    grid-area: c;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.control.toolbar.top .button, .control.toolbar.bottom .button {
+    color: #555;
+}
+
+.control.sidepanel {
+    background: #444;
+    grid-area: b;
+}
+
+.control.toolbar.bottom {
+    background: #eee;
+    grid-area: e;
+}
+
+.constructor-container {
+    grid-area: d;
     background: #eee;
 }
 
-#constructor-container {
-    float: left;
-    /*width: 100%;*/
-    height: 600px;
-    border: 1px solid black;
+.canvas-container {
+    margin: auto;
+    position: absolute;
+    top: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
 }
-#constructor-layers-container {
-    float: left;
-    width: 300px;
+
+.lower-canvas {
+    box-shadow: 0 0 10px 4px rgba(0, 0, 0, .2);
+    background: white;
 }
-.constructor-layers-panel-control {
-    /*width: 100px;*/
-    height: 600px;
-    border: 1px solid black;
-    overflow: auto;
+
+.control.layer {
+    width: 230px;
+    margin: 2px 2px 0 2px;
+    background: #777;
+    border-radius: 4px;
 }
-.constructor-layer-control {
-    clear: left;
-    /*width: 300px;*/
-    height: 50px;
-    /*border: 1px solid black;*/
-    margin: 4px;
-    background: #ddd;
-}
-.constructor-layer-control div {
-    float: left;
+
+.control.layer div {
     padding: 8px;
-    font-family: sans-serif;
-    font-size: 18px;
+    font-size: 14px;
 }
+
+.control.layer.select {
+    background: #aaa;
+}
+
 .constructor-layer-control-icon-frame {
     border: 1px solid #aaa;
     margin: 4px;
@@ -134,41 +118,39 @@ select {
     background-color: white;
     background-image: linear-gradient(45deg, #dddddd 25%, transparent 25%), linear-gradient(-45deg, #dddddd 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #dddddd 75%), linear-gradient(-45deg, transparent 75%, #dddddd 75%);
     background-size: 10px 10px;
-    background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+    background-position: 0 0, 0 5px, 5px -5px, -5px 0;
 
 }
+
 .layer-drag-over {
     background: #aaa;
 }
-.layer-select {
-    background: #eee;
-}
+
 .constructor-toolbar-control {
     float: left;
     width: 100%;
     padding: 2px;
 }
-.button-control {
-    float: left;
-    width: 20px;
+
+.control.button {
     padding: 8px;
-    margin: 6px;
-    background: #eee;
+    margin: 2px;
     text-align: center;
+    vertical-align: middle;
     user-select: none;
-}
-.constructor-button-control i {
-    font-size: 12px;
+    color: #ddd;
 }
 
-.left-pane-control, .right-pane-control {
-    float: left;
+.control.button:hover {
+    color: #fff;
+    cursor: pointer;
 }
 
-.right-pane-control {
-    width: 300px;
+.control.button.active {
+    color: #aaa;
 }
 
-.left-pane-control .button-control {
-   float: none;
+.control.button.selected {
+    color: #fff;
+    background: #666;
 }

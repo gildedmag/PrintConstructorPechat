@@ -400,6 +400,7 @@ enum Icon {
     LAPTOP = '<i class="fa fa-laptop"></i>',
     LASTFM = '<i class="fa fa-lastfm"></i>',
     LASTFM_SQUARE = '<i class="fa fa-lastfm-square"></i>',
+    LAYER_GROUP = '<i class="fa fa-layer-group"></i>',
     LEAF = '<i class="fa fa-leaf"></i>',
     LEANPUB = '<i class="fa fa-leanpub"></i>',
     LEGAL = '<i class="fa fa-legal (alias)"></i>',

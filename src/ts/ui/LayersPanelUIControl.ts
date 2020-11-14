@@ -4,7 +4,7 @@
 class LayersPanelUIControl extends TriggeredUIControl<Constructor> {
 
     getClassName(): string {
-        return "constructor-layers-panel-control";
+        return super.getClassName() + " layers-panel";
     }
 
     constructor(c: Constructor) {
@@ -16,7 +16,6 @@ class LayersPanelUIControl extends TriggeredUIControl<Constructor> {
         this.clear();
         for (let i = 0; i < this.trigger.sides.length; i++) {
             let side = this.trigger.sides[i];
-            console.log(side);
             this.append(new LayersUIControl(side));
         }
     }

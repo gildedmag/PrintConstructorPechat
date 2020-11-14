@@ -83,8 +83,8 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         let canvasContainer = this.canvasElement.parentElement;
         let dw = this.container.clientWidth - canvasContainer.clientWidth;
         let dh = this.container.clientHeight - canvasContainer.clientHeight;
-        canvasContainer.style.marginLeft = dw > 0 ? dw / 2 + Constants.PX : null;
-        canvasContainer.style.marginTop = dh > 0 ? dh / 2 + Constants.PX : null;
+        // canvasContainer.style.marginLeft = dw > 0 ? dw / 2 + Constants.PX : null;
+        // canvasContainer.style.marginTop = dh > 0 ? dh / 2 + Constants.PX : null;
         this.setRoundCorners();
     }
 
@@ -146,6 +146,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         element.object.setCoords();
         this.canvas.requestRenderAll();
         setTimeout(() => this.canvas.renderAll(), null);
+        this.changed();
         return element;
     }
 

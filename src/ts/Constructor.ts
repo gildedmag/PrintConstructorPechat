@@ -44,8 +44,8 @@ class Constructor extends View<Constructor> {
     static instance: Constructor;
     private static zoomStep: number = 0.05;
 
-    sidebarControl: SidebarUIControl;
-    toolbarControl: ToolbarUIControl;
+    sidebarControl: SideBar;
+    toolbarControl: ToolBar;
 
     /**
      * Create new {@link Constructor} instance for an {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement|HTMLElement}
@@ -75,15 +75,6 @@ class Constructor extends View<Constructor> {
         this.container.style.background = null;
         this.lastWidth = this.container.clientWidth;
         this.lastHeight = this.container.clientHeight;
-        //window.onresize = () => this.autoSize();
-        if (Constructor.settings.autoSize) {
-            setInterval(() => {
-                if (this.lastWidth != this.container.clientWidth || this.lastHeight != this.container.clientHeight) {
-                    this.autoSize();
-                }
-            }, 500);
-        }
-
         console.log("Constructor.version: ", Constructor.version);
     }
 

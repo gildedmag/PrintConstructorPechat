@@ -1,6 +1,6 @@
 abstract class TriggeredUIControl<T extends Trigger<T>> extends UIControl {
 
-    trigger: T
+    trigger: T;
 
     constructor(trigger: T) {
         super();
