@@ -4,6 +4,7 @@ abstract class Trigger<T> {
     private visibilityActions: ((trigger: any) => any)[] = [];
 
     changed(){
+        console.log("changed");
         this.actions.forEach(action => action(this));
     }
 
@@ -16,6 +17,7 @@ abstract class Trigger<T> {
     }
 
     public onVisibilityChange(action: (trigger: T) => any){
+        console.log("visibilityChanged");
         this.visibilityActions.push(action);
     }
 

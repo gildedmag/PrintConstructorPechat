@@ -1,7 +1,7 @@
 /// <reference path="VerticalToolBarUIControl.ts" />
 class SideBar extends VerticalToolBarUIControl {
 
-    private buttons: SwitchButton[] = [];
+    buttons: SwitchButton[] = [];
 
     getClassName(): string {
         return super.getClassName() + " sidebar";
@@ -10,16 +10,6 @@ class SideBar extends VerticalToolBarUIControl {
     constructor() {
         super();
         let panel = ConstructorUI.instance.sidePanel;
-        this.append(
-            new Button(
-                () => {
-                    ConstructorUI.instance.toggleClass("expanded");
-                    ConstructorUI.instance.sidePanel.toggleVisibility();
-                    this.buttons.forEach(button => button.toggleVisibility());
-                },
-                Icon.BARS
-            )
-        );
         this.appendSwitch(panel.addElementsPanel, Icon.PLUS);
         this.appendSwitch(panel.layersPanel, Icon.LAYER_GROUP);
         this.appendSwitch(new Button(null, ""), Icon.TH_LARGE);

@@ -25,8 +25,6 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
     /** @hidden */
     filtersCache: string[];
 
-    layerControl: LayerUIControl;
-
     private verticalGuides: number[];
 
     private horizontalGuides: number[];
@@ -65,6 +63,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         });
         object.on(Constants.MODIFIED, () => {
             this.calculateGuides();
+            this.changed();
         });
         object.on(Constants.SCALING, e => {
             //this.snapTransform(e);
@@ -77,12 +76,12 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         object.on(Constants.SELECTED, () => {
             this.side.selection = this;
             Constructor.instance.onSelectHandler((this));
-            this.layerControl && this.layerControl.select();
+            this.changed();
         });
         object.on(Constants.DESELECTED, () => {
             Constructor.instance.onDeselectHandler((this));
             this.side.selection = null;
-            this.layerControl && this.layerControl.deselect();
+            this.changed();
         });
         object.on(Constants.REMOVED, () => {
             this.side.selection = null;

@@ -29,56 +29,64 @@ body {
 .constructor-ui-container {
     height: 100vh;
     display: grid;
-    grid-template-columns: 36px 236px 1fr;
-    grid-template-rows: 36px 1fr 48px;
+    grid-template-columns: auto auto 1fr;
+    grid-template-rows: auto 1fr 48px;
     gap: 0;
     grid-template-areas:
-            "a b c"
-            "a b d"
-            "a b e";
+            "sidebar sidepanel topbar"
+            "sidebar sidepanel constructor"
+            "sidebar sidepanel bottombar";
 }
 
-.constructor-ui-container.expanded {
-    grid-template-columns: 36px 0 1fr;
+.constructor-ui-container.collapsed {
+    grid-template-columns: auto 0 1fr;
     grid-template-areas:
-            "a c c"
-            "d d d"
-            "e e e";
+            "sidebar topbar topbar"
+            "constructor constructor constructor"
+            "bottombar bottombar bottombar";
+}
+
+.constructor-ui-container.collapsed .sidebar {
+    background: none;
 }
 
 .control.sidebar {
     background: #222;
-    grid-area: a;
+    grid-area: sidebar;
     text-align: center;
+    padding: 0;
 }
 
 .control.sidebar .control.button {
-    float: top;
+    font-size: 20px;
+    padding: 12px;
+    margin: 0;
 }
 
 .control.toolbar.top {
     background: #eee;
-    grid-area: c;
+    grid-area: topbar;
     text-align: center;
     vertical-align: middle;
 }
 
-.control.toolbar.top .button, .control.toolbar.bottom .button {
-    color: #555;
+.control.toolbar.top .button, .control.toolbar.bottom .button, .constructor-ui-container.collapsed .sidebar .button {
+    color: #333;
 }
 
 .control.sidepanel {
     background: #444;
-    grid-area: b;
+    grid-area: sidepanel;
+    overflow: auto;
 }
 
 .control.toolbar.bottom {
     background: #eee;
-    grid-area: e;
+    grid-area: bottombar;
 }
 
 .constructor-container {
-    grid-area: d;
+    grid-area: constructor;
     background: #eee;
 }
 
@@ -96,7 +104,6 @@ body {
 }
 
 .control.layer {
-    width: 230px;
     margin: 2px 2px 0 2px;
     background: #777;
     border-radius: 4px;
@@ -133,8 +140,9 @@ body {
 }
 
 .control.button {
-    padding: 8px;
-    margin: 2px;
+    /*width: 16px;*/
+    padding: 4px;
+    margin: 4px;
     text-align: center;
     vertical-align: middle;
     user-select: none;
@@ -154,3 +162,53 @@ body {
     color: #fff;
     background: #666;
 }
+
+
+@media (max-width: 1200px) {
+    .constructor-ui-container {
+        height: 100vh;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto 1fr 1fr;
+        gap: 0;
+        grid-template-areas:
+            "bottombar bottombar"
+            "topbar topbar"
+            "constructor constructor"
+            "sidebar sidepanel";
+    }
+
+    .constructor-ui-container.collapsed {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+        grid-template-areas:
+            "bottombar"
+            "topbar"
+            "constructor";
+    }
+
+    .control.layers, .control.layers-panel  {
+        width: 100%;
+    }
+
+    .control.layer {
+        width: auto;
+        margin: 2px 2px 0 2px;
+        background: #777;
+        border-radius: 4px;
+    }
+
+    .control.button {
+        font-size: 60px !important;
+        padding: 30px !important;;
+        margin: 0;
+    }
+
+    .control.layer div {
+        padding: 20px;
+        font-size: 50px;
+    }
+
+
+}
+

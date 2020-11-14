@@ -51,8 +51,8 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
 
         this.iconElement = document.createElement(Constants.IMG);
         this.iconContainerElement.className = "constructor-layer-control-icon-frame";
-        this.iconContainerElement.style.width = Constructor.settings.ui.layerIconSize + "px";
-        this.iconContainerElement.style.height = Constructor.settings.ui.layerIconSize + "px";
+        // this.iconContainerElement.style.width = Constructor.settings.ui.layerIconSize + "px";
+        // this.iconContainerElement.style.height = Constructor.settings.ui.layerIconSize + "px";
 
         this.visibilityButton = new ToggleButton(
             () => element.toggleVisibility(),
