@@ -4,11 +4,13 @@ abstract class TriggeredUIControl<T extends Trigger<T>> extends UIControl {
 
     constructor(trigger: T) {
         super();
-        trigger.onChange(() => this.update());
+        trigger.onChange(() => this.update(), this);
         trigger.onVisibilityChange(() => this.updateVisibility());
         this.trigger = trigger;
     }
 
-    abstract updateVisibility();
+    updateVisibility() {
+
+    }
 
 }

@@ -129,6 +129,7 @@ var Constants;
     Constants["DIV"] = "div";
     Constants["IMG"] = "img";
     Constants["BUTTON"] = "button";
+    Constants["INPUT"] = "input";
     Constants["LINE_STYLE_PREFIX"] = "1px solid ";
     Constants["PX"] = "px";
     Constants["STYLE"] = "style";
@@ -147,6 +148,8 @@ var Constants;
     Constants["REMOVED"] = "removed";
     Constants["MODIFIED"] = "modified";
     Constants["SELECTION_CLEARED"] = "selection:cleared";
+    Constants["SELECTION_CREATED"] = "selection:created";
+    Constants["SELECTION_UPDATED"] = "selection:updated";
     Constants["MOUSE_UP"] = "mouse:up";
     Constants["AFTER_RENDER"] = "after:render";
     Constants["PROGRESS"] = "progress";
@@ -183,23 +186,47 @@ var Version = (function () {
 }());
 var Trigger = (function () {
     function Trigger() {
-        this.actions = [];
+        this.actions = {};
         this.visibilityActions = [];
     }
     Trigger.prototype.changed = function () {
         var _this = this;
-        console.log("changed");
-        this.actions.forEach(function (action) { return action(_this); });
+        if (this.getClassName) {
+            console.log(this.getClassName(), "changed");
+        }
+        else {
+            console.log(typeof this, "changed");
+        }
+        console.log("actions:", Object.keys(this.actions).length);
+        console.log("-------");
+        Object.keys(this.actions).forEach(function (value, id) {
+            var control = UIControl.getById(value);
+            if (!control) {
+                console.log("ACTION REMOVED");
+                delete _this.actions[value];
+                return;
+            }
+            console.log(control.getClassName(), control.getId());
+            var action = _this.actions[value];
+            try {
+                action(_this);
+            }
+            catch (e) {
+                console.error(e.message);
+            }
+        });
     };
     Trigger.prototype.visibilityChanged = function () {
         var _this = this;
         this.visibilityActions.forEach(function (action) { return action(_this); });
     };
-    Trigger.prototype.onChange = function (action) {
-        this.actions.push(action);
+    Trigger.prototype.onChange = function (action, object) {
+        if (!object.getId) {
+            console.log("!object.getId:", object);
+        }
+        this.actions[object.getId()] = action;
     };
     Trigger.prototype.onVisibilityChange = function (action) {
-        console.log("visibilityChanged");
         this.visibilityActions.push(action);
     };
     return Trigger;
@@ -592,6 +619,7 @@ var Constructor = (function (_super) {
     __extends(Constructor, _super);
     function Constructor(container) {
         var _this = _super.call(this, container instanceof HTMLElement ? container : document.getElementById(container)) || this;
+        _this.sides = [];
         _this.onSelectHandler = function () { };
         _this.onDeselectHandler = function () { };
         _this.onModeChangeHandler = function () { };
@@ -602,26 +630,21 @@ var Constructor = (function (_super) {
         Constructor.instance = _this;
         _this.clipboard = null;
         _this.snapToObjects = false;
-        _this.setMode(Mode.Mode2D);
-        _this.sides = [];
-        _this.addSide(_this.container.clientWidth - 50, _this.container.clientHeight - 50);
+        _this.setState({
+            sides: [{
+                    width: 300,
+                    height: 200
+                }]
+        });
         _this.preview = new Preview(_this);
         _this.spinner = new Spinner(_this.container);
         _this.preview.hide();
         _this.background = _this.container.style.background;
         _this.container.style.background = null;
-        _this.lastWidth = _this.container.clientWidth;
-        _this.lastHeight = _this.container.clientHeight;
         console.log("Constructor.version: ", Constructor.version);
+        console.log("fabric.js.version: ", fabric.version);
         return _this;
     }
-    Constructor.prototype.autoSize = function () {
-        Utils.logMethodName();
-        this.sides.forEach(function (side) { return side.centerPosition(); });
-        this.preview.autoSize();
-        this.lastWidth = this.container.clientWidth;
-        this.lastHeight = this.container.clientHeight;
-    };
     Constructor.prototype.loadModel = function (modelName, callback) {
         Utils.logMethodName();
         this.preview.loadModel(modelName, callback);
@@ -681,7 +704,7 @@ var Constructor = (function (_super) {
             this.getActiveSide().hide();
             this.activeSideIndex = index;
             this.getActiveSide().show();
-            this.getActiveSide().canvas.requestRenderAll();
+            this.getActiveSide().canvas.renderAll();
             this.visibilityChanged();
         }
     };
@@ -865,6 +888,9 @@ var Constructor = (function (_super) {
         if (typeof json === Constants.STRING) {
             state = JSON.parse(json);
         }
+        else {
+            state = json;
+        }
         if (clearHistory)
             localStorage.clear();
         this.deleteAllSides();
@@ -877,11 +903,11 @@ var Constructor = (function (_super) {
                 else {
                     _this.insertSide(side, clearHistory);
                 }
-                side.canvas.requestRenderAll();
+                side.canvas.renderAll();
             });
         }
         this.sides.forEach(function (side) { return side.saveState(); });
-        if (this.preview.modelName != state.model) {
+        if (state.model && this.preview.modelName != state.model) {
             this.loadModel(state.model, function () {
                 if (state.fills) {
                     for (var i = 0; i < state.fills.length; i++) {
@@ -977,1302 +1003,6 @@ var HistoryList = (function () {
     };
     return HistoryList;
 }());
-var Mode;
-(function (Mode) {
-    Mode[Mode["Mode2D"] = 0] = "Mode2D";
-    Mode[Mode["Mode3D"] = 1] = "Mode3D";
-})(Mode || (Mode = {}));
-var Spinner = (function (_super) {
-    __extends(Spinner, _super);
-    function Spinner(container) {
-        var _this = _super.call(this, container) || this;
-        _this.bar = document.createElement(Constants.DIV);
-        _this.bar.style.zIndex = '1000';
-        _this.bar.style.border = Spinner.border + Constants.PX + ' ' + Constants.SOLID + ' ' + Color.LIGHT_GRAY.toHex();
-        _this.bar.style.borderTop = Spinner.border + Constants.PX + ' ' + Constants.SOLID + ' ' + Color.DARK_GRAY.toHex();
-        _this.bar.style.borderRadius = Spinner.borderRadius;
-        _this.bar.style.width = Spinner.size + Constants.PX;
-        _this.bar.style.height = Spinner.size + Constants.PX;
-        _this.bar.style.animation = Spinner.animation;
-        _this.bar.style.position = Constants.ABSOLUTE;
-        var offset = Spinner.size / 2;
-        _this.bar.style.left = (container.clientWidth / 2 - offset) + Constants.PX;
-        _this.bar.style.top = (container.clientHeight / 2 - offset) + Constants.PX;
-        _this.container.appendChild(_this.bar);
-        _this.style = document.createElement(Constants.STYLE);
-        _this.style.type = Constants.TEXT_CSS;
-        _this.style.innerHTML = Spinner.keyframes;
-        document.body.appendChild(_this.style);
-        _this.hide();
-        return _this;
-    }
-    Spinner.prototype.getElement = function () {
-        return this.bar;
-    };
-    Spinner.size = 64;
-    Spinner.border = 6;
-    Spinner.speed = 1;
-    Spinner.keyframes = "@keyframes spin {0% { transform: rotate(0deg); }100% { transform: rotate(360deg); }}";
-    Spinner.animation = "spin " + Spinner.speed + "s linear infinite";
-    Spinner.borderRadius = "50%";
-    return Spinner;
-}(View));
-var Utils = (function () {
-    function Utils() {
-    }
-    Utils.logMethodName = function () {
-        if (Constructor.settings.debug) {
-            var obj = { stack: "" };
-            var message_1 = "";
-            Error.captureStackTrace(obj, this.logMethodName);
-            var first_1 = true;
-            obj.stack.split("\n").forEach(function (line) {
-                if (line.includes("Constructor.") || line.includes("Side2D.") || line.includes("Element2D.")) {
-                    line.split(" ").forEach(function (part) {
-                        if (part.startsWith("Constructor.") || part.startsWith("Side2D.") || part.startsWith("Element2D.")) {
-                            if (!first_1) {
-                                message_1 += "< " + part + "\n";
-                            }
-                            else {
-                                message_1 += part + "\n";
-                                first_1 = false;
-                            }
-                        }
-                    });
-                }
-            });
-            if (message_1 != "") {
-                message_1 = '-----------------------------------------------\n'
-                    + message_1
-                    + '-----------------------------------------------\n';
-                console.log(message_1);
-            }
-        }
-    };
-    Utils.randomInt = function (floor) {
-        return Math.floor(Math.random() * floor);
-    };
-    Utils.loadJSON = function (url, callback) {
-        var request = new XMLHttpRequest();
-        request.overrideMimeType(Constants.APPLICATION_JSON);
-        request.open(Constants.GET, url, true);
-        request.onreadystatechange = function () {
-            if (request.readyState == 4 && request.status == 200) {
-                callback(request.responseText);
-            }
-        };
-        request.send(null);
-    };
-    Utils.arrayMove = function (arr, from, to) {
-        var element = arr[from];
-        arr.splice(from, 1);
-        arr.splice(to, 0, element);
-    };
-    Utils.arrayMoveToStart = function (arr, from) {
-        this.arrayMove(arr, from, 0);
-    };
-    Utils.arrayMoveToEnd = function (arr, from) {
-        this.arrayMove(arr, from, arr.length - 1);
-    };
-    Utils.div = function () {
-        return document.createElement(Constants.DIV);
-    };
-    return Utils;
-}());
-var Dimensions = (function () {
-    function Dimensions(width, height) {
-        this.width = width;
-        this.height = height;
-    }
-    return Dimensions;
-}());
-var Element2D = (function (_super) {
-    __extends(Element2D, _super);
-    function Element2D(type, side) {
-        var _this = _super.call(this) || this;
-        _this.type = type;
-        _this.side = side;
-        if (type === ElementType.IMAGE) {
-            _this.object = new type.nativeType();
-        }
-        else {
-            var defaults = Constructor.settings.elementDefaults[type.getNativeTypeName()];
-            type.nativeType.fromObject(defaults, function (native) {
-                _this.object = native;
-                _this.setOptions(_this.object);
-                if (_this.side && _this.side.canvas) {
-                    _this.object.dirty = true;
-                    Constructor.instance.getActiveSide().canvas.requestRenderAll();
-                }
-                if (Constructor.instance.preview) {
-                    Constructor.instance.preview.render();
-                }
-            });
-        }
-        _this.setOptions(_this.object);
-        return _this;
-    }
-    Element2D.prototype.setOptions = function (object) {
-        var _this = this;
-        if (!object) {
-            return;
-        }
-        object.on(Constants.ADDED, function () {
-            _this.calculateGuides();
-        });
-        object.on(Constants.MODIFIED, function () {
-            _this.calculateGuides();
-            _this.changed();
-        });
-        object.on(Constants.SCALING, function (e) {
-        });
-        object.on(Constants.MOVING, function () {
-            _this.fitIntoMargins();
-            _this.snapPosition();
-        });
-        object.on(Constants.ROTATING, function () { return _this.snapRotation(); });
-        object.on(Constants.SELECTED, function () {
-            _this.side.selection = _this;
-            Constructor.instance.onSelectHandler((_this));
-            _this.changed();
-        });
-        object.on(Constants.DESELECTED, function () {
-            Constructor.instance.onDeselectHandler((_this));
-            _this.side.selection = null;
-            _this.changed();
-        });
-        object.on(Constants.REMOVED, function () {
-            _this.side.selection = null;
-        });
-        object.setOptions(Element2D.commonDefaults);
-    };
-    Element2D.prototype.randomizePosition = function () {
-        var width = this.side.canvas.getWidth();
-        var height = this.side.canvas.getHeight();
-        var w = Math.max((width / 2) * Math.random(), width * 0.1);
-        var h = Math.max((height / 2) * Math.random(), height * 0.1);
-        this.object.left = (width - w) * Math.random() + w / 2;
-        this.object.top = (height - h) * Math.random() + h / 2;
-        this.fitIntoMargins();
-        this.object.setCoords();
-        this.side.canvas.renderAll();
-    };
-    Element2D.prototype.offset = function () {
-        this.object.left = this.object.left + Constructor.settings.duplicateOffset;
-        this.object.top = this.object.top + Constructor.settings.duplicateOffset;
-        this.object.setCoords();
-        this.side.canvas.renderAll();
-    };
-    Element2D.prototype.getColor = function () {
-        return new Color(this.object.fill);
-    };
-    Element2D.prototype.setColor = function (value) {
-        if (this.type != ElementType.IMAGE) {
-            if (typeof value === Constants.STRING)
-                value = new Color(value);
-            var color = value;
-            this.object.fill = color.toRgba();
-            this.object.dirty = true;
-            this.side.canvas.renderAll();
-            setTimeout(function () {
-                Constructor.instance.getActiveSide().canvas.renderAll();
-            }, 100);
-            this.side.saveState();
-        }
-    };
-    Element2D.prototype.getAlpha = function () {
-        return this.object.opacity;
-    };
-    Element2D.prototype.setAlpha = function (value) {
-        this.object.opacity = value;
-        this.side.saveState();
-        this.side.canvas.renderAll();
-    };
-    Element2D.prototype.setShadow = function (value) {
-        if (value && value != 0) {
-            var options = {
-                color: Color.TRANSPARENT_BLACK.toRgba(),
-                includeDefaultValues: true
-            };
-            this.object.setShadow(new fabric.Shadow(options));
-            var shadow = this.object.shadow;
-            shadow.offsetX = value;
-            shadow.offsetY = value;
-            shadow.blur = value;
-        }
-        else {
-            this.object.setShadow(null);
-        }
-        this.side.saveState();
-        this.side.canvas.renderAll();
-    };
-    Element2D.prototype.getShadow = function () {
-        var shadow = this.object.shadow;
-        return shadow ? shadow.offsetX : 0;
-    };
-    Element2D.prototype.setPosition = function (left, top) {
-        this.object.left = left;
-        this.object.top = top;
-        this.object.setCoords();
-        this.object.dirty = true;
-        this.side.canvas.requestRenderAll();
-        this.side.saveState();
-    };
-    Element2D.prototype.setFontFamily = function (fontFamily, repeat) {
-        if (this.type === ElementType.TEXT) {
-            fabric.charWidthsCache[fontFamily] = {};
-            var object = this.object;
-            object.fontFamily = fontFamily;
-            this.object.dirty = true;
-            this.side.canvas.requestRenderAll();
-        }
-    };
-    Element2D.prototype.getText = function () {
-        return this.type === ElementType.TEXT
-            ? this.object.text
-            : null;
-    };
-    Element2D.prototype.setText = function (value) {
-        if (this.type === ElementType.TEXT) {
-            this.object.text = value;
-            this.side.canvas.renderAll();
-        }
-    };
-    Element2D.prototype.getFontFamily = function () {
-        return this.type === ElementType.TEXT ? this.object.fontFamily : null;
-    };
-    Element2D.prototype.setFontSize = function (value) {
-        if (this.type === ElementType.TEXT) {
-            this.object.fontSize = value;
-            this.object.dirty = true;
-            this.side.canvas.requestRenderAll();
-            this.side.saveState();
-        }
-    };
-    Element2D.prototype.getFontSize = function () {
-        return this.type === ElementType.TEXT ? this.object.fontSize : null;
-    };
-    Element2D.prototype.setItalic = function (value) {
-        if (this.type === ElementType.TEXT) {
-            this.object.fontStyle = value ? Constants.ITALIC : Constants.NORMAL;
-            this.object.dirty = true;
-            this.side.canvas.requestRenderAll();
-            this.side.saveState();
-        }
-    };
-    Element2D.prototype.isItalic = function () {
-        return this.type === ElementType.TEXT ? this.object.fontStyle === Constants.ITALIC : null;
-    };
-    Element2D.prototype.setBold = function (value) {
-        if (this.type === ElementType.TEXT) {
-            this.object.fontWeight = value ? Constants.BOLD : Constants.NORMAL;
-            this.side.canvas.renderAll();
-            this.side.saveState();
-        }
-    };
-    Element2D.prototype.isBold = function () {
-        return this.type === ElementType.TEXT ? this.object.fontWeight === Constants.BOLD : null;
-    };
-    Element2D.prototype.setTextDecoration = function (value) {
-        if (this.type === ElementType.TEXT) {
-            switch (value) {
-                case TextDecoration.LINETHROUGH:
-                    this.object.linethrough = true;
-                    break;
-                case TextDecoration.OVERLINE:
-                    this.object.overline = true;
-                    break;
-                case TextDecoration.UNDERLINE:
-                    this.object.underline = true;
-                    break;
-                default: {
-                    this.object.linethrough = false;
-                    this.object.overline = false;
-                    this.object.underline = false;
-                }
-            }
-            this.side.canvas.requestRenderAll();
-            this.side.canvas.renderAll();
-            this.side.saveState();
-        }
-    };
-    Element2D.prototype.getTextDecoration = function () {
-        if (this.type != ElementType.TEXT) {
-            return null;
-        }
-        if (this.object.underline) {
-            return TextDecoration.UNDERLINE;
-        }
-        if (this.object.overline) {
-            return TextDecoration.OVERLINE;
-        }
-        if (this.object.linethrough) {
-            return TextDecoration.LINETHROUGH;
-        }
-        return null;
-    };
-    Element2D.prototype.setTextAlignment = function (value) {
-        if (this.type === ElementType.TEXT) {
-            this.object.textAlign = value;
-            this.side.canvas.renderAll();
-            this.side.saveState();
-        }
-    };
-    Element2D.prototype.getTextAlignment = function () {
-        return this.type === ElementType.TEXT ? this.object.textAlign : null;
-    };
-    Element2D.prototype.addFilter = function (filter, callback) {
-        if (this.object instanceof fabric.Image) {
-            if (!this.filters)
-                this.filters = [];
-            if (filter.isBoolean) {
-                var index = this.filters.indexOf(filter);
-                if (index != -1) {
-                    this.filters.splice(index, 1);
-                    if (this.filters.length === 0)
-                        this.filters = null;
-                    this.applyFilters(callback);
-                    return;
-                }
-            }
-            this.filters.push(filter);
-            this.applyFilters(callback);
-        }
-    };
-    Element2D.prototype.resetFilters = function (callback) {
-        this.filters = null;
-        if (this.object instanceof fabric.Image) {
-            this.object.filters = [];
-            this.applyFilters(callback);
-        }
-    };
-    Element2D.prototype.applyFilters = function (callback) {
-        var image = this.object;
-        image.filters = [];
-        if (this.filters) {
-            for (var _i = 0, _a = this.filters; _i < _a.length; _i++) {
-                var filter = _a[_i];
-                image.filters.push(filter.getFilter());
-            }
-        }
-        this.side.saveState();
-        image.applyFilters();
-        this.side.canvas.renderAll();
-        if (callback)
-            callback(this);
-    };
-    Element2D.prototype.snapRotation = function () {
-        var angle = this.object.angle;
-        angle = Math.round(angle / Constructor.settings.rotationStep) * Constructor.settings.rotationStep;
-        this.object.rotate(angle);
-    };
-    Element2D.prototype.toggleLock = function () {
-        this.setLocked(!this.isLocked());
-    };
-    Element2D.prototype.setLocked = function (locked) {
-        this.object.lockScalingX
-            = this.object.lockScalingY
-                = this.object.lockRotation
-                    = this.object.lockMovementX
-                        = this.object.lockMovementY
-                            = locked;
-    };
-    Element2D.prototype.isLocked = function () {
-        return this.object && this.object.lockScalingX;
-    };
-    Element2D.prototype.toFront = function () {
-        this.side.canvas.bringToFront(this.object);
-        Utils.arrayMoveToEnd(this.side.elements, this.getIndex());
-        this.side.horizontalGuide.sendToBack();
-        this.side.verticalGuide.sendToBack();
-        this.side.deselect();
-        this.side.saveState();
-    };
-    Element2D.prototype.toBack = function () {
-        this.side.canvas.sendToBack(this.object);
-        Utils.arrayMoveToStart(this.side.elements, this.getIndex());
-        this.side.horizontalGuide.sendToBack();
-        this.side.verticalGuide.sendToBack();
-        this.side.deselect();
-        this.side.saveState();
-    };
-    Element2D.prototype.bringDown = function () {
-        this.shiftLayer(-1);
-    };
-    Element2D.prototype.bringUp = function () {
-        this.shiftLayer(1);
-    };
-    Element2D.prototype.shiftLayer = function (delta) {
-        var index = this.getIndex() + delta;
-        if (index < 0) {
-            index = 0;
-        }
-        else if (index > this.side.getLayers().length - 1) {
-            index = this.side.getLayers().length - 1;
-        }
-        this.toLayerInternal(index);
-    };
-    Element2D.prototype.toLayer = function (index) {
-        this.toLayerInternal(this.side.getLayers().length - index - 1);
-    };
-    Element2D.prototype.toLayerInternal = function (index) {
-        this.side.canvas.moveTo(this.object, index + 2);
-        this.side.horizontalGuide.sendToBack();
-        this.side.verticalGuide.sendToBack();
-        Utils.arrayMove(this.side.elements, this.getIndex(), index);
-        this.side.deselect();
-        this.side.canvas.renderAll();
-    };
-    Element2D.prototype.isVisible = function () {
-        return this.object && this.object.visible == true;
-    };
-    Element2D.prototype.toggleVisibility = function () {
-        this.isVisible() ? this.hide() : this.show();
-    };
-    Element2D.prototype.hide = function () {
-        this.object.visible = false;
-        this.object.selectable = false;
-        this.side.deselect();
-        this.side.canvas.renderAll();
-        this.side.saveState();
-    };
-    Element2D.prototype.show = function () {
-        this.object.selectable = true;
-        this.side.deselect();
-        this.side.canvas.renderAll();
-        this.object.visible = true;
-        this.side.saveState();
-    };
-    Element2D.prototype.toDataURL = function (size) {
-        if (!size) {
-            return this.object.toDataURL({});
-        }
-        var maxSize = Math.max(this.object.width * this.object.scaleX, this.object.height * this.object.scaleY);
-        var multiplier = size / maxSize;
-        return this.object.toDataURL({ multiplier: multiplier });
-    };
-    Element2D.prototype.clone = function () {
-        var object = fabric.util.object.clone(this.object);
-        var element = new Element2D(this.type, this.side);
-        element.object = object;
-        return element;
-    };
-    Element2D.prototype.remove = function () {
-        this.side.remove(this);
-    };
-    Element2D.prototype.calculateGuides = function () {
-        if (this.side) {
-            this.object.setCoords();
-            var w = this.object.getBoundingRect().width / this.side.getZoom();
-            var h = this.object.getBoundingRect().height / this.side.getZoom();
-            var l = this.object.left - w / 2;
-            var t = this.object.top - h / 2;
-            this.horizontalGuides = [l + w / 2, l, l + w];
-            this.verticalGuides = [t + h / 2, t, t + h];
-        }
-    };
-    Element2D.getSnapOffset = function (source, target) {
-        var minDelta = Constructor.settings.snapSize;
-        var snapOffset;
-        for (var _i = 0, source_1 = source; _i < source_1.length; _i++) {
-            var a = source_1[_i];
-            for (var _a = 0, target_1 = target; _a < target_1.length; _a++) {
-                var b = target_1[_a];
-                var delta = Math.abs(b - a);
-                if (delta < minDelta) {
-                    minDelta = delta;
-                    var i = (target.indexOf(b) - 1);
-                    if (i == -1)
-                        i = 0;
-                    else if (i == 0)
-                        i = -1;
-                    var d = i * (target[0] - target[1]);
-                    snapOffset = new SnapOffset(a, a - d);
-                }
-            }
-        }
-        return snapOffset;
-    };
-    Element2D.prototype.getHorizontalSnapPosition = function (element) {
-        return Element2D.getSnapOffset(element.horizontalGuides, this.horizontalGuides);
-    };
-    Element2D.prototype.getVerticalSnapPosition = function (element) {
-        return Element2D.getSnapOffset(element.verticalGuides, this.verticalGuides);
-    };
-    Element2D.prototype.fitIntoMargins = function () {
-        if (Constructor.settings.fitIntoMargins) {
-            var rect = this.object.getBoundingRect();
-            var w = rect.width / 2;
-            var h = rect.height / 2;
-            var x = (this.side.canvas.getWidth() / this.side.getZoom() - w);
-            var y = (this.side.canvas.getHeight() / this.side.getZoom() - h);
-            if (this.object.left < w) {
-                this.object.left = w;
-            }
-            else if (this.object.left > x) {
-                this.object.left = x;
-            }
-            if (this.object.top < h) {
-                this.object.top = h;
-            }
-            else if (this.object.top > y) {
-                this.object.top = y;
-            }
-        }
-    };
-    Element2D.prototype.snapPosition = function () {
-        if (Constructor.instance.snapToObjects) {
-            this.calculateGuides();
-            this.side.hideGuides();
-            var xUpdated = false;
-            var yUpdated = false;
-            for (var _i = 0, _a = this.side.elements; _i < _a.length; _i++) {
-                var element = _a[_i];
-                if (element === this)
-                    continue;
-                if (!xUpdated) {
-                    var x = this.getHorizontalSnapPosition(element);
-                    if (x != null) {
-                        this.object.left = x.objectPosition;
-                        this.side.horizontalGuide.update(x.guidePosition);
-                        xUpdated = true;
-                    }
-                }
-                if (!yUpdated) {
-                    var y = this.getVerticalSnapPosition(element);
-                    if (y != null) {
-                        this.object.top = y.objectPosition;
-                        this.side.verticalGuide.update(y.guidePosition);
-                        yUpdated = true;
-                    }
-                }
-                if (xUpdated && yUpdated)
-                    return;
-            }
-        }
-        if (Constructor.instance.snapToGrid) {
-            var gridSize = Constructor.settings.gridSize;
-            this.object.left = Math.round(this.object.left / gridSize) * gridSize;
-            this.object.top = Math.round(this.object.top / gridSize) * gridSize;
-        }
-    };
-    Element2D.prototype.snapTransform = function (e) {
-        var mouseEvent = (e.e);
-        this.calculateGuides();
-        this.side.hideGuides();
-        var xUpdated = false;
-        var yUpdated = false;
-        for (var _i = 0, _a = this.side.elements; _i < _a.length; _i++) {
-            var element = _a[_i];
-            if (element === this)
-                continue;
-            if (!xUpdated) {
-                var x = this.getHorizontalSnapPosition(element);
-                if (x != null) {
-                    var dx = x.objectPosition - mouseEvent.clientX;
-                    this.object.width = this.object.width + dx / 2;
-                    this.object.left = this.object.left - dx / 2;
-                    this.object.setCoords();
-                    this.side.horizontalGuide.update(x.guidePosition);
-                    xUpdated = true;
-                }
-            }
-            if (xUpdated && yUpdated)
-                return;
-        }
-    };
-    Element2D.prototype.getIndex = function () {
-        return this.side.elements.indexOf(this);
-    };
-    Element2D.prototype.getLayerIndex = function () {
-        return this.side.getLayers().indexOf(this);
-    };
-    Element2D.prototype.serialize = function () {
-        return new ObjectOptions(this);
-    };
-    Element2D.prototype.deserialize = function (object) {
-        var type = ElementType.get(object.type);
-        var element = new Element2D(type);
-        var filters = object.filters;
-        if (filters && filters.length > 0) {
-            element.filtersCache = object.filters;
-            delete object.filters;
-        }
-        element.object.setOptions(object.toObject());
-        if (type === ElementType.IMAGE) {
-            var image = element.object;
-        }
-        if (type === ElementType.TEXT && element.object['text']) {
-            var o = element.object;
-            o.text = o.text.split("<br>").join("\n");
-        }
-        element.setOptions(element.object);
-        return element;
-    };
-    Element2D.commonDefaults = {
-        hasBorders: false,
-        cornerColor: Color.TRANSPARENT_BLACK.toRgba(),
-        transparentCorners: false,
-        cornerSize: 8 * window.devicePixelRatio,
-        originX: Constants.CENTER,
-        originY: Constants.CENTER,
-        rotatingPointOffset: 30 * window.devicePixelRatio
-    };
-    return Element2D;
-}(Trigger));
-var ElementType = (function (_super) {
-    __extends(ElementType, _super);
-    function ElementType(nativeType) {
-        var _this = _super.call(this, nativeType.prototype.type) || this;
-        _this.nativeType = nativeType;
-        return _this;
-    }
-    ElementType.prototype.getNativeTypeName = function () {
-        return this.nativeType.prototype.type;
-    };
-    ElementType.CIRCLE = new ElementType(fabric.Circle);
-    ElementType.RECTANGLE = new ElementType(fabric.Rect);
-    ElementType.TRIANGLE = new ElementType(fabric.Triangle);
-    ElementType.TEXT = new ElementType(fabric.IText);
-    ElementType.IMAGE = new ElementType(fabric.Image);
-    return ElementType;
-}(Associated));
-var Filter = (function (_super) {
-    __extends(Filter, _super);
-    function Filter(name, filter, isBoolean) {
-        var _this = _super.call(this, name) || this;
-        _this.nativeFilter = filter;
-        _this.isBoolean = isBoolean;
-        return _this;
-    }
-    Filter.prototype.getFilter = function () {
-        return this.nativeFilter;
-    };
-    Filter.GRAYSCALE = new Filter("grayscale", new fabric.Image.filters.Grayscale(), true);
-    Filter.INVERT = new Filter("invert", new fabric.Image.filters.Invert(), true);
-    Filter.BRIGHTNESS = new Filter("brightness", new fabric.Image.filters.Brightness({ brightness: 0.1 }));
-    Filter.BLUR = new Filter("blur", new fabric.Image.filters.Convolute({
-        matrix: [
-            1 / 9, 1 / 9, 1 / 9,
-            1 / 9, 1 / 9, 1 / 9,
-            1 / 9, 1 / 9, 1 / 9
-        ]
-    }));
-    Filter.SHARPEN = new Filter("sharpen", new fabric.Image.filters.Convolute({
-        matrix: [
-            0, -1, 0,
-            -1, 5, -1,
-            0, -1, 0
-        ]
-    }));
-    Filter.EMBOSS = new Filter("emboss", new fabric.Image.filters.Convolute({
-        matrix: [
-            1, 1, 1,
-            1, 0.7, -1,
-            -1, -1, -1
-        ]
-    }));
-    return Filter;
-}(Associated));
-var Guide = (function (_super) {
-    __extends(Guide, _super);
-    function Guide() {
-        var _this = _super.call(this, [0, 0, 0, 0], Guide.DEFAULTS) || this;
-        _this.dirty = true;
-        return _this;
-    }
-    Guide.prototype.show = function () {
-        this.stroke = Color.GUIDE.toRgba();
-        this.bringToFront();
-        this.dirty = true;
-    };
-    Guide.prototype.hide = function () {
-        this.stroke = Color.TRANSPARENT.toRgba();
-        this.dirty = true;
-    };
-    Guide.DEFAULTS = {
-        left: 0,
-        top: 0,
-        stroke: Color.GUIDE.toRgba(),
-        selectable: false,
-        width: 1
-    };
-    return Guide;
-}(fabric.Line));
-var HorizontalGuide = (function (_super) {
-    __extends(HorizontalGuide, _super);
-    function HorizontalGuide(h) {
-        var _this = _super.call(this) || this;
-        _this.height = h;
-        return _this;
-    }
-    HorizontalGuide.prototype.update = function (x) {
-        this.left = x;
-        this.show();
-    };
-    return HorizontalGuide;
-}(Guide));
-var ImageType;
-(function (ImageType) {
-    ImageType["PNG"] = "image/png";
-    ImageType["JPG"] = "image/jpeg";
-    ImageType["GIF"] = "image/gif";
-    ImageType["SVG"] = "image/svg+xml";
-})(ImageType || (ImageType = {}));
-var ObjectOptions = (function () {
-    function ObjectOptions(element) {
-        if (element) {
-            var object = element.object.toJSON();
-            var excludedOptions = ObjectOptions.excludedNativeOptions[element.object.type];
-            for (var _i = 0, _a = ObjectOptions.nativeOptions; _i < _a.length; _i++) {
-                var property = _a[_i];
-                if (object[property] && (!excludedOptions || !excludedOptions[property])) {
-                    this[property] = object[property];
-                    if (property === "text") {
-                        this[property] = this[property].split("\n").join("<br>");
-                    }
-                }
-            }
-            if (element.filters && element.filters.length > 0) {
-                this.filters = [];
-                for (var _b = 0, _c = element.filters; _b < _c.length; _b++) {
-                    var filter = _c[_b];
-                    this.filters.push(filter.getName());
-                }
-            }
-            else if (element.filtersCache && element.filtersCache.length) {
-                this.filters = element.filtersCache;
-            }
-        }
-    }
-    ObjectOptions.fromObject = function (value) {
-        var object = new ObjectOptions();
-        for (var _i = 0, _a = ObjectOptions.nativeOptions; _i < _a.length; _i++) {
-            var property = _a[_i];
-            if (value[property])
-                object[property] = value[property];
-        }
-        return object;
-    };
-    ObjectOptions.prototype.toObject = function () {
-        var options = {};
-        for (var _i = 0, _a = ObjectOptions.nativeOptions; _i < _a.length; _i++) {
-            var property = _a[_i];
-            if (this[property])
-                options[property] = this[property];
-        }
-        if (this.filters)
-            options.filters = this.filters;
-        return options;
-    };
-    ObjectOptions.prototype.equals = function (object) {
-        var objectOptions = Object.getOwnPropertyNames(object);
-        var options = Object.getOwnPropertyNames(this);
-        if (objectOptions.length != options.length) {
-            return false;
-        }
-        for (var i = 0; i < options.length; i++) {
-            var a = options[i];
-            var b = objectOptions[i];
-            if (this[a] != object[a]) {
-                return false;
-            }
-            if (a != b && this[b] != object[b]) {
-                return false;
-            }
-        }
-        return true;
-    };
-    ObjectOptions.nativeOptions = [
-        "angle",
-        "fill",
-        "flipX",
-        "flipY",
-        "fontFamily",
-        "filters",
-        "fontSize",
-        "fontStyle",
-        "fontWeight",
-        "height",
-        "left",
-        "lineHeight",
-        "opacity",
-        "radius",
-        "scaleX",
-        "scaleY",
-        "shadow",
-        "src",
-        "text",
-        "textAlign",
-        "textBackgroundColor",
-        'underline',
-        'overline',
-        'linethrough',
-        "top",
-        "transformMatrix",
-        "type",
-        "width"
-    ];
-    ObjectOptions.excludedNativeOptions = {
-        "image": [
-            "fill"
-        ]
-    };
-    return ObjectOptions;
-}());
-var Side2DStateObjects = (function () {
-    function Side2DStateObjects(side) {
-        this.objects = [];
-        if (side) {
-            for (var _i = 0, _a = side.elements; _i < _a.length; _i++) {
-                var element = _a[_i];
-                this.objects.push(element.serialize());
-            }
-        }
-    }
-    Side2DStateObjects.parse = function (json) {
-        var objects = new Side2DStateObjects();
-        var rawObjects = JSON.parse(json).objects;
-        for (var _i = 0, rawObjects_1 = rawObjects; _i < rawObjects_1.length; _i++) {
-            var rawObject = rawObjects_1[_i];
-            var objectOptions = ObjectOptions.fromObject(rawObject);
-            objects.objects.push(objectOptions);
-        }
-        return objects;
-    };
-    Side2DStateObjects.prototype.equals = function (state) {
-        if (state.objects.length != this.objects.length) {
-            return false;
-        }
-        for (var i = 0; i < this.objects.length; i++) {
-            var a = this.objects[i];
-            var b = state.objects[i];
-            if (!a.equals(b))
-                return false;
-        }
-        return true;
-    };
-    return Side2DStateObjects;
-}());
-var Side2DState = (function (_super) {
-    __extends(Side2DState, _super);
-    function Side2DState(side) {
-        var _this = _super.call(this, side) || this;
-        _this.width = side.width;
-        _this.height = side.height;
-        _this.roundCorners = side.roundCorners;
-        return _this;
-    }
-    Side2DState.prototype.equals = function (state) {
-        if (this.width != state.width || this.height != state.height || this.roundCorners != state.roundCorners) {
-            return false;
-        }
-        return _super.prototype.equals.call(this, state);
-    };
-    return Side2DState;
-}(Side2DStateObjects));
-var Side2D = (function (_super) {
-    __extends(Side2D, _super);
-    function Side2D(htmlElement, width, height, roundCorners) {
-        var _this = _super.call(this, htmlElement) || this;
-        _this.elements = [];
-        _this.history = new HistoryList(new Side2DState(_this));
-        _this.width = width;
-        _this.height = height;
-        _this.canvasElement = document.createElement(Constants.CANVAS);
-        _this.container.appendChild(_this.canvasElement);
-        _this.canvas = new fabric.Canvas(_this.canvasElement, null);
-        _this.canvasElement.style.background = Constructor.instance.background;
-        _this.canvas.setWidth(width);
-        _this.canvas.setHeight(height);
-        _this.canvas.selection = false;
-        _this.canvas.on(Constants.MOUSE_UP, function () {
-            _this.hideGuides();
-            _this.saveState();
-        });
-        _this.canvas.on(Constants.SELECTION_CLEARED, function () {
-            _this.selection = null;
-        });
-        _this.canvas.on(Constants.AFTER_RENDER, function () {
-            Constructor.instance.onElementModificationHandler && Constructor.instance.onElementModificationHandler();
-        });
-        _this.horizontalGuide = new HorizontalGuide(height);
-        _this.verticalGuide = new VerticalGuide(width);
-        _this.canvas.add(_this.horizontalGuide);
-        _this.canvas.add(_this.verticalGuide);
-        _this.setZoom(1);
-        _this.hideGuides();
-        _this.hide();
-        _this.needsHistoryUpdate = false;
-        _this.roundCorners = roundCorners;
-        if (roundCorners)
-            _this.setRoundCorners();
-        _this.canvasElement.style.border = Constants.LINE_STYLE_PREFIX + Color.GRAY.toHex();
-        return _this;
-    }
-    Side2D.prototype.setRoundCorners = function () {
-        var smallestSide = Math.min(this.canvasElement.width, this.canvasElement.height);
-        this.canvasElement.style.borderRadius = smallestSide / 2 * this.roundCorners / 100 + Constants.PX;
-    };
-    Side2D.prototype.centerPosition = function () {
-        var canvasContainer = this.canvasElement.parentElement;
-        var dw = this.container.clientWidth - canvasContainer.clientWidth;
-        var dh = this.container.clientHeight - canvasContainer.clientHeight;
-        this.setRoundCorners();
-    };
-    Side2D.prototype.setZoom = function (value) {
-        if (value >= Side2D.maxZoom && value <= Side2D.minZoom)
-            return;
-        this.canvas.setZoom(value);
-        this.canvas.setWidth(this.width * value);
-        this.canvas.setHeight(this.height * value);
-        this.canvas.renderAll();
-        this.centerPosition();
-    };
-    Side2D.prototype.getZoom = function () {
-        return this.canvas ? this.canvas.getZoom() : 1;
-    };
-    Side2D.prototype.resetZoom = function () {
-        this.canvas.setZoom(1);
-        this.canvas.setWidth(this.width);
-        this.canvas.setHeight(this.height);
-        this.canvas.renderAll();
-        this.centerPosition();
-    };
-    Side2D.prototype.zoomToFit = function () {
-        this.setZoom(Math.min(this.container.clientWidth / this.width, this.container.clientHeight / this.height));
-    };
-    Side2D.prototype.getRatio = function () {
-        return this.width / this.height;
-    };
-    Side2D.prototype.getElement = function () {
-        return this.canvas.getElement().parentElement;
-    };
-    Side2D.prototype.getIndex = function () {
-        return Constructor.instance.sides.indexOf(this);
-    };
-    Side2D.prototype.fixElementPosition = function (element) {
-        if (!element.object.isOnScreen(true)) {
-            this.resetElementPosition(element);
-        }
-    };
-    Side2D.prototype.resetElementPosition = function (element) {
-        element.object.left = this.width / 2;
-        element.object.top = this.height / 2;
-    };
-    Side2D.prototype.add = function (element) {
-        var _this = this;
-        Utils.logMethodName();
-        element.side = this;
-        this.elements.push(element);
-        this.canvas.add(element.object);
-        setTimeout(function () { return _this.fixElementPosition(element); }, 200);
-        element.fitIntoMargins();
-        element.object.setCoords();
-        this.canvas.requestRenderAll();
-        setTimeout(function () { return _this.canvas.renderAll(); }, null);
-        this.changed();
-        return element;
-    };
-    Side2D.prototype.addElement = function (type) {
-        Utils.logMethodName();
-        return this.add(new Element2D(type, this));
-    };
-    Side2D.prototype.getLayers = function () {
-        var layers = [];
-        for (var i = 0; i < this.elements.length; i++) {
-            layers.unshift(this.elements[i]);
-        }
-        return layers;
-    };
-    Side2D.prototype.moveLayer = function (from, to) {
-        var element = this.getLayers()[from];
-        element.toLayer(to);
-        this.changed();
-    };
-    Side2D.prototype.remove = function (element) {
-        this.canvas.remove(element.object);
-        this.elements.splice(this.elements.indexOf(element), 1);
-        this.deselect();
-        this.canvas.renderAll();
-        this.changed();
-    };
-    Side2D.prototype.getPointSize = function () {
-        return 96 / 72 * this.getZoom();
-    };
-    Side2D.prototype.getInchSize = function () {
-        return 72 * this.getPointSize();
-    };
-    Side2D.prototype.getCentimeterSize = function () {
-        return this.getInchSize() / 2.54;
-    };
-    Side2D.prototype.getMillimeterSize = function () {
-        return this.getCentimeterSize() / 10;
-    };
-    Side2D.prototype.select = function (element) {
-        this.deselect();
-        this.selection = element;
-        this.canvas.setActiveObject(element.object);
-        this.canvas.renderAll();
-        return element;
-    };
-    Side2D.prototype.deselect = function () {
-        this.selection = null;
-        this.canvas.discardActiveObject();
-        this.canvas.renderAll();
-    };
-    Side2D.prototype.hideGuides = function () {
-        this.horizontalGuide.hide();
-        this.verticalGuide.hide();
-        this.canvas.renderAll();
-    };
-    Side2D.prototype.serialize = function () {
-        return new Side2DState(this);
-    };
-    Side2D.prototype.deserialize = function (state) {
-        var side = new Side2D(Constructor.instance.getElement(), state.width, state.height, state.roundCorners);
-        if (state.objects) {
-            var json = '{"objects":' + JSON.stringify(state.objects) + '}';
-            var objects = Side2DStateObjects.parse(json);
-            side.setState(objects);
-        }
-        return side;
-    };
-    Side2D.prototype.clear = function () {
-        Utils.logMethodName();
-        this.elements = [];
-        this.selection = null;
-        this.canvas.clear();
-        this.canvas.add(this.horizontalGuide);
-        this.canvas.add(this.verticalGuide);
-        this.changed();
-    };
-    Side2D.prototype.removeElements = function () {
-        Utils.logMethodName();
-        while (this.elements.length) {
-            this.elements[0].remove();
-        }
-        this.saveState();
-    };
-    Side2D.prototype.addImageFromObjectOptions = function (objectOptions) {
-        var _this = this;
-        Utils.logMethodName();
-        var object = objectOptions.toObject();
-        var side = this;
-        fabric.Image.fromObject(object, function (image) {
-            if (image === null) {
-                return;
-            }
-            var element = new Element2D(ElementType.IMAGE);
-            element.side = _this;
-            element.object = image;
-            element.setOptions(element.object);
-            side.add(element);
-            if (objectOptions.filters) {
-                element.filters = [];
-                for (var _i = 0, _a = objectOptions.filters; _i < _a.length; _i++) {
-                    var filterName = _a[_i];
-                    var filter = Filter.get(filterName);
-                    try {
-                        element.addFilter(filter, function () { return element.side.canvas.renderAll(); });
-                    }
-                    catch (e) {
-                        console.error(e.message);
-                    }
-                }
-                element.applyFilters(function (imageElement) {
-                    imageElement.object.dirty = true;
-                    imageElement.side.canvas.requestRenderAll();
-                });
-            }
-        });
-    };
-    Side2D.prototype.setState = function (state) {
-        var _this = this;
-        Utils.logMethodName();
-        this.history.lock();
-        this.clear();
-        var _loop_2 = function (objectOptions) {
-            if (objectOptions.type === 'image') {
-                this_2.addImageFromObjectOptions(objectOptions);
-            }
-            else {
-                var element_1 = Element2D.prototype.deserialize(objectOptions);
-                this_2.add(element_1);
-                element_1.object.dirty = true;
-                if (element_1.type === ElementType.TEXT) {
-                    setTimeout(function () { return element_1.setFontFamily(element_1.getFontFamily()); }, 0);
-                }
-            }
-        };
-        var this_2 = this;
-        for (var _i = 0, _a = state.objects; _i < _a.length; _i++) {
-            var objectOptions = _a[_i];
-            _loop_2(objectOptions);
-        }
-        this.saveToLocalStorage(state);
-        this.canvas.requestRenderAll();
-        setTimeout(function () {
-            _this.history.unlock();
-        }, 50);
-    };
-    Side2D.prototype.getLocalStorageKey = function () {
-        return Constructor.settings.localStorage.keyPrefix + this.getIndex();
-    };
-    Side2D.prototype.saveToLocalStorage = function (state) {
-        if (!this.history.isLocked()) {
-            Utils.logMethodName();
-            localStorage.setItem(this.getLocalStorageKey(), JSON.stringify(state));
-        }
-    };
-    Side2D.prototype.loadFromLocalStorage = function () {
-        if (Constructor.settings.localStorage.enabled && !Constructor.instance.isExplicitlyLoaded) {
-            Utils.logMethodName();
-            var key = this.getLocalStorageKey();
-            var state = localStorage.getItem(key);
-            if (state) {
-                var objects = Side2DStateObjects.parse(state);
-                this.setState(objects);
-            }
-        }
-    };
-    Side2D.prototype.saveState = function () {
-        Utils.logMethodName();
-        var state = new Side2DStateObjects(this);
-        this.history.add(state);
-        this.saveToLocalStorage(state);
-    };
-    Side2D.prototype.undo = function () {
-        var state = this.history.back();
-        if (state)
-            this.setState(state);
-    };
-    Side2D.prototype.redo = function () {
-        var state = this.history.forward();
-        if (state)
-            this.setState(state);
-    };
-    Side2D.prototype.exportImage = function (maxSize, format) {
-        var w = this.canvas.getWidth() / this.getZoom();
-        var h = this.canvas.getHeight() / this.getZoom();
-        var multiplier = maxSize ? maxSize / Math.max(w, h) : 1;
-        if (!format)
-            format = ImageType.PNG;
-        if (format == ImageType.JPG) {
-            this.history.lock();
-            var background = this.addElement(ElementType.RECTANGLE);
-            background.setColor(Color.WHITE);
-            background.object.width = w;
-            background.object.height = h;
-            background.object.left = w / 2;
-            background.object.top = h / 2;
-            background.object.setCoords();
-            background.toBack();
-            this.canvas.renderAll();
-            var src = this.canvas.toDataURL({ format: Constants.JPG, multiplier: multiplier });
-            background.remove();
-            this.canvas.renderAll();
-            this.history.unlock();
-            return src;
-        }
-        if (format == ImageType.SVG) {
-            return this.canvas.toSVG({
-                width: w * multiplier,
-                height: h * multiplier,
-            });
-        }
-        return this.canvas.toDataURL({ format: Constants.PNG, multiplier: multiplier });
-    };
-    Side2D.prototype.getState = function () {
-        return new Side2DState(this);
-    };
-    Side2D.prototype.equals = function (side) {
-        return this.getState().equals(side.getState());
-    };
-    Side2D.prototype.isEmpty = function () {
-        return this.elements.length == 0;
-    };
-    Side2D.maxZoom = 10;
-    Side2D.minZoom = 0.001;
-    return Side2D;
-}(View));
-var SnapOffset = (function () {
-    function SnapOffset(guidePosition, objectPosition) {
-        this.guidePosition = guidePosition;
-        this.objectPosition = objectPosition;
-    }
-    return SnapOffset;
-}());
-var TextAlignment;
-(function (TextAlignment) {
-    TextAlignment["LEFT"] = "left";
-    TextAlignment["CENTER"] = "center";
-    TextAlignment["RIGHT"] = "right";
-    TextAlignment["JUSTIFY"] = "justify";
-})(TextAlignment || (TextAlignment = {}));
-var TextDecoration;
-(function (TextDecoration) {
-    TextDecoration["UNDERLINE"] = "underline";
-    TextDecoration["OVERLINE"] = "overline";
-    TextDecoration["LINETHROUGH"] = "line-through";
-})(TextDecoration || (TextDecoration = {}));
-var VerticalGuide = (function (_super) {
-    __extends(VerticalGuide, _super);
-    function VerticalGuide(w) {
-        var _this = _super.call(this) || this;
-        _this.width = w;
-        return _this;
-    }
-    VerticalGuide.prototype.update = function (y) {
-        this.top = y;
-        this.show();
-    };
-    return VerticalGuide;
-}(Guide));
-var UIControl = (function (_super) {
-    __extends(UIControl, _super);
-    function UIControl() {
-        var _this = _super.call(this, Utils.div()) || this;
-        _this.children = [];
-        _this.c = Constructor.instance;
-        _this.container.className = _this.getClassName();
-        return _this;
-    }
-    UIControl.prototype.getClassName = function () {
-        return "control";
-    };
-    UIControl.prototype.update = function () {
-    };
-    UIControl.prototype.getElement = function () {
-        return this.container;
-    };
-    UIControl.prototype.appendChild = function (control) {
-        this.children.push(control);
-        this.container.appendChild(control.container);
-        return this;
-    };
-    UIControl.prototype.append = function () {
-        var _this = this;
-        var controls = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            controls[_i] = arguments[_i];
-        }
-        controls.forEach(function (control) { return _this.appendChild(control); });
-        return this;
-    };
-    return UIControl;
-}(View));
-var TriggeredUIControl = (function (_super) {
-    __extends(TriggeredUIControl, _super);
-    function TriggeredUIControl(trigger) {
-        var _this = _super.call(this) || this;
-        trigger.onChange(function () { return _this.update(); });
-        trigger.onVisibilityChange(function () { return _this.updateVisibility(); });
-        _this.trigger = trigger;
-        return _this;
-    }
-    return TriggeredUIControl;
-}(UIControl));
 var Icon;
 (function (Icon) {
     Icon["_500PX"] = "<i class=\"fa fa-500px\"></i>";
@@ -2870,6 +1600,7 @@ var Icon;
     Icon["SKYPE"] = "<i class=\"fa fa-skype\"></i>";
     Icon["SLACK"] = "<i class=\"fa fa-slack\"></i>";
     Icon["SLIDERS"] = "<i class=\"fa fa-sliders\"></i>";
+    Icon["SLIDERS_H"] = "<i class=\"fa fa-sliders-h\"></i>";
     Icon["SLIDESHARE"] = "<i class=\"fa fa-slideshare\"></i>";
     Icon["SMILE_O"] = "<i class=\"fa fa-smile-o\"></i>";
     Icon["SNAPCHAT"] = "<i class=\"fa fa-snapchat\"></i>";
@@ -3063,28 +1794,1536 @@ var Icon;
     Icon["YOUTUBE_PLAY"] = "<i class=\"fa fa-youtube-play\"></i>";
     Icon["YOUTUBE_SQUARE"] = "<i class=\"fa fa-youtube-square\"></i>";
 })(Icon || (Icon = {}));
-var LayersPanelUIControl = (function (_super) {
-    __extends(LayersPanelUIControl, _super);
-    function LayersPanelUIControl(c) {
-        var _this = _super.call(this, c) || this;
+var Mode;
+(function (Mode) {
+    Mode[Mode["Mode2D"] = 0] = "Mode2D";
+    Mode[Mode["Mode3D"] = 1] = "Mode3D";
+})(Mode || (Mode = {}));
+var Spinner = (function (_super) {
+    __extends(Spinner, _super);
+    function Spinner(container) {
+        var _this = _super.call(this, container) || this;
+        _this.bar = document.createElement(Constants.DIV);
+        _this.bar.style.zIndex = '1000';
+        _this.bar.style.border = Spinner.border + Constants.PX + ' ' + Constants.SOLID + ' ' + Color.LIGHT_GRAY.toHex();
+        _this.bar.style.borderTop = Spinner.border + Constants.PX + ' ' + Constants.SOLID + ' ' + Color.DARK_GRAY.toHex();
+        _this.bar.style.borderRadius = Spinner.borderRadius;
+        _this.bar.style.width = Spinner.size + Constants.PX;
+        _this.bar.style.height = Spinner.size + Constants.PX;
+        _this.bar.style.animation = Spinner.animation;
+        _this.bar.style.position = Constants.ABSOLUTE;
+        var offset = Spinner.size / 2;
+        _this.bar.style.left = (container.clientWidth / 2 - offset) + Constants.PX;
+        _this.bar.style.top = (container.clientHeight / 2 - offset) + Constants.PX;
+        _this.container.appendChild(_this.bar);
+        _this.style = document.createElement(Constants.STYLE);
+        _this.style.type = Constants.TEXT_CSS;
+        _this.style.innerHTML = Spinner.keyframes;
+        document.body.appendChild(_this.style);
+        _this.hide();
+        return _this;
+    }
+    Spinner.prototype.getElement = function () {
+        return this.bar;
+    };
+    Spinner.size = 64;
+    Spinner.border = 6;
+    Spinner.speed = 1;
+    Spinner.keyframes = "@keyframes spin {0% { transform: rotate(0deg); }100% { transform: rotate(360deg); }}";
+    Spinner.animation = "spin " + Spinner.speed + "s linear infinite";
+    Spinner.borderRadius = "50%";
+    return Spinner;
+}(View));
+var Utils = (function () {
+    function Utils() {
+    }
+    Utils.logMethodName = function () {
+        if (Constructor.settings.debug) {
+            var obj = { stack: "" };
+            var message_1 = "";
+            Error.captureStackTrace(obj, this.logMethodName);
+            var first_1 = true;
+            obj.stack.split("\n").forEach(function (line) {
+                if (line.includes("Constructor.") || line.includes("Side2D.") || line.includes("Element2D.")) {
+                    line.split(" ").forEach(function (part) {
+                        if (part.startsWith("Constructor.") || part.startsWith("Side2D.") || part.startsWith("Element2D.")) {
+                            if (!first_1) {
+                                message_1 += "< " + part + "\n";
+                            }
+                            else {
+                                message_1 += part + "\n";
+                                first_1 = false;
+                            }
+                        }
+                    });
+                }
+            });
+            if (message_1 != "") {
+                message_1 = '-----------------------------------------------\n'
+                    + message_1
+                    + '-----------------------------------------------\n';
+                console.log(message_1);
+            }
+        }
+    };
+    Utils.randomInt = function (floor) {
+        return Math.floor(Math.random() * floor);
+    };
+    Utils.loadJSON = function (url, callback) {
+        var request = new XMLHttpRequest();
+        request.overrideMimeType(Constants.APPLICATION_JSON);
+        request.open(Constants.GET, url, true);
+        request.onreadystatechange = function () {
+            if (request.readyState == 4 && request.status == 200) {
+                callback(request.responseText);
+            }
+        };
+        request.send(null);
+    };
+    Utils.arrayMove = function (arr, from, to) {
+        var element = arr[from];
+        arr.splice(from, 1);
+        arr.splice(to, 0, element);
+    };
+    Utils.arrayMoveToStart = function (arr, from) {
+        this.arrayMove(arr, from, 0);
+    };
+    Utils.arrayMoveToEnd = function (arr, from) {
+        this.arrayMove(arr, from, arr.length - 1);
+    };
+    Utils.div = function (innerText) {
+        var div = document.createElement(Constants.DIV);
+        if (innerText) {
+            div.innerText = innerText;
+        }
+        return div;
+    };
+    Utils.input = function () {
+        return document.createElement(Constants.INPUT);
+    };
+    Utils.isFullscreen = function () {
+        return window.innerWidth == screen.width && window.innerHeight == screen.height;
+    };
+    return Utils;
+}());
+var Dimensions = (function () {
+    function Dimensions(width, height) {
+        this.width = width;
+        this.height = height;
+    }
+    return Dimensions;
+}());
+var Element2D = (function (_super) {
+    __extends(Element2D, _super);
+    function Element2D(type, side) {
+        var _this = _super.call(this) || this;
+        _this.type = type;
+        _this.side = side;
+        if (type === ElementType.IMAGE) {
+            _this.object = new type.nativeType();
+        }
+        else {
+            var defaults = Constructor.settings.elementDefaults[type.getNativeTypeName()];
+            type.nativeType.fromObject(defaults, function (native) {
+                _this.object = native;
+                _this.setOptions(_this.object);
+                if (_this.side && _this.side.canvas) {
+                    _this.object.dirty = true;
+                    Constructor.instance.getActiveSide().canvas.requestRenderAll();
+                }
+                if (Constructor.instance.preview) {
+                    Constructor.instance.preview.render();
+                }
+            });
+        }
+        _this.setOptions(_this.object);
+        return _this;
+    }
+    Element2D.prototype.setOptions = function (object) {
+        var _this = this;
+        if (!object) {
+            return;
+        }
+        object.on(Constants.ADDED, function () {
+            _this.calculateGuides();
+        });
+        object.on(Constants.MODIFIED, function () {
+            _this.calculateGuides();
+            _this.changed();
+        });
+        object.on(Constants.SCALING, function (e) {
+        });
+        object.on(Constants.MOVING, function () {
+            _this.fitIntoMargins();
+            _this.snapPosition();
+        });
+        object.on(Constants.ROTATING, function () { return _this.snapRotation(); });
+        object.on(Constants.SELECTED, function () {
+            _this.side.selection = _this;
+            Constructor.instance.onSelectHandler((_this));
+            _this.changed();
+        });
+        object.on(Constants.DESELECTED, function () {
+            Constructor.instance.onDeselectHandler((_this));
+            _this.side.selection = null;
+            _this.changed();
+        });
+        object.on(Constants.REMOVED, function () {
+            _this.side.selection = null;
+        });
+        object.setOptions(Element2D.commonDefaults);
+    };
+    Element2D.prototype.randomizePosition = function () {
+        var width = this.side.canvas.getWidth();
+        var height = this.side.canvas.getHeight();
+        var w = Math.max((width / 2) * Math.random(), width * 0.1);
+        var h = Math.max((height / 2) * Math.random(), height * 0.1);
+        this.object.left = (width - w) * Math.random() + w / 2;
+        this.object.top = (height - h) * Math.random() + h / 2;
+        this.fitIntoMargins();
+        this.object.setCoords();
+        this.side.canvas.renderAll();
+    };
+    Element2D.prototype.offset = function () {
+        this.object.left = this.object.left + Constructor.settings.duplicateOffset;
+        this.object.top = this.object.top + Constructor.settings.duplicateOffset;
+        this.object.setCoords();
+        this.side.canvas.renderAll();
+    };
+    Element2D.prototype.getColor = function () {
+        return new Color(this.object.fill);
+    };
+    Element2D.prototype.setColor = function (value) {
+        if (this.type != ElementType.IMAGE) {
+            if (typeof value === Constants.STRING)
+                value = new Color(value);
+            var color = value;
+            this.object.fill = color.toRgba();
+            this.object.dirty = true;
+            this.side.canvas.renderAll();
+            setTimeout(function () {
+                Constructor.instance.getActiveSide().canvas.renderAll();
+            }, 100);
+            this.side.saveState();
+        }
+    };
+    Element2D.prototype.getAlpha = function () {
+        return this.object.opacity;
+    };
+    Element2D.prototype.setAlpha = function (value) {
+        this.object.opacity = value;
+        this.side.saveState();
+        this.side.canvas.renderAll();
+    };
+    Element2D.prototype.setShadow = function (value) {
+        if (value && value != 0) {
+            var options = {
+                color: Color.TRANSPARENT_BLACK.toRgba(),
+                includeDefaultValues: true
+            };
+            this.object.setShadow(new fabric.Shadow(options));
+            var shadow = this.object.shadow;
+            shadow.offsetX = value;
+            shadow.offsetY = value;
+            shadow.blur = value;
+        }
+        else {
+            this.object.setShadow(null);
+        }
+        this.side.saveState();
+        this.side.canvas.renderAll();
+    };
+    Element2D.prototype.getShadow = function () {
+        var shadow = this.object.shadow;
+        return shadow ? shadow.offsetX : 0;
+    };
+    Element2D.prototype.setPosition = function (left, top) {
+        this.object.left = left;
+        this.object.top = top;
+        this.object.setCoords();
+        this.object.dirty = true;
+        this.side.canvas.requestRenderAll();
+        this.side.saveState();
+    };
+    Element2D.prototype.setFontFamily = function (fontFamily, repeat) {
+        if (this.type === ElementType.TEXT) {
+            fabric.charWidthsCache[fontFamily] = {};
+            var object = this.object;
+            object.fontFamily = fontFamily;
+            this.object.dirty = true;
+            this.side.canvas.requestRenderAll();
+        }
+    };
+    Element2D.prototype.getText = function () {
+        return this.type === ElementType.TEXT
+            ? this.object.text
+            : null;
+    };
+    Element2D.prototype.setText = function (value) {
+        if (this.type === ElementType.TEXT) {
+            this.object.text = value;
+            this.side.canvas.renderAll();
+        }
+    };
+    Element2D.prototype.getFontFamily = function () {
+        return this.type === ElementType.TEXT ? this.object.fontFamily : null;
+    };
+    Element2D.prototype.setFontSize = function (value) {
+        if (this.type === ElementType.TEXT) {
+            this.object.fontSize = value;
+            this.object.dirty = true;
+            this.side.canvas.requestRenderAll();
+            this.side.saveState();
+        }
+    };
+    Element2D.prototype.getFontSize = function () {
+        return this.type === ElementType.TEXT ? this.object.fontSize : null;
+    };
+    Element2D.prototype.setItalic = function (value) {
+        if (this.type === ElementType.TEXT) {
+            this.object.fontStyle = value ? Constants.ITALIC : Constants.NORMAL;
+            this.object.dirty = true;
+            this.side.canvas.requestRenderAll();
+            this.side.saveState();
+        }
+    };
+    Element2D.prototype.isItalic = function () {
+        return this.type === ElementType.TEXT ? this.object.fontStyle === Constants.ITALIC : null;
+    };
+    Element2D.prototype.setBold = function (value) {
+        if (this.type === ElementType.TEXT) {
+            this.object.fontWeight = value ? Constants.BOLD : Constants.NORMAL;
+            this.side.canvas.renderAll();
+            this.side.saveState();
+        }
+    };
+    Element2D.prototype.isBold = function () {
+        return this.type === ElementType.TEXT ? this.object.fontWeight === Constants.BOLD : null;
+    };
+    Element2D.prototype.setTextDecoration = function (value) {
+        if (this.type === ElementType.TEXT) {
+            switch (value) {
+                case TextDecoration.LINETHROUGH:
+                    this.object.linethrough = true;
+                    break;
+                case TextDecoration.OVERLINE:
+                    this.object.overline = true;
+                    break;
+                case TextDecoration.UNDERLINE:
+                    this.object.underline = true;
+                    break;
+                default: {
+                    this.object.linethrough = false;
+                    this.object.overline = false;
+                    this.object.underline = false;
+                }
+            }
+            this.side.canvas.requestRenderAll();
+            this.side.canvas.renderAll();
+            this.side.saveState();
+        }
+    };
+    Element2D.prototype.getTextDecoration = function () {
+        if (this.type != ElementType.TEXT) {
+            return null;
+        }
+        if (this.object.underline) {
+            return TextDecoration.UNDERLINE;
+        }
+        if (this.object.overline) {
+            return TextDecoration.OVERLINE;
+        }
+        if (this.object.linethrough) {
+            return TextDecoration.LINETHROUGH;
+        }
+        return null;
+    };
+    Element2D.prototype.setTextAlignment = function (value) {
+        if (this.type === ElementType.TEXT) {
+            this.object.textAlign = value;
+            this.side.canvas.renderAll();
+            this.side.saveState();
+        }
+    };
+    Element2D.prototype.getTextAlignment = function () {
+        return this.type === ElementType.TEXT ? this.object.textAlign : null;
+    };
+    Element2D.prototype.addFilter = function (filter, callback) {
+        if (this.object instanceof fabric.Image) {
+            if (!this.filters)
+                this.filters = [];
+            if (filter.isBoolean) {
+                var index = this.filters.indexOf(filter);
+                if (index != -1) {
+                    this.filters.splice(index, 1);
+                    if (this.filters.length === 0)
+                        this.filters = null;
+                    this.applyFilters(callback);
+                    return;
+                }
+            }
+            this.filters.push(filter);
+            this.applyFilters(callback);
+        }
+    };
+    Element2D.prototype.resetFilters = function (callback) {
+        this.filters = null;
+        if (this.object instanceof fabric.Image) {
+            this.object.filters = [];
+            this.applyFilters(callback);
+        }
+    };
+    Element2D.prototype.applyFilters = function (callback) {
+        var image = this.object;
+        image.filters = [];
+        if (this.filters) {
+            for (var _i = 0, _a = this.filters; _i < _a.length; _i++) {
+                var filter = _a[_i];
+                image.filters.push(filter.getFilter());
+            }
+        }
+        this.side.saveState();
+        image.applyFilters();
+        this.side.canvas.renderAll();
+        if (callback)
+            callback(this);
+    };
+    Element2D.prototype.snapRotation = function () {
+        var angle = this.object.angle;
+        angle = Math.round(angle / Constructor.settings.rotationStep) * Constructor.settings.rotationStep;
+        this.object.rotate(angle);
+    };
+    Element2D.prototype.toggleLock = function () {
+        this.setLocked(!this.isLocked());
+    };
+    Element2D.prototype.setLocked = function (locked) {
+        this.object.lockScalingX
+            = this.object.lockScalingY
+                = this.object.lockRotation
+                    = this.object.lockMovementX
+                        = this.object.lockMovementY
+                            = locked;
+    };
+    Element2D.prototype.isLocked = function () {
+        return this.object && this.object.lockScalingX;
+    };
+    Element2D.prototype.toFront = function () {
+        this.side.canvas.bringToFront(this.object);
+        Utils.arrayMoveToEnd(this.side.elements, this.getIndex());
+        this.side.horizontalGuide.sendToBack();
+        this.side.verticalGuide.sendToBack();
+        this.side.deselect();
+        this.side.saveState();
+    };
+    Element2D.prototype.toBack = function () {
+        this.side.canvas.sendToBack(this.object);
+        Utils.arrayMoveToStart(this.side.elements, this.getIndex());
+        this.side.horizontalGuide.sendToBack();
+        this.side.verticalGuide.sendToBack();
+        this.side.deselect();
+        this.side.saveState();
+    };
+    Element2D.prototype.bringDown = function () {
+        this.shiftLayer(-1);
+    };
+    Element2D.prototype.bringUp = function () {
+        this.shiftLayer(1);
+    };
+    Element2D.prototype.shiftLayer = function (delta) {
+        var index = this.getIndex() + delta;
+        if (index < 0) {
+            index = 0;
+        }
+        else if (index > this.side.getLayers().length - 1) {
+            index = this.side.getLayers().length - 1;
+        }
+        this.toLayerInternal(index);
+    };
+    Element2D.prototype.toLayer = function (index) {
+        this.toLayerInternal(this.side.getLayers().length - index - 1);
+    };
+    Element2D.prototype.toLayerInternal = function (index) {
+        this.side.canvas.moveTo(this.object, index + 2);
+        this.side.horizontalGuide.sendToBack();
+        this.side.verticalGuide.sendToBack();
+        Utils.arrayMove(this.side.elements, this.getIndex(), index);
+        this.side.deselect();
+        this.side.canvas.renderAll();
+    };
+    Element2D.prototype.isVisible = function () {
+        return this.object && this.object.visible == true;
+    };
+    Element2D.prototype.isSelected = function () {
+        return Constructor.instance.getSelection() == this;
+    };
+    Element2D.prototype.toggleVisibility = function () {
+        this.isVisible() ? this.hide() : this.show();
+    };
+    Element2D.prototype.hide = function () {
+        this.object.visible = false;
+        this.object.selectable = false;
+        this.side.deselect();
+        this.side.canvas.renderAll();
+        this.side.saveState();
+    };
+    Element2D.prototype.show = function () {
+        this.object.selectable = true;
+        this.side.deselect();
+        this.side.canvas.renderAll();
+        this.object.visible = true;
+        this.side.saveState();
+    };
+    Element2D.prototype.toDataURL = function (size) {
+        if (!size) {
+            return this.object.toDataURL({});
+        }
+        var maxSize = Math.max(this.object.width * this.object.scaleX, this.object.height * this.object.scaleY);
+        var multiplier = size / maxSize;
+        return this.object.toDataURL({ multiplier: multiplier });
+    };
+    Element2D.prototype.clone = function () {
+        var object = fabric.util.object.clone(this.object);
+        var element = new Element2D(this.type, this.side);
+        element.object = object;
+        return element;
+    };
+    Element2D.prototype.remove = function () {
+        this.side.remove(this);
+    };
+    Element2D.prototype.calculateGuides = function () {
+        if (this.side) {
+            this.object.setCoords();
+            var w = this.object.getBoundingRect().width / this.side.getZoom();
+            var h = this.object.getBoundingRect().height / this.side.getZoom();
+            var l = this.object.left - w / 2;
+            var t = this.object.top - h / 2;
+            this.horizontalGuides = [l + w / 2, l, l + w];
+            this.verticalGuides = [t + h / 2, t, t + h];
+        }
+    };
+    Element2D.getSnapOffset = function (source, target) {
+        var minDelta = Constructor.settings.snapSize;
+        var snapOffset;
+        for (var _i = 0, source_1 = source; _i < source_1.length; _i++) {
+            var a = source_1[_i];
+            for (var _a = 0, target_1 = target; _a < target_1.length; _a++) {
+                var b = target_1[_a];
+                var delta = Math.abs(b - a);
+                if (delta < minDelta) {
+                    minDelta = delta;
+                    var i = (target.indexOf(b) - 1);
+                    if (i == -1)
+                        i = 0;
+                    else if (i == 0)
+                        i = -1;
+                    var d = i * (target[0] - target[1]);
+                    snapOffset = new SnapOffset(a, a - d);
+                }
+            }
+        }
+        return snapOffset;
+    };
+    Element2D.prototype.getHorizontalSnapPosition = function (element) {
+        return Element2D.getSnapOffset(element.horizontalGuides, this.horizontalGuides);
+    };
+    Element2D.prototype.getVerticalSnapPosition = function (element) {
+        return Element2D.getSnapOffset(element.verticalGuides, this.verticalGuides);
+    };
+    Element2D.prototype.fitIntoMargins = function () {
+        if (Constructor.settings.fitIntoMargins) {
+            var rect = this.object.getBoundingRect();
+            var w = rect.width / 2;
+            var h = rect.height / 2;
+            var x = (this.side.canvas.getWidth() / this.side.getZoom() - w);
+            var y = (this.side.canvas.getHeight() / this.side.getZoom() - h);
+            if (this.object.left < w) {
+                this.object.left = w;
+            }
+            else if (this.object.left > x) {
+                this.object.left = x;
+            }
+            if (this.object.top < h) {
+                this.object.top = h;
+            }
+            else if (this.object.top > y) {
+                this.object.top = y;
+            }
+        }
+    };
+    Element2D.prototype.snapPosition = function () {
+        if (Constructor.instance.snapToObjects) {
+            this.calculateGuides();
+            this.side.hideGuides();
+            var xUpdated = false;
+            var yUpdated = false;
+            for (var _i = 0, _a = this.side.elements; _i < _a.length; _i++) {
+                var element = _a[_i];
+                if (element === this)
+                    continue;
+                if (!xUpdated) {
+                    var x = this.getHorizontalSnapPosition(element);
+                    if (x != null) {
+                        this.object.left = x.objectPosition;
+                        this.side.horizontalGuide.update(x.guidePosition);
+                        xUpdated = true;
+                    }
+                }
+                if (!yUpdated) {
+                    var y = this.getVerticalSnapPosition(element);
+                    if (y != null) {
+                        this.object.top = y.objectPosition;
+                        this.side.verticalGuide.update(y.guidePosition);
+                        yUpdated = true;
+                    }
+                }
+                if (xUpdated && yUpdated)
+                    return;
+            }
+        }
+        if (Constructor.instance.snapToGrid) {
+            var gridSize = Constructor.settings.gridSize;
+            this.object.left = Math.round(this.object.left / gridSize) * gridSize;
+            this.object.top = Math.round(this.object.top / gridSize) * gridSize;
+        }
+    };
+    Element2D.prototype.snapTransform = function (e) {
+        var mouseEvent = (e.e);
+        this.calculateGuides();
+        this.side.hideGuides();
+        var xUpdated = false;
+        var yUpdated = false;
+        for (var _i = 0, _a = this.side.elements; _i < _a.length; _i++) {
+            var element = _a[_i];
+            if (element === this)
+                continue;
+            if (!xUpdated) {
+                var x = this.getHorizontalSnapPosition(element);
+                if (x != null) {
+                    var dx = x.objectPosition - mouseEvent.clientX;
+                    this.object.width = this.object.width + dx / 2;
+                    this.object.left = this.object.left - dx / 2;
+                    this.object.setCoords();
+                    this.side.horizontalGuide.update(x.guidePosition);
+                    xUpdated = true;
+                }
+            }
+            if (xUpdated && yUpdated)
+                return;
+        }
+    };
+    Element2D.prototype.getIndex = function () {
+        return this.side.elements.indexOf(this);
+    };
+    Element2D.prototype.getLayerIndex = function () {
+        return this.side.getLayers().indexOf(this);
+    };
+    Element2D.prototype.serialize = function () {
+        return new ObjectOptions(this);
+    };
+    Element2D.prototype.deserialize = function (object) {
+        var type = ElementType.get(object.type);
+        var element = new Element2D(type);
+        var filters = object.filters;
+        if (filters && filters.length > 0) {
+            element.filtersCache = object.filters;
+            delete object.filters;
+        }
+        element.object.setOptions(object.toObject());
+        if (type === ElementType.IMAGE) {
+            var image = element.object;
+        }
+        if (type === ElementType.TEXT && element.object['text']) {
+            var o = element.object;
+            o.text = o.text.split("<br>").join("\n");
+        }
+        element.setOptions(element.object);
+        return element;
+    };
+    Element2D.commonDefaults = {
+        hasBorders: false,
+        cornerColor: Color.TRANSPARENT_BLACK.toRgba(),
+        transparentCorners: false,
+        cornerSize: 8 * window.devicePixelRatio,
+        originX: Constants.CENTER,
+        originY: Constants.CENTER,
+        rotatingPointOffset: 30 * window.devicePixelRatio
+    };
+    return Element2D;
+}(Trigger));
+var ElementType = (function (_super) {
+    __extends(ElementType, _super);
+    function ElementType(nativeType) {
+        var _this = _super.call(this, nativeType.prototype.type) || this;
+        _this.nativeType = nativeType;
+        return _this;
+    }
+    ElementType.prototype.getNativeTypeName = function () {
+        return this.nativeType.prototype.type;
+    };
+    ElementType.CIRCLE = new ElementType(fabric.Circle);
+    ElementType.RECTANGLE = new ElementType(fabric.Rect);
+    ElementType.TRIANGLE = new ElementType(fabric.Triangle);
+    ElementType.TEXT = new ElementType(fabric.IText);
+    ElementType.IMAGE = new ElementType(fabric.Image);
+    return ElementType;
+}(Associated));
+var Filter = (function (_super) {
+    __extends(Filter, _super);
+    function Filter(name, filter, isBoolean) {
+        var _this = _super.call(this, name) || this;
+        _this.nativeFilter = filter;
+        _this.isBoolean = isBoolean;
+        return _this;
+    }
+    Filter.prototype.getFilter = function () {
+        return this.nativeFilter;
+    };
+    Filter.GRAYSCALE = new Filter("grayscale", new fabric.Image.filters.Grayscale(), true);
+    Filter.INVERT = new Filter("invert", new fabric.Image.filters.Invert(), true);
+    Filter.BRIGHTNESS = new Filter("brightness", new fabric.Image.filters.Brightness({ brightness: 0.1 }));
+    Filter.BLUR = new Filter("blur", new fabric.Image.filters.Convolute({
+        matrix: [
+            1 / 9, 1 / 9, 1 / 9,
+            1 / 9, 1 / 9, 1 / 9,
+            1 / 9, 1 / 9, 1 / 9
+        ]
+    }));
+    Filter.SHARPEN = new Filter("sharpen", new fabric.Image.filters.Convolute({
+        matrix: [
+            0, -1, 0,
+            -1, 5, -1,
+            0, -1, 0
+        ]
+    }));
+    Filter.EMBOSS = new Filter("emboss", new fabric.Image.filters.Convolute({
+        matrix: [
+            1, 1, 1,
+            1, 0.7, -1,
+            -1, -1, -1
+        ]
+    }));
+    return Filter;
+}(Associated));
+var Guide = (function (_super) {
+    __extends(Guide, _super);
+    function Guide() {
+        var _this = _super.call(this, [0, 0, 0, 0], Guide.DEFAULTS) || this;
+        _this.dirty = true;
+        return _this;
+    }
+    Guide.prototype.show = function () {
+        this.stroke = Color.GUIDE.toRgba();
+        this.bringToFront();
+        this.dirty = true;
+    };
+    Guide.prototype.hide = function () {
+        this.stroke = Color.TRANSPARENT.toRgba();
+        this.dirty = true;
+    };
+    Guide.DEFAULTS = {
+        left: 0,
+        top: 0,
+        stroke: Color.GUIDE.toRgba(),
+        selectable: false,
+        width: 1
+    };
+    return Guide;
+}(fabric.Line));
+var HorizontalGuide = (function (_super) {
+    __extends(HorizontalGuide, _super);
+    function HorizontalGuide(h) {
+        var _this = _super.call(this) || this;
+        _this.height = h;
+        return _this;
+    }
+    HorizontalGuide.prototype.update = function (x) {
+        this.left = x;
+        this.show();
+    };
+    return HorizontalGuide;
+}(Guide));
+var ImageType;
+(function (ImageType) {
+    ImageType["PNG"] = "image/png";
+    ImageType["JPG"] = "image/jpeg";
+    ImageType["GIF"] = "image/gif";
+    ImageType["SVG"] = "image/svg+xml";
+})(ImageType || (ImageType = {}));
+var ObjectOptions = (function () {
+    function ObjectOptions(element) {
+        if (element) {
+            var object = element.object.toJSON();
+            var excludedOptions = ObjectOptions.excludedNativeOptions[element.object.type];
+            for (var _i = 0, _a = ObjectOptions.nativeOptions; _i < _a.length; _i++) {
+                var property = _a[_i];
+                if (object[property] && (!excludedOptions || !excludedOptions[property])) {
+                    this[property] = object[property];
+                    if (property === "text") {
+                        this[property] = this[property].split("\n").join("<br>");
+                    }
+                }
+            }
+            if (element.filters && element.filters.length > 0) {
+                this.filters = [];
+                for (var _b = 0, _c = element.filters; _b < _c.length; _b++) {
+                    var filter = _c[_b];
+                    this.filters.push(filter.getName());
+                }
+            }
+            else if (element.filtersCache && element.filtersCache.length) {
+                this.filters = element.filtersCache;
+            }
+        }
+    }
+    ObjectOptions.fromObject = function (value) {
+        var object = new ObjectOptions();
+        for (var _i = 0, _a = ObjectOptions.nativeOptions; _i < _a.length; _i++) {
+            var property = _a[_i];
+            if (value[property])
+                object[property] = value[property];
+        }
+        return object;
+    };
+    ObjectOptions.prototype.toObject = function () {
+        var options = {};
+        for (var _i = 0, _a = ObjectOptions.nativeOptions; _i < _a.length; _i++) {
+            var property = _a[_i];
+            if (this[property])
+                options[property] = this[property];
+        }
+        if (this.filters)
+            options.filters = this.filters;
+        return options;
+    };
+    ObjectOptions.prototype.equals = function (object) {
+        var objectOptions = Object.getOwnPropertyNames(object);
+        var options = Object.getOwnPropertyNames(this);
+        if (objectOptions.length != options.length) {
+            return false;
+        }
+        for (var i = 0; i < options.length; i++) {
+            var a = options[i];
+            var b = objectOptions[i];
+            if (this[a] != object[a]) {
+                return false;
+            }
+            if (a != b && this[b] != object[b]) {
+                return false;
+            }
+        }
+        return true;
+    };
+    ObjectOptions.nativeOptions = [
+        "angle",
+        "fill",
+        "flipX",
+        "flipY",
+        "fontFamily",
+        "filters",
+        "fontSize",
+        "fontStyle",
+        "fontWeight",
+        "height",
+        "left",
+        "lineHeight",
+        "opacity",
+        "radius",
+        "scaleX",
+        "scaleY",
+        "shadow",
+        "src",
+        "text",
+        "textAlign",
+        "textBackgroundColor",
+        'underline',
+        'overline',
+        'linethrough',
+        "top",
+        "transformMatrix",
+        "type",
+        "width"
+    ];
+    ObjectOptions.excludedNativeOptions = {
+        "image": [
+            "fill"
+        ]
+    };
+    return ObjectOptions;
+}());
+var Side2DStateObjects = (function () {
+    function Side2DStateObjects(side) {
+        this.objects = [];
+        if (side) {
+            for (var _i = 0, _a = side.elements; _i < _a.length; _i++) {
+                var element = _a[_i];
+                this.objects.push(element.serialize());
+            }
+        }
+    }
+    Side2DStateObjects.parse = function (json) {
+        var objects = new Side2DStateObjects();
+        var rawObjects = JSON.parse(json).objects;
+        for (var _i = 0, rawObjects_1 = rawObjects; _i < rawObjects_1.length; _i++) {
+            var rawObject = rawObjects_1[_i];
+            var objectOptions = ObjectOptions.fromObject(rawObject);
+            objects.objects.push(objectOptions);
+        }
+        return objects;
+    };
+    Side2DStateObjects.prototype.equals = function (state) {
+        if (state.objects.length != this.objects.length) {
+            return false;
+        }
+        for (var i = 0; i < this.objects.length; i++) {
+            var a = this.objects[i];
+            var b = state.objects[i];
+            if (!a.equals(b))
+                return false;
+        }
+        return true;
+    };
+    return Side2DStateObjects;
+}());
+var Side2DState = (function (_super) {
+    __extends(Side2DState, _super);
+    function Side2DState(side) {
+        var _this = _super.call(this, side) || this;
+        _this.width = side.width;
+        _this.height = side.height;
+        _this.roundCorners = side.roundCorners;
+        return _this;
+    }
+    Side2DState.prototype.equals = function (state) {
+        if (this.width != state.width || this.height != state.height || this.roundCorners != state.roundCorners) {
+            return false;
+        }
+        return _super.prototype.equals.call(this, state);
+    };
+    return Side2DState;
+}(Side2DStateObjects));
+var Side2D = (function (_super) {
+    __extends(Side2D, _super);
+    function Side2D(htmlElement, width, height, roundCorners) {
+        var _this = _super.call(this, htmlElement) || this;
+        _this.elements = [];
+        _this.history = new HistoryList(new Side2DState(_this));
+        _this.width = width;
+        _this.height = height;
+        _this.canvasElement = document.createElement(Constants.CANVAS);
+        _this.container.appendChild(_this.canvasElement);
+        _this.canvas = new fabric.Canvas(_this.canvasElement, null);
+        _this.canvasElement.style.background = Constructor.instance.background;
+        _this.canvas.setWidth(width);
+        _this.canvas.setHeight(height);
+        _this.canvas.selection = false;
+        _this.canvas.on(Constants.MOUSE_UP, function () {
+            _this.hideGuides();
+            _this.saveState();
+        });
+        _this.canvas.on(Constants.SELECTION_CLEARED, function () {
+            _this.selection = null;
+            _this.changed();
+            Constructor.instance.changed();
+        });
+        _this.canvas.on(Constants.SELECTION_UPDATED, function () {
+            _this.changed();
+            Constructor.instance.changed();
+        });
+        _this.canvas.on(Constants.SELECTION_CREATED, function () {
+            _this.changed();
+            Constructor.instance.changed();
+        });
+        _this.canvas.on(Constants.AFTER_RENDER, function () {
+            Constructor.instance.onElementModificationHandler && Constructor.instance.onElementModificationHandler();
+        });
+        _this.horizontalGuide = new HorizontalGuide(height);
+        _this.verticalGuide = new VerticalGuide(width);
+        _this.canvas.add(_this.horizontalGuide);
+        _this.canvas.add(_this.verticalGuide);
+        _this.setZoom(1);
+        _this.hideGuides();
+        _this.hide();
+        _this.needsHistoryUpdate = false;
+        _this.roundCorners = roundCorners;
+        if (roundCorners)
+            _this.setRoundCorners();
+        _this.canvasElement.style.border = Constants.LINE_STYLE_PREFIX + Color.GRAY.toHex();
+        return _this;
+    }
+    Side2D.prototype.setRoundCorners = function () {
+        var smallestSide = Math.min(this.canvasElement.width, this.canvasElement.height);
+        this.canvasElement.style.borderRadius = smallestSide / 2 * this.roundCorners / 100 + Constants.PX;
+    };
+    Side2D.prototype.centerPosition = function () {
+        var canvasContainer = this.canvasElement.parentElement;
+        var dw = this.container.clientWidth - canvasContainer.clientWidth;
+        var dh = this.container.clientHeight - canvasContainer.clientHeight;
+        this.setRoundCorners();
+    };
+    Side2D.prototype.setZoom = function (value) {
+        if (value >= Side2D.maxZoom && value <= Side2D.minZoom)
+            return;
+        this.canvas.setZoom(value);
+        this.canvas.setWidth(this.width * value);
+        this.canvas.setHeight(this.height * value);
+        this.canvas.renderAll();
+    };
+    Side2D.prototype.getZoom = function () {
+        return this.canvas ? this.canvas.getZoom() : 1;
+    };
+    Side2D.prototype.resetZoom = function () {
+        this.canvas.setZoom(1);
+        this.canvas.setWidth(this.width);
+        this.canvas.setHeight(this.height);
+        this.canvas.renderAll();
+        this.centerPosition();
+    };
+    Side2D.prototype.zoomToFit = function () {
+        var value = Math.min(this.container.clientWidth / this.width, this.container.clientHeight / this.height);
+        value *= 0.8;
+        this.setZoom(value);
+    };
+    Side2D.prototype.getRatio = function () {
+        return this.width / this.height;
+    };
+    Side2D.prototype.getElement = function () {
+        return this.canvas.getElement().parentElement;
+    };
+    Side2D.prototype.getIndex = function () {
+        return Constructor.instance.sides.indexOf(this);
+    };
+    Side2D.prototype.fixElementPosition = function (element) {
+        if (!element.object.isOnScreen(true)) {
+            this.resetElementPosition(element);
+        }
+    };
+    Side2D.prototype.resetElementPosition = function (element) {
+        element.object.left = this.width / 2;
+        element.object.top = this.height / 2;
+    };
+    Side2D.prototype.add = function (element) {
+        var _this = this;
+        Utils.logMethodName();
+        element.side = this;
+        this.elements.push(element);
+        this.canvas.add(element.object);
+        setTimeout(function () { return _this.fixElementPosition(element); }, 200);
+        element.fitIntoMargins();
+        element.object.setCoords();
+        this.canvas.requestRenderAll();
+        setTimeout(function () { return _this.canvas.renderAll(); }, null);
+        this.changed();
+        return element;
+    };
+    Side2D.prototype.addElement = function (type) {
+        Utils.logMethodName();
+        return this.add(new Element2D(type, this));
+    };
+    Side2D.prototype.getLayers = function () {
+        var layers = [];
+        for (var i = 0; i < this.elements.length; i++) {
+            layers.unshift(this.elements[i]);
+        }
+        return layers;
+    };
+    Side2D.prototype.moveLayer = function (from, to) {
+        var element = this.getLayers()[from];
+        element.toLayer(to);
+        this.changed();
+    };
+    Side2D.prototype.remove = function (element) {
+        this.canvas.remove(element.object);
+        this.elements.splice(this.elements.indexOf(element), 1);
+        this.deselect();
+        this.canvas.renderAll();
+        this.changed();
+    };
+    Side2D.prototype.getPointSize = function () {
+        return 96 / 72 * this.getZoom();
+    };
+    Side2D.prototype.getInchSize = function () {
+        return 72 * this.getPointSize();
+    };
+    Side2D.prototype.getCentimeterSize = function () {
+        return this.getInchSize() / 2.54;
+    };
+    Side2D.prototype.getMillimeterSize = function () {
+        return this.getCentimeterSize() / 10;
+    };
+    Side2D.prototype.select = function (element) {
+        this.deselect();
+        this.selection = element;
+        this.canvas.setActiveObject(element.object);
+        this.canvas.renderAll();
+        return element;
+    };
+    Side2D.prototype.deselect = function () {
+        this.selection = null;
+        this.canvas.discardActiveObject();
+        this.canvas.renderAll();
+    };
+    Side2D.prototype.hideGuides = function () {
+        this.horizontalGuide.hide();
+        this.verticalGuide.hide();
+        this.canvas.renderAll();
+    };
+    Side2D.prototype.serialize = function () {
+        return new Side2DState(this);
+    };
+    Side2D.prototype.deserialize = function (state) {
+        var side = new Side2D(Constructor.instance.getElement(), state.width, state.height, state.roundCorners);
+        if (state.objects) {
+            var json = '{"objects":' + JSON.stringify(state.objects) + '}';
+            var objects = Side2DStateObjects.parse(json);
+            side.setState(objects);
+        }
+        return side;
+    };
+    Side2D.prototype.clear = function () {
+        Utils.logMethodName();
+        this.elements = [];
+        this.selection = null;
+        this.canvas.clear();
+        this.canvas.add(this.horizontalGuide);
+        this.canvas.add(this.verticalGuide);
+        this.changed();
+    };
+    Side2D.prototype.removeElements = function () {
+        Utils.logMethodName();
+        while (this.elements.length) {
+            this.elements[0].remove();
+        }
+        this.saveState();
+    };
+    Side2D.prototype.addImageFromObjectOptions = function (objectOptions) {
+        var _this = this;
+        Utils.logMethodName();
+        var object = objectOptions.toObject();
+        var side = this;
+        fabric.Image.fromObject(object, function (image) {
+            if (image === null) {
+                return;
+            }
+            var element = new Element2D(ElementType.IMAGE);
+            element.side = _this;
+            element.object = image;
+            element.setOptions(element.object);
+            side.add(element);
+            if (objectOptions.filters) {
+                element.filters = [];
+                for (var _i = 0, _a = objectOptions.filters; _i < _a.length; _i++) {
+                    var filterName = _a[_i];
+                    var filter = Filter.get(filterName);
+                    try {
+                        element.addFilter(filter, function () { return element.side.canvas.renderAll(); });
+                    }
+                    catch (e) {
+                        console.error(e.message);
+                    }
+                }
+                element.applyFilters(function (imageElement) {
+                    imageElement.object.dirty = true;
+                    imageElement.side.canvas.requestRenderAll();
+                });
+            }
+        });
+    };
+    Side2D.prototype.setState = function (state) {
+        var _this = this;
+        Utils.logMethodName();
+        this.history.lock();
+        this.clear();
+        var _loop_2 = function (objectOptions) {
+            if (objectOptions.type === 'image') {
+                this_2.addImageFromObjectOptions(objectOptions);
+            }
+            else {
+                var element_1 = Element2D.prototype.deserialize(objectOptions);
+                this_2.add(element_1);
+                element_1.object.dirty = true;
+                if (element_1.type === ElementType.TEXT) {
+                    setTimeout(function () { return element_1.setFontFamily(element_1.getFontFamily()); }, 0);
+                }
+            }
+        };
+        var this_2 = this;
+        for (var _i = 0, _a = state.objects; _i < _a.length; _i++) {
+            var objectOptions = _a[_i];
+            _loop_2(objectOptions);
+        }
+        this.saveToLocalStorage(state);
+        this.canvas.requestRenderAll();
+        setTimeout(function () {
+            _this.history.unlock();
+        }, 50);
+    };
+    Side2D.prototype.getLocalStorageKey = function () {
+        return Constructor.settings.localStorage.keyPrefix + this.getIndex();
+    };
+    Side2D.prototype.saveToLocalStorage = function (state) {
+        if (!this.history.isLocked()) {
+            Utils.logMethodName();
+            localStorage.setItem(this.getLocalStorageKey(), JSON.stringify(state));
+        }
+    };
+    Side2D.prototype.loadFromLocalStorage = function () {
+        if (Constructor.settings.localStorage.enabled && !Constructor.instance.isExplicitlyLoaded) {
+            Utils.logMethodName();
+            var key = this.getLocalStorageKey();
+            var state = localStorage.getItem(key);
+            if (state) {
+                var objects = Side2DStateObjects.parse(state);
+                this.setState(objects);
+            }
+        }
+    };
+    Side2D.prototype.saveState = function () {
+        Utils.logMethodName();
+        var state = new Side2DStateObjects(this);
+        this.history.add(state);
+        this.saveToLocalStorage(state);
+    };
+    Side2D.prototype.undo = function () {
+        var state = this.history.back();
+        if (state)
+            this.setState(state);
+    };
+    Side2D.prototype.redo = function () {
+        var state = this.history.forward();
+        if (state)
+            this.setState(state);
+    };
+    Side2D.prototype.exportImage = function (maxSize, format) {
+        var w = this.canvas.getWidth() / this.getZoom();
+        var h = this.canvas.getHeight() / this.getZoom();
+        var multiplier = maxSize ? maxSize / Math.max(w, h) : 1;
+        if (!format)
+            format = ImageType.PNG;
+        if (format == ImageType.JPG) {
+            this.history.lock();
+            var background = this.addElement(ElementType.RECTANGLE);
+            background.setColor(Color.WHITE);
+            background.object.width = w;
+            background.object.height = h;
+            background.object.left = w / 2;
+            background.object.top = h / 2;
+            background.object.setCoords();
+            background.toBack();
+            this.canvas.renderAll();
+            var src = this.canvas.toDataURL({ format: Constants.JPG, multiplier: multiplier });
+            background.remove();
+            this.canvas.renderAll();
+            this.history.unlock();
+            return src;
+        }
+        if (format == ImageType.SVG) {
+            return this.canvas.toSVG({
+                width: w * multiplier,
+                height: h * multiplier,
+            });
+        }
+        return this.canvas.toDataURL({ format: Constants.PNG, multiplier: multiplier });
+    };
+    Side2D.prototype.getState = function () {
+        return new Side2DState(this);
+    };
+    Side2D.prototype.equals = function (side) {
+        return this.getState().equals(side.getState());
+    };
+    Side2D.prototype.isEmpty = function () {
+        return this.elements.length == 0;
+    };
+    Side2D.maxZoom = 10;
+    Side2D.minZoom = 0.001;
+    return Side2D;
+}(View));
+var SnapOffset = (function () {
+    function SnapOffset(guidePosition, objectPosition) {
+        this.guidePosition = guidePosition;
+        this.objectPosition = objectPosition;
+    }
+    return SnapOffset;
+}());
+var TextAlignment;
+(function (TextAlignment) {
+    TextAlignment["LEFT"] = "left";
+    TextAlignment["CENTER"] = "center";
+    TextAlignment["RIGHT"] = "right";
+    TextAlignment["JUSTIFY"] = "justify";
+})(TextAlignment || (TextAlignment = {}));
+var TextDecoration;
+(function (TextDecoration) {
+    TextDecoration["UNDERLINE"] = "underline";
+    TextDecoration["OVERLINE"] = "overline";
+    TextDecoration["LINETHROUGH"] = "line-through";
+})(TextDecoration || (TextDecoration = {}));
+var VerticalGuide = (function (_super) {
+    __extends(VerticalGuide, _super);
+    function VerticalGuide(w) {
+        var _this = _super.call(this) || this;
+        _this.width = w;
+        return _this;
+    }
+    VerticalGuide.prototype.update = function (y) {
+        this.top = y;
+        this.show();
+    };
+    return VerticalGuide;
+}(Guide));
+var UIControl = (function (_super) {
+    __extends(UIControl, _super);
+    function UIControl(tag) {
+        var _this = _super.call(this, tag ? document.createElement(tag) : Utils.div()) || this;
+        _this.children = [];
+        _this.id = UIControl.nextId++;
+        UIControl.map[_this.id] = _this;
+        _this.c = Constructor.instance;
+        _this.container.className = _this.getClassName();
+        return _this;
+    }
+    UIControl.prototype.getClassName = function () {
+        return "control";
+    };
+    UIControl.prototype.getId = function () {
+        return this.id;
+    };
+    UIControl.prototype.update = function () {
+    };
+    UIControl.prototype.getElement = function () {
+        return this.container;
+    };
+    UIControl.getById = function (id) {
+        return this.map[id];
+    };
+    UIControl.prototype.appendChild = function (control) {
+        console.log("children:", this.children.length);
+        this.children.push(control);
+        this.container.appendChild(control.container);
+        return this;
+    };
+    UIControl.prototype.append = function () {
+        var _this = this;
+        var controls = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            controls[_i] = arguments[_i];
+        }
+        controls.forEach(function (control) { return _this.appendChild(control); });
+        return this;
+    };
+    UIControl.prototype.clear = function () {
+        this.getElement().innerHTML = "";
+        this.children.forEach(function (child) {
+            child.clear();
+            child.container.remove();
+            delete UIControl.map[child.id];
+        });
+        this.children = [];
+    };
+    UIControl.map = {};
+    UIControl.nextId = 0;
+    return UIControl;
+}(View));
+var ToolBar = (function (_super) {
+    __extends(ToolBar, _super);
+    function ToolBar() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    ToolBar.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " toolbar";
+    };
+    ToolBar.prototype.update = function () {
+    };
+    return ToolBar;
+}(UIControl));
+var BottomBar = (function (_super) {
+    __extends(BottomBar, _super);
+    function BottomBar() {
+        var _this = _super.call(this) || this;
         _this.update();
         return _this;
     }
-    LayersPanelUIControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " layers-panel";
+    BottomBar.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " bottom";
     };
-    LayersPanelUIControl.prototype.update = function () {
+    BottomBar.prototype.update = function () {
+        var _this = this;
         this.clear();
-        for (var i = 0; i < this.trigger.sides.length; i++) {
-            var side = this.trigger.sides[i];
-            this.append(new LayersUIControl(side));
+        this.append(new Button(function () {
+            ConstructorUI.instance.toggleClass("collapsed");
+            ConstructorUI.instance.sidePanel.toggleVisibility();
+            ConstructorUI.instance.sideBar.buttons.forEach(function (button) { return button.toggleVisibility(); });
+        }, Icon.BARS), new Spacer(), new Button(function () {
+            _this.c.zoomIn();
+        }, Icon.SEARCH_PLUS), new Button(function () {
+            _this.c.zoomOut();
+        }, Icon.SEARCH_MINUS), new Button(function () {
+            _this.c.zoomToFit();
+        }, Icon.SEARCH), new FullScreenButton(), new Spacer(), new ToggleButton(function () {
+            _this.c.toggleMode();
+            _this.update();
+        }, function () { return _this.c.getMode() == Mode.Mode3D; }, Icon.SQUARE, Icon.CUBE));
+    };
+    return BottomBar;
+}(ToolBar));
+var Button = (function (_super) {
+    __extends(Button, _super);
+    function Button(action, icon) {
+        var _this = _super.call(this) || this;
+        _this.container.innerHTML = icon;
+        _this.container.onclick = function () { return action(); };
+        return _this;
+    }
+    Button.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " button";
+    };
+    Button.prototype.update = function () {
+    };
+    return Button;
+}(UIControl));
+var ConstructorController = (function (_super) {
+    __extends(ConstructorController, _super);
+    function ConstructorController() {
+        var _this = _super.call(this) || this;
+        _this.c = new Constructor(_this.container);
+        _this.c.addElement(ElementType.CIRCLE);
+        _this.c.addElement(ElementType.RECTANGLE);
+        _this.c.addElement(ElementType.TEXT);
+        return _this;
+    }
+    ConstructorController.prototype.getClassName = function () {
+        return "constructor-container";
+    };
+    return ConstructorController;
+}(UIControl));
+var ConstructorUI = (function (_super) {
+    __extends(ConstructorUI, _super);
+    function ConstructorUI() {
+        var _this = _super.call(this) || this;
+        ConstructorUI.instance = _this;
+        var host = document.getElementById("constructor-ui");
+        if (!host) {
+            console.log("'#constructor-ui' element not found");
+            return _this;
+        }
+        _this.constructorControl = new ConstructorController();
+        _this.toolBar = new ToolBar();
+        _this.sidePanel = new SidePanel();
+        _this.sideBar = new SideBar();
+        _this.topBar = new TopBar();
+        _this.bottomBar = new BottomBar();
+        _this.append(_this.constructorControl, _this.toolBar, _this.sidePanel, _this.sideBar, _this.topBar, _this.bottomBar);
+        host.appendChild(_this.container);
+        _this.bindDelKey();
+        setTimeout(function () {
+            var viewportmeta = document.querySelector('meta[name=viewport]');
+            viewportmeta.setAttribute('content', "initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0");
+        }, 1000);
+        return _this;
+    }
+    ConstructorUI.prototype.getClassName = function () {
+        return "constructor-ui-container";
+    };
+    ConstructorUI.init = function () {
+        document.addEventListener("DOMContentLoaded", function () {
+            new ConstructorUI();
+        });
+    };
+    ConstructorUI.prototype.bindDelKey = function () {
+        var _this = this;
+        document.addEventListener("keydown", function (e) {
+            if (e.keyCode == 46) {
+                var selection = _this.c.getSelection();
+                if (selection) {
+                    selection.remove();
+                }
+            }
+        }, false);
+    };
+    ConstructorUI.test = ConstructorUI.init();
+    return ConstructorUI;
+}(UIControl));
+var ToggleButton = (function (_super) {
+    __extends(ToggleButton, _super);
+    function ToggleButton(action, check, iconOn, iconOff) {
+        var _this = _super.call(this, action, iconOn) || this;
+        _this.action = action;
+        _this.check = check;
+        _this.iconOn = iconOn;
+        _this.iconOn = iconOn;
+        _this.iconOff = iconOff;
+        _this.container.onclick = function () { return _this.action(); };
+        _this.update();
+        return _this;
+    }
+    ToggleButton.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " toggle";
+    };
+    ToggleButton.prototype.update = function () {
+        var isOn = false;
+        try {
+            isOn = this.check();
+        }
+        catch (e) {
+            console.log(e.message);
+        }
+        if (isOn) {
+            this.container.innerHTML = this.iconOn;
+            this.addClass("active");
+        }
+        else {
+            this.container.innerHTML = this.iconOff;
+            this.removeClass("active");
         }
     };
-    LayersPanelUIControl.prototype.updateVisibility = function () {
-        this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
+    return ToggleButton;
+}(Button));
+var FullScreenButton = (function (_super) {
+    __extends(FullScreenButton, _super);
+    function FullScreenButton() {
+        var _this = _super.call(this, function () { return _this.toggleFullscreen(); }, function () { return Utils.isFullscreen(); }, Icon.COMPRESS, Icon.EXPAND) || this;
+        return _this;
+    }
+    FullScreenButton.prototype.toggleFullscreen = function () {
+        var _this = this;
+        Utils.isFullscreen()
+            ? document.exitFullscreen()
+            : document.body.requestFullscreen();
+        setTimeout(function () { return _this.update(); }, 100);
     };
-    return LayersPanelUIControl;
-}(TriggeredUIControl));
+    FullScreenButton.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " fullscreen";
+    };
+    return FullScreenButton;
+}(ToggleButton));
+var TriggeredUIControl = (function (_super) {
+    __extends(TriggeredUIControl, _super);
+    function TriggeredUIControl(trigger) {
+        var _this = _super.call(this) || this;
+        trigger.onChange(function () { return _this.update(); }, _this);
+        trigger.onVisibilityChange(function () { return _this.updateVisibility(); });
+        _this.trigger = trigger;
+        return _this;
+    }
+    TriggeredUIControl.prototype.updateVisibility = function () {
+    };
+    return TriggeredUIControl;
+}(UIControl));
+var Spacer = (function (_super) {
+    __extends(Spacer, _super);
+    function Spacer() {
+        var _this = _super.call(this) || this;
+        _this.container.addEventListener("touchstart", function (e) {
+            e.preventDefault();
+        });
+        return _this;
+    }
+    Spacer.prototype.getClassName = function () {
+        return "spacer";
+    };
+    Spacer.prototype.update = function () {
+    };
+    return Spacer;
+}(UIControl));
 var LayerUIControl = (function (_super) {
     __extends(LayerUIControl, _super);
     function LayerUIControl(element) {
@@ -3101,10 +3340,10 @@ var LayerUIControl = (function (_super) {
         _this.container.ondragover = function (e) {
             e.preventDefault();
             LayerUIControl.dragTo = _this.trigger.getLayerIndex();
-            _this.addClass("layer-drag-over");
+            _this.addClass("drag-over");
         };
         _this.container.ondragleave = function (e) {
-            _this.removeClass("layer-drag-over");
+            _this.removeClass("drag-over");
         };
         _this.iconElement = document.createElement(Constants.IMG);
         _this.iconContainerElement.className = "constructor-layer-control-icon-frame";
@@ -3146,6 +3385,12 @@ var LayerUIControl = (function (_super) {
         else {
             this.iconElement.src = this.cachedIcon;
         }
+        if (this.trigger.isSelected()) {
+            this.addClass("selected");
+        }
+        else {
+            this.removeClass("selected");
+        }
         this.lockButton.update();
         this.updateVisibility();
     };
@@ -3155,61 +3400,28 @@ var LayerUIControl = (function (_super) {
     LayerUIControl.dragTo = 0;
     return LayerUIControl;
 }(TriggeredUIControl));
-var ConstructorController = (function (_super) {
-    __extends(ConstructorController, _super);
-    function ConstructorController() {
-        var _this = _super.call(this) || this;
-        _this.c = new Constructor(_this.container);
+var LayersPanelUIControl = (function (_super) {
+    __extends(LayersPanelUIControl, _super);
+    function LayersPanelUIControl(c) {
+        var _this = _super.call(this, c) || this;
+        _this.update();
         return _this;
     }
-    ConstructorController.prototype.getClassName = function () {
-        return "constructor-container";
+    LayersPanelUIControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " layers-panel";
     };
-    return ConstructorController;
-}(UIControl));
-var ConstructorUI = (function (_super) {
-    __extends(ConstructorUI, _super);
-    function ConstructorUI() {
-        var _this = _super.call(this) || this;
-        ConstructorUI.instance = _this;
-        var host = document.getElementById("constructor-ui");
-        if (!host) {
-            console.log("'#constructor-ui' element not found");
-            return _this;
+    LayersPanelUIControl.prototype.update = function () {
+        this.clear();
+        for (var i = 0; i < this.trigger.sides.length; i++) {
+            var side = this.trigger.sides[i];
+            this.append(new LayersUIControl(side));
         }
-        _this.constructorControl = new ConstructorController();
-        _this.toolBar = new ToolBar();
-        _this.sidePanel = new SidePanel();
-        _this.sideBar = new SideBar();
-        _this.topBar = new TopBar();
-        _this.bottomBar = new BottomBar();
-        _this.append(_this.constructorControl, _this.toolBar, _this.sidePanel, _this.sideBar, _this.topBar, _this.bottomBar);
-        host.appendChild(_this.container);
-        _this.bindDelKey();
-        return _this;
-    }
-    ConstructorUI.prototype.getClassName = function () {
-        return "constructor-ui-container";
     };
-    ConstructorUI.init = function () {
-        document.addEventListener("DOMContentLoaded", function () {
-            new ConstructorUI();
-        });
+    LayersPanelUIControl.prototype.updateVisibility = function () {
+        this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
     };
-    ConstructorUI.prototype.bindDelKey = function () {
-        var _this = this;
-        document.addEventListener("keydown", function (e) {
-            if (e.keyCode == 46) {
-                var selection = _this.c.getSelection();
-                if (selection) {
-                    selection.remove();
-                }
-            }
-        }, false);
-    };
-    ConstructorUI.test = ConstructorUI.init();
-    return ConstructorUI;
-}(UIControl));
+    return LayersPanelUIControl;
+}(TriggeredUIControl));
 var LayersUIControl = (function (_super) {
     __extends(LayersUIControl, _super);
     function LayersUIControl(side) {
@@ -3222,10 +3434,14 @@ var LayersUIControl = (function (_super) {
     };
     LayersUIControl.prototype.update = function () {
         var _this = this;
-        this.clear();
-        this.trigger.getLayers().forEach(function (layer) {
-            _this.append(new LayerUIControl(layer));
-        });
+        console.log(this.trigger.getClassName(), this.children.length, this.trigger.getLayers().length);
+        if (this.children.length != this.trigger.getLayers().length) {
+            this.clear();
+            console.log("CLEARED");
+            this.trigger.getLayers().forEach(function (layer) {
+                _this.append(new LayerUIControl(layer));
+            });
+        }
         this.updateVisibility();
     };
     LayersUIControl.prototype.updateVisibility = function () {
@@ -3235,63 +3451,6 @@ var LayersUIControl = (function (_super) {
     };
     return LayersUIControl;
 }(TriggeredUIControl));
-var ToolBar = (function (_super) {
-    __extends(ToolBar, _super);
-    function ToolBar() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    ToolBar.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " toolbar";
-    };
-    ToolBar.prototype.update = function () {
-    };
-    return ToolBar;
-}(UIControl));
-var BottomBar = (function (_super) {
-    __extends(BottomBar, _super);
-    function BottomBar() {
-        var _this = _super.call(this) || this;
-        _this.update();
-        return _this;
-    }
-    BottomBar.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " bottom";
-    };
-    BottomBar.prototype.update = function () {
-        var _this = this;
-        this.clear();
-        this.append(new Button(function () {
-            ConstructorUI.instance.toggleClass("collapsed");
-            ConstructorUI.instance.sidePanel.toggleVisibility();
-            ConstructorUI.instance.sideBar.buttons.forEach(function (button) { return button.toggleVisibility(); });
-        }, Icon.BARS), new Spacer(), new Button(function () {
-            _this.c.zoomIn();
-        }, Icon.SEARCH_PLUS), new Button(function () {
-            _this.c.zoomOut();
-        }, Icon.SEARCH_MINUS), new Button(function () {
-            _this.c.zoomToFit();
-        }, Icon.SEARCH), new Spacer(), new ToggleButton(function () {
-            _this.c.toggleMode();
-            _this.update();
-        }, function () { return _this.c.getMode() == Mode.Mode3D; }, Icon.SQUARE, Icon.CUBE));
-    };
-    return BottomBar;
-}(ToolBar));
-var Button = (function (_super) {
-    __extends(Button, _super);
-    function Button(action, icon) {
-        var _this = _super.call(this) || this;
-        _this.container.innerHTML = icon;
-        _this.container.onclick = function () { return action(); };
-        return _this;
-    }
-    Button.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " button";
-    };
-    Button.prototype.update = function () {
-    };
-    return Button;
-}(UIControl));
 var VerticalToolBarUIControl = (function (_super) {
     __extends(VerticalToolBarUIControl, _super);
     function VerticalToolBarUIControl() {
@@ -3310,7 +3469,7 @@ var SideBar = (function (_super) {
         var panel = ConstructorUI.instance.sidePanel;
         _this.appendSwitch(panel.addElementsPanel, Icon.PLUS);
         _this.appendSwitch(panel.layersPanel, Icon.LAYER_GROUP);
-        _this.appendSwitch(new Button(null, ""), Icon.TH_LARGE);
+        _this.appendSwitch(panel.selectionPanel, Icon.SLIDERS_H);
         _this.append(new Spacer());
         _this.hideOthers(panel.layersPanel);
         return _this;
@@ -3347,12 +3506,13 @@ var SidePanel = (function (_super) {
     function SidePanel() {
         var _this = _super.call(this) || this;
         _this.layersPanel = new LayersPanelUIControl(_this.c);
+        _this.selectionPanel = new SelectionPanel(_this.c);
         _this.addElementsPanel = new ToolBar()
             .append(new Button(function () { return _this.c.addElement(ElementType.CIRCLE); }, Icon.CIRCLE))
             .append(new Button(function () { return _this.c.addElement(ElementType.RECTANGLE); }, Icon.SQUARE))
             .append(new Button(function () { return _this.c.addElement(ElementType.TRIANGLE); }, Icon.CARET_UP))
             .append(new Button(function () { return _this.c.addElement(ElementType.TEXT); }, Icon.FONT));
-        _this.append(_this.addElementsPanel, _this.layersPanel);
+        _this.append(_this.addElementsPanel, _this.layersPanel, _this.selectionPanel);
         return _this;
     }
     SidePanel.prototype.getClassName = function () {
@@ -3362,18 +3522,6 @@ var SidePanel = (function (_super) {
     };
     return SidePanel;
 }(ToolBar));
-var Spacer = (function (_super) {
-    __extends(Spacer, _super);
-    function Spacer() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    Spacer.prototype.getClassName = function () {
-        return "spacer";
-    };
-    Spacer.prototype.update = function () {
-    };
-    return Spacer;
-}(UIControl));
 var SwitchButton = (function (_super) {
     __extends(SwitchButton, _super);
     function SwitchButton(view, icon) {
@@ -3400,51 +3548,166 @@ var SwitchButton = (function (_super) {
     };
     return SwitchButton;
 }(TriggeredUIControl));
-var ToggleButton = (function (_super) {
-    __extends(ToggleButton, _super);
-    function ToggleButton(action, check, iconOn, iconOff) {
-        var _this = _super.call(this, action, iconOn) || this;
-        _this.action = action;
-        _this.check = check;
-        _this.iconOn = iconOn;
-        _this.iconOn = iconOn;
-        _this.iconOff = iconOff;
-        _this.container.onclick = function () { return _this.action(); };
-        _this.update();
-        return _this;
-    }
-    ToggleButton.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " toggle";
-    };
-    ToggleButton.prototype.update = function () {
-        var isOn = false;
-        try {
-            isOn = this.check();
-        }
-        catch (e) {
-            console.log(e.message);
-        }
-        if (isOn) {
-            this.container.innerHTML = this.iconOn;
-            this.addClass("active");
-        }
-        else {
-            this.container.innerHTML = this.iconOff;
-            this.removeClass("active");
-        }
-    };
-    return ToggleButton;
-}(Button));
 var TopBar = (function (_super) {
     __extends(TopBar, _super);
     function TopBar() {
-        var _this = _super.call(this) || this;
-        _this.append();
-        return _this;
+        return _super !== null && _super.apply(this, arguments) || this;
     }
     TopBar.prototype.getClassName = function () {
         return _super.prototype.getClassName.call(this) + " top";
     };
     return TopBar;
 }(ToolBar));
+var InputControl = (function (_super) {
+    __extends(InputControl, _super);
+    function InputControl(type, action) {
+        var _this = _super.call(this, "input") || this;
+        _this.container.type = "color";
+        _this.onChange(action, _this);
+        _this.container.onchange = function () { return _this.changed(); };
+        return _this;
+    }
+    InputControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " input";
+    };
+    return InputControl;
+}(UIControl));
+var ColorPicker = (function (_super) {
+    __extends(ColorPicker, _super);
+    function ColorPicker() {
+        var _this = _super.call(this, Constructor.instance) || this;
+        _this.input = new InputControl("color", function () {
+            _this.c.getSelection().setColor(_this.input.container.value);
+        });
+        _this.label = new LabelControl("");
+        _this.append(_this.label, _this.input);
+        _this.update();
+        return _this;
+    }
+    ColorPicker.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " color-picker";
+    };
+    ColorPicker.prototype.update = function () {
+        var selection = this.c.getSelection();
+        if (selection) {
+            var color = selection.getColor().toHex();
+            this.label.setValue(color);
+            this.input.container.value = color;
+        }
+        else {
+        }
+    };
+    return ColorPicker;
+}(TriggeredUIControl));
+var AlphaPicker = (function (_super) {
+    __extends(AlphaPicker, _super);
+    function AlphaPicker() {
+        var _this = _super.call(this) || this;
+        _this.input = document.createElement("select");
+        for (var i = 0; i <= 100; i += 10) {
+            var option = document.createElement("option");
+            option.value = i.toString();
+            option.innerText = i.toString();
+            _this.input.appendChild(option);
+        }
+        _this.input.onchange = function (e) {
+            console.log(_this.input.value);
+            _this.c.getSelection().setAlpha(parseInt(_this.input.value) / 100);
+        };
+        _this.container.appendChild(_this.input);
+        _this.c.onChange(function (trigger) {
+            var selection = _this.c.getSelection();
+            if (selection) {
+                _this.show();
+                _this.input.value = (selection.getAlpha() * 100).toString();
+            }
+            else {
+                _this.hide();
+            }
+        }, _this);
+        return _this;
+    }
+    AlphaPicker.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " alpha-picker";
+    };
+    return AlphaPicker;
+}(UIControl));
+var SelectionPanel = (function (_super) {
+    __extends(SelectionPanel, _super);
+    function SelectionPanel(c) {
+        var _this = _super.call(this, c) || this;
+        _this.update();
+        return _this;
+    }
+    SelectionPanel.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " selection-panel vertical";
+    };
+    SelectionPanel.prototype.update = function () {
+        this.clear();
+        var selection = this.c.getSelection();
+        if (!selection) {
+            return;
+        }
+        console.log("SELECTION PANEL UPDATE");
+        this.append(new Row(new LabelControl("Transparency"), new Spacer(), new AlphaPicker()), new Row(new LabelControl("Color"), new Spacer(), new ColorPicker()));
+    };
+    SelectionPanel.prototype.updateVisibility = function () {
+        this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
+    };
+    return SelectionPanel;
+}(TriggeredUIControl));
+var LabelControl = (function (_super) {
+    __extends(LabelControl, _super);
+    function LabelControl(value) {
+        var _this = _super.call(this) || this;
+        _this.container.innerText = value;
+        return _this;
+    }
+    LabelControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " label";
+    };
+    LabelControl.prototype.setValue = function (value) {
+        console.log(value);
+        this.container.innerText = value;
+    };
+    return LabelControl;
+}(UIControl));
+var Row = (function (_super) {
+    __extends(Row, _super);
+    function Row() {
+        var controls = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            controls[_i] = arguments[_i];
+        }
+        var _this = _super.call(this) || this;
+        controls.forEach(function (control) {
+            _this.append(control);
+        });
+        return _this;
+    }
+    Row.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " row";
+    };
+    return Row;
+}(UIControl));
+var Column = (function (_super) {
+    __extends(Column, _super);
+    function Column() {
+        var controls = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            controls[_i] = arguments[_i];
+        }
+        var _this = _super.call(this) || this;
+        _this.append(new Spacer());
+        controls.forEach(function (control) {
+            _this.append(control);
+            _this.append(new Spacer());
+        });
+        return _this;
+    }
+    Column.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " column";
+    };
+    return Column;
+}(UIControl));
 //# sourceMappingURL=constructor.js.map

@@ -1,18 +1,25 @@
+* {
+    touch-action: none;
+}
+
 body {
     margin: 0;
     padding: 0;
     background: #eee;
     width: 100%;
     height: 100%;
+    /*overflow: hidden;*/
 }
 
 #constructor-ui {
-
+    height: auto;
 }
 
 .spacer {
     display: flex;
     flex: auto;
+    width: auto;
+    height: auto;
 }
 
 .control {
@@ -22,14 +29,38 @@ body {
     font-family: sans-serif;
 }
 
+.row {
+    width: 100%;
+}
+
+.column {
+    //display: inline;
+}
+
 .vertical {
     flex-flow: column;
+    width: 100%;
+}
+
+.row>.control {
+    margin: 8px;
+}
+
+.row .control {
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+.label {
+    color: #cccccc;
+    letter-spacing: 0.05em;
+    font-weight: lighter;
 }
 
 .constructor-ui-container {
     height: 100vh;
     display: grid;
-    grid-template-columns: auto auto 1fr;
+    grid-template-columns: auto 250px 1fr;
     grid-template-rows: auto 1fr 48px;
     gap: 0;
     grid-template-areas:
@@ -107,6 +138,8 @@ body {
     margin: 2px 2px 0 2px;
     background: #777;
     border-radius: 4px;
+    height: 50px;
+    width: 246px;
 }
 
 .control.layer div {
@@ -114,8 +147,8 @@ body {
     font-size: 14px;
 }
 
-.control.layer.select {
-    background: #aaa;
+.control.layer.selected {
+    background: #999;
 }
 
 .constructor-layer-control-icon-frame {
@@ -129,8 +162,8 @@ body {
 
 }
 
-.layer-drag-over {
-    background: #aaa;
+.control.layer.drag-over {
+    background: #333 !important;
 }
 
 .constructor-toolbar-control {
@@ -164,12 +197,27 @@ body {
 }
 
 
-@media (max-width: 1200px) {
+input[type="color"] {
+    -webkit-appearance: none;
+    appearance: none;
+    border: none;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+@media (max-width: 1000px) {
+    .button.fullscreen {
+        visibility: hidden;
+    }
+}
+@media (min-width: 320px) and (orientation:portrait) {
     .constructor-ui-container {
-        height: 100vh;
+        height: 87vh;
         display: grid;
         grid-template-columns: auto 1fr;
-        grid-template-rows: auto auto 1fr 1fr;
+        grid-template-rows: auto max-content 1fr 1fr;
         gap: 0;
         grid-template-areas:
             "bottombar bottombar"
@@ -198,16 +246,18 @@ body {
         border-radius: 4px;
     }
 
-    .control.button {
-        font-size: 60px !important;
-        padding: 30px !important;;
-        margin: 0;
-    }
 
-    .control.layer div {
-        padding: 20px;
-        font-size: 50px;
-    }
+
+    /*.control.button {*/
+    /*    font-size: 60px !important;*/
+    /*    padding: 30px !important;;*/
+    /*    margin: 0;*/
+    /*}*/
+
+    /*.control.layer div {*/
+    /*    padding: 20px;*/
+    /*    font-size: 50px;*/
+    /*}*/
 
 
 }

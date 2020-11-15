@@ -1,6 +1,7 @@
 /// <reference path="UIControl.ts" />
 /// <reference path="TriggeredUIControl.ts" />
 /// <reference path="../Icon.ts" />
+/// <reference path="Spacer.ts" />
 
 class LayerUIControl extends TriggeredUIControl<Element2D> {
 
@@ -43,11 +44,20 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
         this.container.ondragover = e => {
             e.preventDefault();
             LayerUIControl.dragTo = this.trigger.getLayerIndex();
-            this.addClass("layer-drag-over");
+            this.addClass("drag-over");
         };
         this.container.ondragleave = e => {
-            this.removeClass("layer-drag-over");
+            this.removeClass("drag-over");
         };
+
+        // this.container.addEventListener('touchmove', function (e) {
+        //     // grab the location of touch
+        //     var touchLocation = e.targetTouches[0];
+        //
+        //     // assign box new coordinates based on the touch.
+        //     this.container.style.left = touchLocation.pageX + 'px';
+        //     this.container.style.top = touchLocation.pageY + 'px';
+        // });
 
         this.iconElement = document.createElement(Constants.IMG);
         this.iconContainerElement.className = "constructor-layer-control-icon-frame";
@@ -98,6 +108,11 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
             this.cachedIcon = src;
         } else {
             this.iconElement.src = this.cachedIcon;
+        }
+        if (this.trigger.isSelected()) {
+            this.addClass("selected")
+        } else {
+            this.removeClass("selected")
         }
         this.lockButton.update();
         this.updateVisibility();

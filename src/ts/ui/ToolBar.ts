@@ -1,3 +1,4 @@
+/// <reference path="UIControl.ts" />
 class ToolBar extends UIControl {
 
     getClassName(): string {

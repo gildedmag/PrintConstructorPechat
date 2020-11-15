@@ -55,6 +55,16 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         this.canvas.on(Constants.SELECTION_CLEARED, () => {
             //Constructor.instance.onDeselectHandler(this.selection);
             this.selection = null;
+            this.changed();
+            Constructor.instance.changed();
+        });
+        this.canvas.on(Constants.SELECTION_UPDATED, () => {
+            this.changed();
+            Constructor.instance.changed();
+        });
+        this.canvas.on(Constants.SELECTION_CREATED, () => {
+            this.changed();
+            Constructor.instance.changed();
         });
         this.canvas.on(Constants.AFTER_RENDER, () => {
             Constructor.instance.onElementModificationHandler && Constructor.instance.onElementModificationHandler();
@@ -94,7 +104,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         this.canvas.setWidth(this.width * value);
         this.canvas.setHeight(this.height * value);
         this.canvas.renderAll();
-        this.centerPosition();
+        //this.centerPosition();
     }
 
     getZoom(): number {
@@ -110,7 +120,9 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     }
 
     zoomToFit() {
-        this.setZoom(Math.min(this.container.clientWidth / this.width, this.container.clientHeight / this.height));
+        var value = Math.min(this.container.clientWidth / this.width, this.container.clientHeight / this.height);
+        value *= 0.8;
+        this.setZoom(value);
     }
 
     getRatio(): number {
@@ -146,7 +158,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         element.object.setCoords();
         this.canvas.requestRenderAll();
         setTimeout(() => this.canvas.renderAll(), null);
-        this.changed();
+        this.changed()
         return element;
     }
 

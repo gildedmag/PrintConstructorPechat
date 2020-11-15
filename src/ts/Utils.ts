@@ -96,8 +96,20 @@ class Utils {
         this.arrayMove(arr, from, arr.length - 1)
     }
 
-    public static div(): HTMLDivElement {
-        return document.createElement(Constants.DIV)
+    public static div(innerText?: string): HTMLDivElement {
+        let div = document.createElement(Constants.DIV);
+        if (innerText){
+            div.innerText = innerText;
+        }
+        return div;
+    }
+
+    public static input(): HTMLInputElement {
+        return document.createElement(Constants.INPUT)
+    }
+
+    static isFullscreen(){
+        return window.innerWidth == screen.width && window.innerHeight == screen.height
     }
 
 }

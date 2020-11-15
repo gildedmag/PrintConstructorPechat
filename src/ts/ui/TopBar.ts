@@ -4,11 +4,14 @@ class TopBar extends ToolBar {
         return super.getClassName() + " top";
     }
 
-    constructor() {
-        super();
-        this.append(
-
-        )
-    }
+    // constructor() {
+    //     super();
+    //     this.append(
+    //         new Spacer(),
+    //         new ColorPicker(),
+    //         new AlphaPicker(),
+    //         new Spacer()
+    //     );
+    // }
 
 }

@@ -1,7 +1,8 @@
 class SidePanel extends ToolBar {
 
-    layersPanel: LayersPanelUIControl;
+    layersPanel: SelectionPanel;
     addElementsPanel: ToolBar;
+    selectionPanel: SelectionPanel;
 
     getClassName(): string {
         return super.getClassName() + " sidepanel";
@@ -11,6 +12,7 @@ class SidePanel extends ToolBar {
         super();
 
         this.layersPanel = new LayersPanelUIControl(this.c);
+        this.selectionPanel = new SelectionPanel(this.c);
 
         this.addElementsPanel = new ToolBar()
             .append(new Button(() => this.c.addElement(ElementType.CIRCLE), Icon.CIRCLE))
@@ -20,7 +22,8 @@ class SidePanel extends ToolBar {
 
         this.append(
             this.addElementsPanel,
-            this.layersPanel
+            this.layersPanel,
+            this.selectionPanel
         );
 
         //this.switch(1);

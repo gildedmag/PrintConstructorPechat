@@ -37,7 +37,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         if (type === ElementType.IMAGE) {
             this.object = new type.nativeType();
         } else {
-            let defaults = Constructor.settings.elementDefaults[type.getNativeTypeName()]
+            let defaults = Constructor.settings.elementDefaults[type.getNativeTypeName()];
             type.nativeType.fromObject(defaults, native => {
                 this.object = native
                 this.setOptions(this.object);
@@ -402,6 +402,10 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
 
     isVisible(): boolean {
         return this.object && this.object.visible == true;
+    }
+
+    isSelected(): boolean {
+        return Constructor.instance.getSelection() == this;
     }
 
     toggleVisibility(){

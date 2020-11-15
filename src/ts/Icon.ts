@@ -596,6 +596,7 @@ enum Icon {
     SKYPE = '<i class="fa fa-skype"></i>',
     SLACK = '<i class="fa fa-slack"></i>',
     SLIDERS = '<i class="fa fa-sliders"></i>',
+    SLIDERS_H = '<i class="fa fa-sliders-h"></i>',
     SLIDESHARE = '<i class="fa fa-slideshare"></i>',
     SMILE_O = '<i class="fa fa-smile-o"></i>',
     SNAPCHAT = '<i class="fa fa-snapchat"></i>',

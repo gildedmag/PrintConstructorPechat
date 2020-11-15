@@ -4,6 +4,13 @@ class Spacer extends UIControl {
         return "spacer";
     }
 
+    constructor() {
+        super();
+        this.container.addEventListener("touchstart", e => {
+            e.preventDefault();
+        });
+    }
+
     update() {
 
     }

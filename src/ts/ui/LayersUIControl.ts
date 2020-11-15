@@ -12,10 +12,14 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
     }
 
     update() {
-        this.clear();
-        this.trigger.getLayers().forEach(layer => {
-            this.append(new LayerUIControl(layer));
-        });
+        console.log(this.trigger.getClassName(), this.children.length, this.trigger.getLayers().length);
+        if (this.children.length != this.trigger.getLayers().length) {
+            this.clear();
+            console.log("CLEARED");
+            this.trigger.getLayers().forEach(layer => {
+                this.append(new LayerUIControl(layer));
+            });
+        }
         this.updateVisibility();
     }
 

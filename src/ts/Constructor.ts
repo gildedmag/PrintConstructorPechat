@@ -5,7 +5,7 @@
 
 class Constructor extends View<Constructor> {
 
-    sides: Side2D[];
+    sides: Side2D[] = [];
     activeSideIndex: number;
     preview: Preview;
 
@@ -33,19 +33,12 @@ class Constructor extends View<Constructor> {
     /** @hidden */
     background: string;
 
-    /** @hidden */
-    lastWidth: number;
-    lastHeight: number;
-
     public isExplicitlyLoaded: boolean = false;
 
     static version = Version.version;
     static settings: Settings = new Settings();
     static instance: Constructor;
     private static zoomStep: number = 0.05;
-
-    sidebarControl: SideBar;
-    toolbarControl: ToolBar;
 
     /**
      * Create new {@link Constructor} instance for an {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement|HTMLElement}
@@ -65,25 +58,21 @@ class Constructor extends View<Constructor> {
         Constructor.instance = this;
         this.clipboard = null;
         this.snapToObjects = false;
-        this.setMode(Mode.Mode2D);
-        this.sides = [];
-        this.addSide(this.container.clientWidth - 50, this.container.clientHeight - 50);
+        //this.setMode(Mode.Mode2D);
+        this.setState({
+            sides: [{
+                width: 300,
+                height: 200
+            }]
+        });
+        //this.addSide(this.container.clientWidth - 50, this.container.clientHeight - 50);
         this.preview = new Preview(this);
         this.spinner = new Spinner(this.container);
         this.preview.hide();
         this.background = this.container.style.background;
         this.container.style.background = null;
-        this.lastWidth = this.container.clientWidth;
-        this.lastHeight = this.container.clientHeight;
         console.log("Constructor.version: ", Constructor.version);
-    }
-
-    autoSize() {
-        Utils.logMethodName();
-        this.sides.forEach(side => side.centerPosition());
-        this.preview.autoSize();
-        this.lastWidth = this.container.clientWidth;
-        this.lastHeight = this.container.clientHeight;
+        console.log("fabric.js.version: ", fabric.version);
     }
 
     /**
@@ -192,7 +181,7 @@ class Constructor extends View<Constructor> {
             this.getActiveSide().hide();
             this.activeSideIndex = index;
             this.getActiveSide().show();
-            this.getActiveSide().canvas.requestRenderAll();
+            this.getActiveSide().canvas.renderAll();
             this.visibilityChanged();
         }
     }
@@ -446,6 +435,8 @@ class Constructor extends View<Constructor> {
         let state: any;
         if (typeof json === Constants.STRING) {
             state = JSON.parse(json as string);
+        } else {
+            state = json
         }
         if (clearHistory) localStorage.clear();
         this.deleteAllSides();
@@ -458,11 +449,11 @@ class Constructor extends View<Constructor> {
                 } else {
                     this.insertSide(side, clearHistory);
                 }
-                side.canvas.requestRenderAll();
+                side.canvas.renderAll();
             });
         }
         this.sides.forEach(side => side.saveState());
-        if (this.preview.modelName != state.model) {
+        if (state.model && this.preview.modelName != state.model) {
             this.loadModel(state.model, () => {
                 if (state.fills) {
                     for (let i = 0; i < state.fills.length; i++) {

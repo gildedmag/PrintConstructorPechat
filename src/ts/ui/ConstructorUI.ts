@@ -44,6 +44,12 @@ class ConstructorUI extends UIControl {
 
         host.appendChild(this.container);
         this.bindDelKey();
+
+        setTimeout(() => {
+            //alert("set");
+            const viewportmeta = document.querySelector('meta[name=viewport]');
+            viewportmeta.setAttribute('content', "initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0");
+        }, 1000)
     }
 
     public static init() {
