@@ -26,12 +26,16 @@ class SelectionPanel extends TriggeredUIControl<Constructor> {
                 value => this.c.getSelection().setAlpha(value / 100),
                 () => this.c.getSelection().getAlpha() * 100
             ),
+            new SelectRangePropertyControl(
+                "Shadow",
+                value => this.c.getSelection().setShadow(value / 10),
+                () => this.c.getSelection().getShadow() * 10
+            ),
             new SelectionColorControl(
                 "Color",
                 value => this.c.getSelection().setColor(value),
                 () => this.c.getSelection().getColor().toHex()
             ),
-
         );
         if (this.c.getSelection().type == ElementType.TEXT) {
             this.append(
@@ -42,6 +46,15 @@ class SelectionPanel extends TriggeredUIControl<Constructor> {
                     4,
                     96,
                     2
+                ),
+                new Row(
+                    new LabelControl("Font Family"),
+                    new Spacer(),
+                    new Button(
+                        () => ConstructorUI.instance.sidePanel.fontFamilyPanel.show(),
+                        null,
+                        this.c.getSelection().getFontFamily()
+                    )
                 ),
                 new TextBar()
             );

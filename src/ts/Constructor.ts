@@ -247,6 +247,16 @@ class Constructor extends View<Constructor> {
         return (this.preview && this.preview.isVisible()) ? Mode.Mode3D : Mode.Mode2D;
     }
 
+    toggleSnapToGrid(){
+        this.snapToGrid = !this.snapToGrid;
+        this.changed();
+    }
+
+    toggleSnapToObjects(){
+        this.snapToObjects = !this.snapToObjects;
+        this.changed();
+    }
+
     setMode(mode: Mode) {
         if (this.preview) {
             Utils.logMethodName();
@@ -262,6 +272,7 @@ class Constructor extends View<Constructor> {
                 this.preview.render();
                 if (this.onModeChangeHandler) this.onModeChangeHandler();
             }
+            this.changed();
         }
     }
 

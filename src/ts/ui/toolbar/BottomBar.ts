@@ -22,6 +22,7 @@ class BottomBar extends ToolBar {
                 Icon.BARS
             ),
             new Spacer(),
+
             new Button(() => {
                 this.c.zoomIn();
             }, Icon.SEARCH_PLUS),
@@ -31,8 +32,21 @@ class BottomBar extends ToolBar {
             new Button(() => {
                 this.c.zoomToFit();
             }, Icon.SEARCH),
-            //new FullScreenButton(),
+
+
+            new ToggleButton(
+                () => this.c.toggleSnapToGrid(),
+                () => this.c.snapToGrid,
+                Icon.BORDER_ALL
+            ),
+            new ToggleButton(
+                () => this.c.toggleSnapToObjects(),
+                () => this.c.snapToObjects,
+                Icon.VECTOR_SQUARE
+            ),
+
             new Spacer(),
+
             new ToggleButton(
                 () => {
                     this.c.toggleMode();

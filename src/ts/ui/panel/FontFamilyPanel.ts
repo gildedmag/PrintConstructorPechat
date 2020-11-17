@@ -11,6 +11,7 @@ class FontFamilyPanel extends TriggeredUIControl<Constructor> {
         let fontFamilies = this.getFontFamilies();
         for (let i = 0; i < fontFamilies.length; i++) {
             let fontFamily = fontFamilies[i];
+
             this.append(
                 new FontFamilyButton(fontFamily)
             );
@@ -22,12 +23,13 @@ class FontFamilyPanel extends TriggeredUIControl<Constructor> {
     }
 
     update() {
-
     }
 
     updateVisibility() {
         this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
     }
+
+
 
     getFontFamilies(): [string] {
         let {fonts} = document;
@@ -39,8 +41,13 @@ class FontFamilyPanel extends TriggeredUIControl<Constructor> {
         while (!done) {
             const font = iterator.next();
             if (!font.done) {
-                let fontFamily = font.value[0].family;
-                if (!list.includes(fontFamily)) {
+                console.log(font);
+                let fontFamily: string = font.value.family;
+                if (!fontFamily) {
+                    fontFamily = font.value[0].family;
+                }
+                console.log(fontFamily);
+                if (!list.includes(fontFamily) && !fontFamily.includes("Awesome")) {
                     list.push(fontFamily);
                 }
             } else {

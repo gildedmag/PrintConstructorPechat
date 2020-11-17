@@ -174,24 +174,35 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
 
     setFontFamily(fontFamily: string, repeat?: boolean) {
         if (this.type === ElementType.TEXT) {
-            (fabric as any).charWidthsCache[fontFamily] = {};
-            let object = this.object as any;
-            object.fontFamily = fontFamily;
-            this.object.dirty = true;
-            this.side.canvas.requestRenderAll();
-            if (repeat){
-                setTimeout(() => this.setFontFamily(fontFamily), 10)
-            }
+            let font = new FontFaceObserver(fontFamily);
+            let element = this;
+            font.load(FontFamilyButton.charset)
+                .then(function() {
+                    console.log(fontFamily);
+                    element.object.set("fontFamily", fontFamily);
+                    element.side.canvas.requestRenderAll();
+                }).catch(function(e) {
+                console.log(e)
+            });
+
+            // (fabric as any).charWidthsCache[fontFamily] = {};
+            // let object = this.object as any;
+            // object.fontFamily = fontFamily;
+            // this.object.dirty = true;
+            // this.side.canvas.requestRenderAll();
+            // if (repeat){
+            //     setTimeout(() => this.setFontFamily(fontFamily), 10)
+            // }
         }
     }
 
-    getText(): String {
+    getText(): string {
         return this.type === ElementType.TEXT
             ? (this.object as fabric.IText).text
             : null
     }
 
-    setText(value: String): void {
+    setText(value: string): void {
         if (this.type === ElementType.TEXT) {
             ((this.object as fabric.IText).text as String) = value;
             this.side.canvas.renderAll();

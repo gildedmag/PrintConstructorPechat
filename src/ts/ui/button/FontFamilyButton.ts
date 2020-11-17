@@ -3,11 +3,13 @@ class FontFamilyButton extends UIControl {
 
     static charset = FontFamilyButton.initCharset();
 
-    static  initCharset(){
+    static initCharset() {
         let s = ""
         for (let i = 32; i <= 1024; i++) s += String.fromCharCode(i);
         return s;
     }
+
+    private fontFamily: string;
 
     getClassName(): string {
         return super.getClassName() + " button font-family";
@@ -15,12 +17,23 @@ class FontFamilyButton extends UIControl {
 
     constructor(fontFamily: string) {
         super();
-        this.append(
-            new Spacer(),
-            new LabelControl(fontFamily)
-                .setFontFamily(fontFamily),
-            new Spacer(),
-        );
+        this.fontFamily = fontFamily;
+        let font = new FontFaceObserver(fontFamily);
+        let element = this;
+        font.load(FontFamilyButton.charset)
+            .then(function() {
+                element.append(
+                    new Row(
+                    new Spacer(),
+                    new LabelControl(fontFamily)
+                        .setFontFamily(fontFamily),
+                    new Spacer(),
+                    )
+                );
+            }).catch(function(e) {
+            alert(e)
+        });
+
         this.container.onclick = () => {
             this.c.getSelection().setFontFamily(fontFamily, true);
             console.log("font", fontFamily);

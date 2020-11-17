@@ -1,6 +1,6 @@
-* {
-    touch-action: none;
-}
+/** {*/
+/*    touch-action: none;*/
+/*}*/
 
 body {
     margin: 0;
@@ -194,7 +194,7 @@ body {
 }
 
 .control.button.toggle {
-    color: #777;
+    /*color: #777;*/
 }
 
 .control.button.toggle.active {
@@ -204,6 +204,10 @@ body {
 .control.button.selected {
     color: #fff;
     background: #666;
+}
+
+.selection-panel .button .label {
+    text-align: right !important;
 }
 
 .control.input {
@@ -228,32 +232,59 @@ input[type="color"] {
     color: #aaa;
 }
 
-@media (max-width: 1000px) {
-    .button.fullscreen {
-        visibility: hidden;
-    }
+.toolbar.top .toggle.active, .toolbar.bottom .toggle.active {
+    color: #000;
 }
-@media (max-width: 1000px) and (orientation:portrait) {
+
+.button.font-family .label {
+    height: 24px;
+}
+
+@media (max-height: 600px) and (orientation:landscape) {
     .constructor-ui-container {
-        height: 87vh;
+        height: 100vh;
         display: grid;
-        grid-template-columns: auto 1fr;
-        grid-template-rows: auto max-content 1fr 1fr;
+        grid-template-columns: auto auto auto 1fr auto;
+        grid-template-rows: 1fr;
         gap: 0;
         grid-template-areas:
-            "bottombar bottombar"
+            "sidebar sidepanel bottombar constructor topbar";
+    }
+
+    .constructor-ui-container.collapsed {
+        grid-template-columns: auto 1fr auto;
+        grid-template-rows: 1fr;
+        grid-template-areas:
+            "bottombar constructor topbar";
+    }
+
+    .toolbar {
+        flex-flow: column;
+    }
+
+}
+
+@media (max-width: 1000px) and (orientation:portrait) {
+    .constructor-ui-container {
+        height: 100vh;
+        display: grid;
+        grid-template-columns: 42px 1fr;
+        grid-template-rows: auto 1fr auto 1fr;
+        gap: 0;
+        grid-template-areas:
             "topbar topbar"
             "constructor constructor"
+            "bottombar bottombar"
             "sidebar sidepanel";
     }
 
     .constructor-ui-container.collapsed {
         grid-template-columns: 1fr;
-        grid-template-rows: auto auto 1fr;
+        grid-template-rows: auto 1fr 84px;
         grid-template-areas:
-            "bottombar"
             "topbar"
-            "constructor";
+            "constructor"
+            "bottombar";
     }
 
     .control.layers, .control.layers-panel  {
