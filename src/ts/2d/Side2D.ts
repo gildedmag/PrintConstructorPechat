@@ -120,9 +120,13 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     }
 
     zoomToFit() {
-        var value = Math.min(this.container.clientWidth / this.width, this.container.clientHeight / this.height);
-        value *= 0.8;
-        this.setZoom(value);
+        let value = Math.min(this.container.clientWidth / this.width, this.container.clientHeight / this.height);
+        if (!value) {
+            setTimeout(() => this.zoomToFit(), 10);
+        } else {
+            value *= 0.8;
+            this.setZoom(value);
+        }
     }
 
     getRatio(): number {
@@ -136,7 +140,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     getIndex(): number {
         return Constructor.instance.sides.indexOf(this);
     }
-                                 
+
     fixElementPosition(element: Element2D): void {
         if (!element.object.isOnScreen(true)) {
             this.resetElementPosition(element);
@@ -175,7 +179,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         return layers;
     }
 
-    moveLayer(from: number, to: number){
+    moveLayer(from: number, to: number) {
         let element: Element2D = this.getLayers()[from];
         element.toLayer(to);
         this.changed();
@@ -319,7 +323,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     }
 
     saveToLocalStorage(state: Side2DStateObjects) {
-        if (!this.history.isLocked()){
+        if (!this.history.isLocked()) {
             Utils.logMethodName();
             localStorage.setItem(this.getLocalStorageKey(), JSON.stringify(state));
         }

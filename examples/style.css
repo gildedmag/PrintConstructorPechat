@@ -101,7 +101,7 @@ body {
     vertical-align: middle;
 }
 
-.control.toolbar.top .button, .control.toolbar.bottom .button, .constructor-ui-container.collapsed .sidebar .button {
+.toolbar.top .button, .toolbar.bottom .button, .constructor-ui-container.collapsed .sidebar .button {
     color: #333;
 }
 
@@ -142,7 +142,7 @@ body {
     width: 246px;
 }
 
-.control.layer div {
+.control.layer > div {
     padding: 8px;
     font-size: 14px;
 }
@@ -152,9 +152,7 @@ body {
 }
 
 .constructor-layer-control-icon-frame {
-    border: 1px solid #aaa;
     margin: 4px;
-
     background-color: white;
     background-image: linear-gradient(45deg, #dddddd 25%, transparent 25%), linear-gradient(-45deg, #dddddd 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #dddddd 75%), linear-gradient(-45deg, transparent 75%, #dddddd 75%);
     background-size: 10px 10px;
@@ -182,13 +180,25 @@ body {
     color: #ddd;
 }
 
-.control.button:hover {
+.control.button.font-family {
+    font-size: 20px;
+}
+
+.control.button:hover, .control.button:hover * {
     color: #fff;
     cursor: pointer;
 }
 
 .control.button.active {
-    color: #aaa;
+    color: #fff;
+}
+
+.control.button.toggle {
+    color: #777;
+}
+
+.control.button.toggle.active {
+    color: #fff;
 }
 
 .control.button.selected {
@@ -196,6 +206,13 @@ body {
     background: #666;
 }
 
+.control.input {
+    width: 100px;
+}
+
+.control.select {
+    /*padding-right: 50px;*/
+}
 
 input[type="color"] {
     -webkit-appearance: none;
@@ -207,12 +224,16 @@ input[type="color"] {
     display: block;
 }
 
+.toolbar.top .button:hover *, .toolbar.bottom .button:hover * {
+    color: #aaa;
+}
+
 @media (max-width: 1000px) {
     .button.fullscreen {
         visibility: hidden;
     }
 }
-@media (min-width: 320px) and (orientation:portrait) {
+@media (max-width: 1000px) and (orientation:portrait) {
     .constructor-ui-container {
         height: 87vh;
         display: grid;

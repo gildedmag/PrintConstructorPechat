@@ -112,4 +112,8 @@ class Utils {
         return window.innerWidth == screen.width && window.innerHeight == screen.height
     }
 
+    static isCompact(): boolean {
+        return window.devicePixelRatio > 1;
+    }
+
 }

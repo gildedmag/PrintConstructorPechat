@@ -91,8 +91,8 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
 
     /** @hidden */
     randomizePosition() {
-        let width = this.side.canvas.getWidth();
-        let height = this.side.canvas.getHeight();
+        let width = this.side.canvas.getWidth() / this.side.getZoom();
+        let height = this.side.canvas.getHeight() / this.side.getZoom();
         let w = Math.max((width / 2) * Math.random(), width * 0.1);
         let h = Math.max((height / 2) * Math.random(), height * 0.1);
         this.object.left = (width - w) * Math.random() + w / 2;
@@ -179,6 +179,9 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
             object.fontFamily = fontFamily;
             this.object.dirty = true;
             this.side.canvas.requestRenderAll();
+            if (repeat){
+                setTimeout(() => this.setFontFamily(fontFamily), 10)
+            }
         }
     }
 
@@ -205,6 +208,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
             this.object.dirty = true;
             this.side.canvas.requestRenderAll();
             this.side.saveState();
+            this.changed();
         }
     }
 
@@ -218,6 +222,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
             this.object.dirty = true;
             this.side.canvas.requestRenderAll();
             this.side.saveState();
+            this.changed();
         }
     }
 
@@ -225,16 +230,25 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         return this.type === ElementType.TEXT ? (this.object as fabric.IText).fontStyle === Constants.ITALIC : null;
     }
 
+    toggleItalic() {
+        this.setItalic(!this.isItalic());
+    }
+
     setBold(value: boolean) {
         if (this.type === ElementType.TEXT) {
             (this.object as fabric.IText).fontWeight = value ? Constants.BOLD : Constants.NORMAL;
             this.side.canvas.renderAll();
             this.side.saveState();
+            this.changed();
         }
     }
 
     isBold(): boolean {
         return this.type === ElementType.TEXT ? (this.object as fabric.IText).fontWeight === Constants.BOLD : null;
+    }
+
+    toggleBold() {
+        this.setBold(!this.isBold());
     }
 
     setTextDecoration(value: TextDecoration) {
@@ -258,7 +272,48 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
             this.side.canvas.requestRenderAll();
             this.side.canvas.renderAll();
             this.side.saveState();
+            this.changed();
         }
+    }
+
+    toggleUnderline(){
+        if (!this.isUnderline()){
+            this.setTextDecoration(TextDecoration.UNDERLINE)
+        } else {
+            this.setTextDecoration(null)
+        }
+    }
+
+    toggleOverline(){
+        if (!this.isOverline()){
+            this.setTextDecoration(TextDecoration.OVERLINE)
+        } else {
+            this.setTextDecoration(null)
+        }
+    }
+
+    toggleLinethrough(){
+        if (!this.isLinethrough()){
+            this.setTextDecoration(TextDecoration.LINETHROUGH)
+        } else {
+            this.setTextDecoration(null)
+        }
+    }
+
+    clearDecoration(){
+        this.setTextDecoration(null);
+    }
+
+    isUnderline(): boolean {
+        return this.getTextDecoration() == TextDecoration.UNDERLINE;
+    }
+
+    isOverline(): boolean {
+        return this.getTextDecoration() == TextDecoration.OVERLINE;
+    }
+
+    isLinethrough(): boolean {
+        return this.getTextDecoration() == TextDecoration.LINETHROUGH;
     }
 
     getTextDecoration(): string {
@@ -629,5 +684,9 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         element.setOptions(element.object);
         return element;
     }
+
+    // changed() {
+    //     /Constructor.instance.changed();
+    // }
 
 }

@@ -4,7 +4,7 @@ class FullScreenButton extends ToggleButton {
     toggleFullscreen() {
         Utils.isFullscreen()
             ? document.exitFullscreen()
-            : document.body.requestFullscreen();
+            : this.c.container.requestFullscreen();
         setTimeout(() => this.update(), 100);
         //this.update();
     }

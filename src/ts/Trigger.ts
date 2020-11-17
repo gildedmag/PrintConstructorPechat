@@ -11,17 +11,13 @@ abstract class Trigger<T> {
         } else {
             console.log(typeof this, "changed");
         }
-        console.log("actions:", Object.keys(this.actions).length);
-        console.log("-------");
-        Object.keys(this.actions).forEach((value, id) => {
-            let control = UIControl.getById(value);
+        Object.keys(this.actions).forEach((key, id) => {
+            let control = UIControl.getById(key);
             if (!control){
-                console.log("ACTION REMOVED");
-                delete this.actions[value];
+                delete this.actions[key];
                 return;
             }
-            console.log(control.getClassName(), control.getId());
-            let action = this.actions[value];
+            let action = this.actions[key];
             try {
                 action(this);
             } catch (e) {
@@ -35,9 +31,6 @@ abstract class Trigger<T> {
     }
 
     public onChange(action: (trigger: T) => any, object: Identifiable) {
-        if (!object.getId){
-            console.log("!object.getId:", object);
-        }
         this.actions[object.getId()] = action;
     }
 

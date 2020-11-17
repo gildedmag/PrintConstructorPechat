@@ -10,9 +10,10 @@ class SideBar extends VerticalToolBarUIControl {
     constructor() {
         super();
         let panel = ConstructorUI.instance.sidePanel;
-        this.appendSwitch(panel.addElementsPanel, Icon.PLUS);
+        this.appendSwitch(panel.newElementPanel, Icon.PLUS);
         this.appendSwitch(panel.layersPanel, Icon.LAYER_GROUP);
         this.appendSwitch(panel.selectionPanel, Icon.SLIDERS_H);
+        this.appendSwitch(panel.fontFamilyPanel, Icon.FONT);
         this.append(new Spacer());
         this.hideOthers(panel.layersPanel);
 

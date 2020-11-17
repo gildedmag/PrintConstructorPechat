@@ -31,7 +31,7 @@ class BottomBar extends ToolBar {
             new Button(() => {
                 this.c.zoomToFit();
             }, Icon.SEARCH),
-            new FullScreenButton(),
+            //new FullScreenButton(),
             new Spacer(),
             new ToggleButton(
                 () => {

@@ -1,5 +1,5 @@
-/// <reference path="Button.ts" />
-class ToggleButton extends Button {
+/// <reference path="TriggeredButton.ts" />
+class ToggleButton extends TriggeredButton {
 
     action: () => void;
     check: () => boolean;
@@ -14,14 +14,14 @@ class ToggleButton extends Button {
         action: () => any,
         check: () => boolean,
         iconOn: Icon | string,
-        iconOff: Icon | string
+        iconOff?: Icon | string
     ) {
         super(action, iconOn);
         this.action = action;
         this.check = check;
         this.iconOn = iconOn;
         this.iconOn = iconOn;
-        this.iconOff = iconOff;
+        this.iconOff = iconOff || iconOn;
         this.container.onclick = () => this.action();
         this.update();
     }

@@ -1,7 +1,5 @@
-/// <reference path="UIControl.ts" />
-/// <reference path="TriggeredUIControl.ts" />
-/// <reference path="../Icon.ts" />
-/// <reference path="Spacer.ts" />
+/// <reference path="../TriggeredUIControl.ts" />
+/// <reference path="../Spacer.ts" />
 
 class LayerUIControl extends TriggeredUIControl<Element2D> {
 
@@ -11,6 +9,7 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
     visibilityButton: ToggleButton;
     lockButton: ToggleButton;
     deleteButton: Button;
+
     cachedIcon: string;
 
     static dragTo = 0;
@@ -95,19 +94,17 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
     }
 
     update() {
+        this.removeClass("drag-over");
         this.labelElement.innerText = this.trigger.type.getName();
         let maxSize = Math.max(this.trigger.object.width * this.trigger.object.scaleX, this.trigger.object.height * this.trigger.object.scaleY);
         if (this.trigger.isVisible()) {
-            let multiplier = Constructor.settings.ui.layerIconSize / maxSize;
-            let options = {
-                format: "png",
-                multiplier: multiplier
-            };
-            let src = this.trigger.object.toDataURL(options).toString();
-            this.iconElement.src = src;
-            this.cachedIcon = src;
+            this.getIcon(maxSize);
+        } else if (this.cachedIcon) {
+            //this.iconElement.src = this.cachedIcon;
         } else {
-            this.iconElement.src = this.cachedIcon;
+            this.trigger.show();
+            this.getIcon(maxSize);
+            this.trigger.hide();
         }
         if (this.trigger.isSelected()) {
             this.addClass("selected")
@@ -116,6 +113,17 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
         }
         this.lockButton.update();
         this.updateVisibility();
+    }
+
+    getIcon(maxSize: number){
+        let multiplier = Constructor.settings.ui.layerIconSize / maxSize;
+        let options = {
+            format: "png",
+            multiplier: multiplier
+        };
+        let src = this.trigger.object.toDataURL(options).toString();
+        this.iconElement.src = src;
+        this.cachedIcon = src;
     }
 
     updateVisibility() {

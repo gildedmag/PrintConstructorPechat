@@ -37,7 +37,6 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
 
 
     private appendChild(control: UIControl): UIControl {
-        console.log("children:", this.children.length);
         this.children.push(control);
         this.container.appendChild(control.container);
         return this;
@@ -48,7 +47,18 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
         return this;
     }
 
-    clear(){
+    removeChild(index: number) {
+        return this.children.splice(index, 1)[0];
+    }
+
+    moveChild(from: number, to: number) {
+        let htmlElement = this.children[from].container;
+        let before = this.children[to].container;
+        this.children.splice(to, 0, this.removeChild(from));
+        this.container.insertBefore(htmlElement, before);
+    }
+
+    clear() {
         this.getElement().innerHTML = "";
         this.children.forEach(child => {
             child.clear();

@@ -13,16 +13,20 @@ class Constructor extends View<Constructor> {
     spinner: Spinner;
 
     /** @hidden */
-    onSelectHandler: (selection: Element2D) => void = () => {};
+    onSelectHandler: (selection: Element2D) => void = () => {
+    };
 
     /** @hidden */
-    onDeselectHandler: (selection: Element2D) => void = () => {};
+    onDeselectHandler: (selection: Element2D) => void = () => {
+    };
 
     /** @hidden */
-    onModeChangeHandler: () => void = () => {};
+    onModeChangeHandler: () => void = () => {
+    };
 
     /** @hidden */
-    onElementModificationHandler: () => void = () => {};
+    onElementModificationHandler: () => void = () => {
+    };
 
     /** @hidden */
     clipboard: Element2D;
@@ -61,10 +65,10 @@ class Constructor extends View<Constructor> {
         //this.setMode(Mode.Mode2D);
         this.setState({
             sides: [{
-                width: 300,
-                height: 200
+                width: 400,
+                height: 300
             }]
-        });
+        }, () => this.zoomToFit());
         //this.addSide(this.container.clientWidth - 50, this.container.clientHeight - 50);
         this.preview = new Preview(this);
         this.spinner = new Spinner(this.container);
@@ -73,6 +77,13 @@ class Constructor extends View<Constructor> {
         this.container.style.background = null;
         console.log("Constructor.version: ", Constructor.version);
         console.log("fabric.js.version: ", fabric.version);
+        window.addEventListener("resize", function () {
+            let div = container as HTMLDivElement;
+            console.log("resize");
+            if (div.scrollWidth > div.clientWidth || div.scrollHeight > div.clientHeight) {
+                Constructor.instance.zoomToFit();
+            }
+        })
     }
 
     /**
@@ -221,7 +232,11 @@ class Constructor extends View<Constructor> {
     }
 
     zoomToFit() {
-        this.getActiveSide().zoomToFit();
+        if (!this.getActiveSide()) {
+            setTimeout(() => this.zoomToFit(), 10);
+        } else {
+            this.getActiveSide().zoomToFit();
+        }
     }
 
     resetZoom() {

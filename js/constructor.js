@@ -197,17 +197,13 @@ var Trigger = (function () {
         else {
             console.log(typeof this, "changed");
         }
-        console.log("actions:", Object.keys(this.actions).length);
-        console.log("-------");
-        Object.keys(this.actions).forEach(function (value, id) {
-            var control = UIControl.getById(value);
+        Object.keys(this.actions).forEach(function (key, id) {
+            var control = UIControl.getById(key);
             if (!control) {
-                console.log("ACTION REMOVED");
-                delete _this.actions[value];
+                delete _this.actions[key];
                 return;
             }
-            console.log(control.getClassName(), control.getId());
-            var action = _this.actions[value];
+            var action = _this.actions[key];
             try {
                 action(_this);
             }
@@ -221,9 +217,6 @@ var Trigger = (function () {
         this.visibilityActions.forEach(function (action) { return action(_this); });
     };
     Trigger.prototype.onChange = function (action, object) {
-        if (!object.getId) {
-            console.log("!object.getId:", object);
-        }
         this.actions[object.getId()] = action;
     };
     Trigger.prototype.onVisibilityChange = function (action) {
@@ -270,6 +263,7 @@ var View = (function (_super) {
         if (!this.hasClass(className)) {
             this.container.classList.add(className);
         }
+        return this;
     };
     View.prototype.removeClass = function (className) {
         if (this.hasClass(className)) {
@@ -283,6 +277,14 @@ var View = (function (_super) {
         this.hasClass(className)
             ? this.removeClass(className)
             : this.addClass(className);
+    };
+    View.prototype.setFontFamily = function (fontFamily) {
+        this.container.style.fontFamily = fontFamily;
+        return this;
+    };
+    View.prototype.setFontSize = function (fontSize) {
+        this.container.style.fontSize = fontSize + "px";
+        return this;
     };
     return View;
 }(Trigger));
@@ -620,10 +622,14 @@ var Constructor = (function (_super) {
     function Constructor(container) {
         var _this = _super.call(this, container instanceof HTMLElement ? container : document.getElementById(container)) || this;
         _this.sides = [];
-        _this.onSelectHandler = function () { };
-        _this.onDeselectHandler = function () { };
-        _this.onModeChangeHandler = function () { };
-        _this.onElementModificationHandler = function () { };
+        _this.onSelectHandler = function () {
+        };
+        _this.onDeselectHandler = function () {
+        };
+        _this.onModeChangeHandler = function () {
+        };
+        _this.onElementModificationHandler = function () {
+        };
         _this.isExplicitlyLoaded = false;
         _this.container.style.overflow = Constants.AUTO;
         fabric.textureSize = 4096;
@@ -632,10 +638,10 @@ var Constructor = (function (_super) {
         _this.snapToObjects = false;
         _this.setState({
             sides: [{
-                    width: 300,
-                    height: 200
+                    width: 400,
+                    height: 300
                 }]
-        });
+        }, function () { return _this.zoomToFit(); });
         _this.preview = new Preview(_this);
         _this.spinner = new Spinner(_this.container);
         _this.preview.hide();
@@ -643,6 +649,13 @@ var Constructor = (function (_super) {
         _this.container.style.background = null;
         console.log("Constructor.version: ", Constructor.version);
         console.log("fabric.js.version: ", fabric.version);
+        window.addEventListener("resize", function () {
+            var div = container;
+            console.log("resize");
+            if (div.scrollWidth > div.clientWidth || div.scrollHeight > div.clientHeight) {
+                Constructor.instance.zoomToFit();
+            }
+        });
         return _this;
     }
     Constructor.prototype.loadModel = function (modelName, callback) {
@@ -739,7 +752,13 @@ var Constructor = (function (_super) {
         }
     };
     Constructor.prototype.zoomToFit = function () {
-        this.getActiveSide().zoomToFit();
+        var _this = this;
+        if (!this.getActiveSide()) {
+            setTimeout(function () { return _this.zoomToFit(); }, 10);
+        }
+        else {
+            this.getActiveSide().zoomToFit();
+        }
     };
     Constructor.prototype.resetZoom = function () {
         this.getActiveSide().resetZoom();
@@ -1539,12 +1558,14 @@ var Icon;
     Icon["RAVELRY"] = "<i class=\"fa fa-ravelry\"></i>";
     Icon["REBEL"] = "<i class=\"fa fa-rebel\"></i>";
     Icon["RECYCLE"] = "<i class=\"fa fa-recycle\"></i>";
+    Icon["REDO"] = "<i class=\"fa fa-redo\"></i>";
     Icon["REDDIT"] = "<i class=\"fa fa-reddit\"></i>";
     Icon["REDDIT_ALIEN"] = "<i class=\"fa fa-reddit-alien\"></i>";
     Icon["REDDIT_SQUARE"] = "<i class=\"fa fa-reddit-square\"></i>";
     Icon["REFRESH"] = "<i class=\"fa fa-refresh\"></i>";
     Icon["REGISTERED"] = "<i class=\"fa fa-registered\"></i>";
     Icon["REMOVE"] = "<i class=\"fa fa-remove (alias)\"></i>";
+    Icon["REMOVE_FORMAT"] = "<i class=\"fas fa-remove-format\"></i>";
     Icon["RENREN"] = "<i class=\"fa fa-renren\"></i>";
     Icon["REORDER"] = "<i class=\"fa fa-reorder (alias)\"></i>";
     Icon["REPEAT"] = "<i class=\"fa fa-repeat\"></i>";
@@ -1646,6 +1667,7 @@ var Icon;
     Icon["STOP_CIRCLE_O"] = "<i class=\"fa fa-stop-circle-o\"></i>";
     Icon["STREET_VIEW"] = "<i class=\"fa fa-street-view\"></i>";
     Icon["STRIKETHROUGH"] = "<i class=\"fa fa-strikethrough\"></i>";
+    Icon["LINETHROUGH"] = "<i class=\"fa fa-strikethrough\"></i>";
     Icon["STUMBLEUPON"] = "<i class=\"fa fa-stumbleupon\"></i>";
     Icon["STUMBLEUPON_CIRCLE"] = "<i class=\"fa fa-stumbleupon-circle\"></i>";
     Icon["SUBSCRIPT"] = "<i class=\"fa fa-subscript\"></i>";
@@ -1904,6 +1926,9 @@ var Utils = (function () {
     Utils.isFullscreen = function () {
         return window.innerWidth == screen.width && window.innerHeight == screen.height;
     };
+    Utils.isCompact = function () {
+        return window.devicePixelRatio > 1;
+    };
     return Utils;
 }());
 var Dimensions = (function () {
@@ -1974,8 +1999,8 @@ var Element2D = (function (_super) {
         object.setOptions(Element2D.commonDefaults);
     };
     Element2D.prototype.randomizePosition = function () {
-        var width = this.side.canvas.getWidth();
-        var height = this.side.canvas.getHeight();
+        var width = this.side.canvas.getWidth() / this.side.getZoom();
+        var height = this.side.canvas.getHeight() / this.side.getZoom();
         var w = Math.max((width / 2) * Math.random(), width * 0.1);
         var h = Math.max((height / 2) * Math.random(), height * 0.1);
         this.object.left = (width - w) * Math.random() + w / 2;
@@ -2046,12 +2071,16 @@ var Element2D = (function (_super) {
         this.side.saveState();
     };
     Element2D.prototype.setFontFamily = function (fontFamily, repeat) {
+        var _this = this;
         if (this.type === ElementType.TEXT) {
             fabric.charWidthsCache[fontFamily] = {};
             var object = this.object;
             object.fontFamily = fontFamily;
             this.object.dirty = true;
             this.side.canvas.requestRenderAll();
+            if (repeat) {
+                setTimeout(function () { return _this.setFontFamily(fontFamily); }, 10);
+            }
         }
     };
     Element2D.prototype.getText = function () {
@@ -2074,6 +2103,7 @@ var Element2D = (function (_super) {
             this.object.dirty = true;
             this.side.canvas.requestRenderAll();
             this.side.saveState();
+            this.changed();
         }
     };
     Element2D.prototype.getFontSize = function () {
@@ -2085,20 +2115,28 @@ var Element2D = (function (_super) {
             this.object.dirty = true;
             this.side.canvas.requestRenderAll();
             this.side.saveState();
+            this.changed();
         }
     };
     Element2D.prototype.isItalic = function () {
         return this.type === ElementType.TEXT ? this.object.fontStyle === Constants.ITALIC : null;
+    };
+    Element2D.prototype.toggleItalic = function () {
+        this.setItalic(!this.isItalic());
     };
     Element2D.prototype.setBold = function (value) {
         if (this.type === ElementType.TEXT) {
             this.object.fontWeight = value ? Constants.BOLD : Constants.NORMAL;
             this.side.canvas.renderAll();
             this.side.saveState();
+            this.changed();
         }
     };
     Element2D.prototype.isBold = function () {
         return this.type === ElementType.TEXT ? this.object.fontWeight === Constants.BOLD : null;
+    };
+    Element2D.prototype.toggleBold = function () {
+        this.setBold(!this.isBold());
     };
     Element2D.prototype.setTextDecoration = function (value) {
         if (this.type === ElementType.TEXT) {
@@ -2121,7 +2159,44 @@ var Element2D = (function (_super) {
             this.side.canvas.requestRenderAll();
             this.side.canvas.renderAll();
             this.side.saveState();
+            this.changed();
         }
+    };
+    Element2D.prototype.toggleUnderline = function () {
+        if (!this.isUnderline()) {
+            this.setTextDecoration(TextDecoration.UNDERLINE);
+        }
+        else {
+            this.setTextDecoration(null);
+        }
+    };
+    Element2D.prototype.toggleOverline = function () {
+        if (!this.isOverline()) {
+            this.setTextDecoration(TextDecoration.OVERLINE);
+        }
+        else {
+            this.setTextDecoration(null);
+        }
+    };
+    Element2D.prototype.toggleLinethrough = function () {
+        if (!this.isLinethrough()) {
+            this.setTextDecoration(TextDecoration.LINETHROUGH);
+        }
+        else {
+            this.setTextDecoration(null);
+        }
+    };
+    Element2D.prototype.clearDecoration = function () {
+        this.setTextDecoration(null);
+    };
+    Element2D.prototype.isUnderline = function () {
+        return this.getTextDecoration() == TextDecoration.UNDERLINE;
+    };
+    Element2D.prototype.isOverline = function () {
+        return this.getTextDecoration() == TextDecoration.OVERLINE;
+    };
+    Element2D.prototype.isLinethrough = function () {
+        return this.getTextDecoration() == TextDecoration.LINETHROUGH;
     };
     Element2D.prototype.getTextDecoration = function () {
         if (this.type != ElementType.TEXT) {
@@ -2779,9 +2854,15 @@ var Side2D = (function (_super) {
         this.centerPosition();
     };
     Side2D.prototype.zoomToFit = function () {
+        var _this = this;
         var value = Math.min(this.container.clientWidth / this.width, this.container.clientHeight / this.height);
-        value *= 0.8;
-        this.setZoom(value);
+        if (!value) {
+            setTimeout(function () { return _this.zoomToFit(); }, 10);
+        }
+        else {
+            value *= 0.8;
+            this.setZoom(value);
+        }
     };
     Side2D.prototype.getRatio = function () {
         return this.width / this.height;
@@ -3096,7 +3177,6 @@ var UIControl = (function (_super) {
         return this.map[id];
     };
     UIControl.prototype.appendChild = function (control) {
-        console.log("children:", this.children.length);
         this.children.push(control);
         this.container.appendChild(control.container);
         return this;
@@ -3109,6 +3189,15 @@ var UIControl = (function (_super) {
         }
         controls.forEach(function (control) { return _this.appendChild(control); });
         return this;
+    };
+    UIControl.prototype.removeChild = function (index) {
+        return this.children.splice(index, 1)[0];
+    };
+    UIControl.prototype.moveChild = function (from, to) {
+        var htmlElement = this.children[from].container;
+        var before = this.children[to].container;
+        this.children.splice(to, 0, this.removeChild(from));
+        this.container.insertBefore(htmlElement, before);
     };
     UIControl.prototype.clear = function () {
         this.getElement().innerHTML = "";
@@ -3123,62 +3212,25 @@ var UIControl = (function (_super) {
     UIControl.nextId = 0;
     return UIControl;
 }(View));
-var ToolBar = (function (_super) {
-    __extends(ToolBar, _super);
-    function ToolBar() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    ToolBar.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " toolbar";
-    };
-    ToolBar.prototype.update = function () {
-    };
-    return ToolBar;
-}(UIControl));
-var BottomBar = (function (_super) {
-    __extends(BottomBar, _super);
-    function BottomBar() {
+var Column = (function (_super) {
+    __extends(Column, _super);
+    function Column() {
+        var controls = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            controls[_i] = arguments[_i];
+        }
         var _this = _super.call(this) || this;
-        _this.update();
+        _this.append(new Spacer());
+        controls.forEach(function (control) {
+            _this.append(control);
+            _this.append(new Spacer());
+        });
         return _this;
     }
-    BottomBar.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " bottom";
+    Column.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " column";
     };
-    BottomBar.prototype.update = function () {
-        var _this = this;
-        this.clear();
-        this.append(new Button(function () {
-            ConstructorUI.instance.toggleClass("collapsed");
-            ConstructorUI.instance.sidePanel.toggleVisibility();
-            ConstructorUI.instance.sideBar.buttons.forEach(function (button) { return button.toggleVisibility(); });
-        }, Icon.BARS), new Spacer(), new Button(function () {
-            _this.c.zoomIn();
-        }, Icon.SEARCH_PLUS), new Button(function () {
-            _this.c.zoomOut();
-        }, Icon.SEARCH_MINUS), new Button(function () {
-            _this.c.zoomToFit();
-        }, Icon.SEARCH), new FullScreenButton(), new Spacer(), new ToggleButton(function () {
-            _this.c.toggleMode();
-            _this.update();
-        }, function () { return _this.c.getMode() == Mode.Mode3D; }, Icon.SQUARE, Icon.CUBE));
-    };
-    return BottomBar;
-}(ToolBar));
-var Button = (function (_super) {
-    __extends(Button, _super);
-    function Button(action, icon) {
-        var _this = _super.call(this) || this;
-        _this.container.innerHTML = icon;
-        _this.container.onclick = function () { return action(); };
-        return _this;
-    }
-    Button.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " button";
-    };
-    Button.prototype.update = function () {
-    };
-    return Button;
+    return Column;
 }(UIControl));
 var ConstructorController = (function (_super) {
     __extends(ConstructorController, _super);
@@ -3242,6 +3294,343 @@ var ConstructorUI = (function (_super) {
     ConstructorUI.test = ConstructorUI.init();
     return ConstructorUI;
 }(UIControl));
+var LabelControl = (function (_super) {
+    __extends(LabelControl, _super);
+    function LabelControl(value) {
+        var _this = _super.call(this) || this;
+        _this.container.innerText = value;
+        return _this;
+    }
+    LabelControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " label";
+    };
+    LabelControl.prototype.setValue = function (value) {
+        console.log(value);
+        this.container.innerText = value;
+    };
+    return LabelControl;
+}(UIControl));
+var Row = (function (_super) {
+    __extends(Row, _super);
+    function Row() {
+        var controls = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            controls[_i] = arguments[_i];
+        }
+        var _this = _super.call(this) || this;
+        controls.forEach(function (control) {
+            _this.append(control);
+        });
+        return _this;
+    }
+    Row.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " row";
+    };
+    return Row;
+}(UIControl));
+var Spacer = (function (_super) {
+    __extends(Spacer, _super);
+    function Spacer() {
+        var _this = _super.call(this) || this;
+        _this.container.addEventListener("touchstart", function (e) {
+            e.preventDefault();
+        });
+        return _this;
+    }
+    Spacer.prototype.getClassName = function () {
+        return "spacer";
+    };
+    Spacer.prototype.update = function () {
+    };
+    return Spacer;
+}(UIControl));
+var TriggeredUIControl = (function (_super) {
+    __extends(TriggeredUIControl, _super);
+    function TriggeredUIControl(trigger, tag) {
+        var _this = _super.call(this, tag) || this;
+        trigger.onChange(function () { return _this.update(); }, _this);
+        trigger.onVisibilityChange(function () { return _this.updateVisibility(); });
+        _this.trigger = trigger;
+        return _this;
+    }
+    TriggeredUIControl.prototype.updateVisibility = function () {
+    };
+    return TriggeredUIControl;
+}(UIControl));
+var ToolBar = (function (_super) {
+    __extends(ToolBar, _super);
+    function ToolBar() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    ToolBar.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " toolbar";
+    };
+    ToolBar.prototype.update = function () {
+    };
+    return ToolBar;
+}(UIControl));
+var BottomBar = (function (_super) {
+    __extends(BottomBar, _super);
+    function BottomBar() {
+        var _this = _super.call(this) || this;
+        _this.update();
+        return _this;
+    }
+    BottomBar.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " bottom";
+    };
+    BottomBar.prototype.update = function () {
+        var _this = this;
+        this.clear();
+        this.append(new Button(function () {
+            ConstructorUI.instance.toggleClass("collapsed");
+            ConstructorUI.instance.sidePanel.toggleVisibility();
+            ConstructorUI.instance.sideBar.buttons.forEach(function (button) { return button.toggleVisibility(); });
+        }, Icon.BARS), new Spacer(), new Button(function () {
+            _this.c.zoomIn();
+        }, Icon.SEARCH_PLUS), new Button(function () {
+            _this.c.zoomOut();
+        }, Icon.SEARCH_MINUS), new Button(function () {
+            _this.c.zoomToFit();
+        }, Icon.SEARCH), new Spacer(), new ToggleButton(function () {
+            _this.c.toggleMode();
+            _this.update();
+        }, function () { return _this.c.getMode() == Mode.Mode3D; }, Icon.SQUARE, Icon.CUBE));
+    };
+    return BottomBar;
+}(ToolBar));
+var VerticalToolBarUIControl = (function (_super) {
+    __extends(VerticalToolBarUIControl, _super);
+    function VerticalToolBarUIControl() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    VerticalToolBarUIControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " vertical";
+    };
+    return VerticalToolBarUIControl;
+}(ToolBar));
+var SideBar = (function (_super) {
+    __extends(SideBar, _super);
+    function SideBar() {
+        var _this = _super.call(this) || this;
+        _this.buttons = [];
+        var panel = ConstructorUI.instance.sidePanel;
+        _this.appendSwitch(panel.newElementPanel, Icon.PLUS);
+        _this.appendSwitch(panel.layersPanel, Icon.LAYER_GROUP);
+        _this.appendSwitch(panel.selectionPanel, Icon.SLIDERS_H);
+        _this.appendSwitch(panel.fontFamilyPanel, Icon.FONT);
+        _this.append(new Spacer());
+        _this.hideOthers(panel.layersPanel);
+        return _this;
+    }
+    SideBar.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " sidebar";
+    };
+    SideBar.prototype.appendSwitch = function (control, icon) {
+        var _this = this;
+        var button = new SwitchButton(control, icon);
+        this.buttons.push(button);
+        control.onVisibilityChange(function (trigger) {
+            if (trigger.isVisible()) {
+                _this.hideOthers(trigger);
+            }
+        });
+        this.append(button);
+    };
+    SideBar.prototype.hideOthers = function (activeTrigger) {
+        this.buttons.forEach(function (button) {
+            if (button.trigger != activeTrigger) {
+                button.trigger.hide();
+                button.removeClass("selected");
+            }
+            else {
+                button.addClass("selected");
+            }
+        });
+    };
+    return SideBar;
+}(VerticalToolBarUIControl));
+var TopBar = (function (_super) {
+    __extends(TopBar, _super);
+    function TopBar() {
+        var _this = _super.call(this) || this;
+        _this.append(new Spacer(), new Button(function () { return _this.c.undo(); }, Icon.UNDO), new Button(function () { return _this.c.redo(); }, Icon.REDO), new Spacer());
+        return _this;
+    }
+    TopBar.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " top";
+    };
+    return TopBar;
+}(ToolBar));
+var InputControl = (function (_super) {
+    __extends(InputControl, _super);
+    function InputControl(type, setter, getter, min, max, step) {
+        var _this = _super.call(this, Constructor.instance, "input") || this;
+        _this.getter = getter;
+        _this.setter = setter;
+        var element = _this.container;
+        element.type = type;
+        element.min = min || 0;
+        element.max = max || 100;
+        element.step = step || 10;
+        element.value = getter();
+        element.onchange = function () {
+            var value = _this.container.value;
+            console.log("this.container.value", value);
+            _this.setter(value);
+            _this.changed();
+        };
+        return _this;
+    }
+    InputControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " input";
+    };
+    InputControl.prototype.update = function () {
+        var selection = this.c.getSelection();
+        if (selection) {
+            var value = this.getter();
+            this.container.value = value;
+        }
+        else {
+        }
+    };
+    InputControl.prototype.changed = function () {
+    };
+    return InputControl;
+}(TriggeredUIControl));
+var ColorControl = (function (_super) {
+    __extends(ColorControl, _super);
+    function ColorControl(setter, getter) {
+        return _super.call(this, "color", setter, getter) || this;
+    }
+    ColorControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " color";
+    };
+    return ColorControl;
+}(InputControl));
+var RangeControl = (function (_super) {
+    __extends(RangeControl, _super);
+    function RangeControl(setter, getter, min, max, step) {
+        return _super.call(this, "range", setter, getter, min, max, step) || this;
+    }
+    RangeControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " input";
+    };
+    return RangeControl;
+}(InputControl));
+var SelectControl = (function (_super) {
+    __extends(SelectControl, _super);
+    function SelectControl(setter, getter, min, max, step) {
+        var _this = _super.call(this, Constructor.instance, "select") || this;
+        for (var i = (min || 0); i <= (max || 100); i += (step || 10)) {
+            var option = document.createElement("option");
+            option.value = i.toString();
+            option.innerText = i.toString();
+            _this.container.appendChild(option);
+        }
+        _this.getter = getter;
+        _this.setter = setter;
+        _this.container.value = getter();
+        _this.container.onchange = function () {
+            var value = _this.container.value;
+            console.log("this.container.value", value);
+            _this.setter(value);
+            _this.changed();
+        };
+        return _this;
+    }
+    SelectControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " select";
+    };
+    SelectControl.prototype.update = function () {
+        console.log("InputControl update");
+        var selection = this.c.getSelection();
+        if (selection) {
+            var value = this.getter();
+            console.log("getter value:", value);
+            this.container.value = value;
+        }
+        else {
+        }
+    };
+    return SelectControl;
+}(TriggeredUIControl));
+var SelectionColorControl = (function (_super) {
+    __extends(SelectionColorControl, _super);
+    function SelectionColorControl(label, setter, getter, max, step) {
+        var _this = _super.call(this) || this;
+        _this.append(new Row(new LabelControl(label), new Spacer(), new ColorControl(setter, getter)));
+        return _this;
+    }
+    SelectionColorControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " property-control color";
+    };
+    SelectionColorControl.prototype.update = function () {
+    };
+    return SelectionColorControl;
+}(UIControl));
+var Button = (function (_super) {
+    __extends(Button, _super);
+    function Button(action, icon, label) {
+        var _this = _super.call(this) || this;
+        if (icon) {
+            _this.append(new IconControl(icon));
+        }
+        if (label) {
+            _this.append(new LabelControl(label), new Spacer());
+        }
+        _this.container.onclick = function () { return action(); };
+        return _this;
+    }
+    Button.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " button";
+    };
+    return Button;
+}(UIControl));
+var SwitchButton = (function (_super) {
+    __extends(SwitchButton, _super);
+    function SwitchButton(view, icon) {
+        var _this = _super.call(this, view) || this;
+        _this.container.innerHTML = icon;
+        _this.container.onclick = function () {
+            _this.trigger.show();
+        };
+        return _this;
+    }
+    SwitchButton.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " button";
+    };
+    SwitchButton.prototype.updateVisibility = function () {
+        this.update();
+    };
+    SwitchButton.prototype.update = function () {
+        if (this.trigger.isVisible()) {
+            this.addClass("active");
+        }
+        else {
+            this.removeClass("active");
+        }
+    };
+    return SwitchButton;
+}(TriggeredUIControl));
+var TriggeredButton = (function (_super) {
+    __extends(TriggeredButton, _super);
+    function TriggeredButton(action, icon, label) {
+        var _this = _super.call(this, Constructor.instance) || this;
+        if (icon) {
+            _this.append(new IconControl(icon));
+        }
+        if (label) {
+            _this.append(new LabelControl(label));
+        }
+        _this.container.onclick = function () { return action(); };
+        return _this;
+    }
+    TriggeredButton.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " button";
+    };
+    return TriggeredButton;
+}(TriggeredUIControl));
 var ToggleButton = (function (_super) {
     __extends(ToggleButton, _super);
     function ToggleButton(action, check, iconOn, iconOff) {
@@ -3250,7 +3639,7 @@ var ToggleButton = (function (_super) {
         _this.check = check;
         _this.iconOn = iconOn;
         _this.iconOn = iconOn;
-        _this.iconOff = iconOff;
+        _this.iconOff = iconOff || iconOn;
         _this.container.onclick = function () { return _this.action(); };
         _this.update();
         return _this;
@@ -3276,7 +3665,7 @@ var ToggleButton = (function (_super) {
         }
     };
     return ToggleButton;
-}(Button));
+}(TriggeredButton));
 var FullScreenButton = (function (_super) {
     __extends(FullScreenButton, _super);
     function FullScreenButton() {
@@ -3287,7 +3676,7 @@ var FullScreenButton = (function (_super) {
         var _this = this;
         Utils.isFullscreen()
             ? document.exitFullscreen()
-            : document.body.requestFullscreen();
+            : this.c.container.requestFullscreen();
         setTimeout(function () { return _this.update(); }, 100);
     };
     FullScreenButton.prototype.getClassName = function () {
@@ -3295,35 +3684,6 @@ var FullScreenButton = (function (_super) {
     };
     return FullScreenButton;
 }(ToggleButton));
-var TriggeredUIControl = (function (_super) {
-    __extends(TriggeredUIControl, _super);
-    function TriggeredUIControl(trigger) {
-        var _this = _super.call(this) || this;
-        trigger.onChange(function () { return _this.update(); }, _this);
-        trigger.onVisibilityChange(function () { return _this.updateVisibility(); });
-        _this.trigger = trigger;
-        return _this;
-    }
-    TriggeredUIControl.prototype.updateVisibility = function () {
-    };
-    return TriggeredUIControl;
-}(UIControl));
-var Spacer = (function (_super) {
-    __extends(Spacer, _super);
-    function Spacer() {
-        var _this = _super.call(this) || this;
-        _this.container.addEventListener("touchstart", function (e) {
-            e.preventDefault();
-        });
-        return _this;
-    }
-    Spacer.prototype.getClassName = function () {
-        return "spacer";
-    };
-    Spacer.prototype.update = function () {
-    };
-    return Spacer;
-}(UIControl));
 var LayerUIControl = (function (_super) {
     __extends(LayerUIControl, _super);
     function LayerUIControl(element) {
@@ -3370,20 +3730,18 @@ var LayerUIControl = (function (_super) {
         this.removeClass("select");
     };
     LayerUIControl.prototype.update = function () {
+        this.removeClass("drag-over");
         this.labelElement.innerText = this.trigger.type.getName();
         var maxSize = Math.max(this.trigger.object.width * this.trigger.object.scaleX, this.trigger.object.height * this.trigger.object.scaleY);
         if (this.trigger.isVisible()) {
-            var multiplier = Constructor.settings.ui.layerIconSize / maxSize;
-            var options = {
-                format: "png",
-                multiplier: multiplier
-            };
-            var src = this.trigger.object.toDataURL(options).toString();
-            this.iconElement.src = src;
-            this.cachedIcon = src;
+            this.getIcon(maxSize);
+        }
+        else if (this.cachedIcon) {
         }
         else {
-            this.iconElement.src = this.cachedIcon;
+            this.trigger.show();
+            this.getIcon(maxSize);
+            this.trigger.hide();
         }
         if (this.trigger.isSelected()) {
             this.addClass("selected");
@@ -3394,6 +3752,16 @@ var LayerUIControl = (function (_super) {
         this.lockButton.update();
         this.updateVisibility();
     };
+    LayerUIControl.prototype.getIcon = function (maxSize) {
+        var multiplier = Constructor.settings.ui.layerIconSize / maxSize;
+        var options = {
+            format: "png",
+            multiplier: multiplier
+        };
+        var src = this.trigger.object.toDataURL(options).toString();
+        this.iconElement.src = src;
+        this.cachedIcon = src;
+    };
     LayerUIControl.prototype.updateVisibility = function () {
         this.visibilityButton.update();
     };
@@ -3402,8 +3770,8 @@ var LayerUIControl = (function (_super) {
 }(TriggeredUIControl));
 var LayersPanelUIControl = (function (_super) {
     __extends(LayersPanelUIControl, _super);
-    function LayersPanelUIControl(c) {
-        var _this = _super.call(this, c) || this;
+    function LayersPanelUIControl() {
+        var _this = _super.call(this, Constructor.instance) || this;
         _this.update();
         return _this;
     }
@@ -3411,10 +3779,12 @@ var LayersPanelUIControl = (function (_super) {
         return _super.prototype.getClassName.call(this) + " layers-panel";
     };
     LayersPanelUIControl.prototype.update = function () {
-        this.clear();
-        for (var i = 0; i < this.trigger.sides.length; i++) {
-            var side = this.trigger.sides[i];
-            this.append(new LayersUIControl(side));
+        if (this.children.length != this.c.sides.length) {
+            this.clear();
+            for (var i = 0; i < this.trigger.sides.length; i++) {
+                var side = this.trigger.sides[i];
+                this.append(new LayersUIControl(side));
+            }
         }
     };
     LayersPanelUIControl.prototype.updateVisibility = function () {
@@ -3433,16 +3803,37 @@ var LayersUIControl = (function (_super) {
         return _super.prototype.getClassName.call(this) + " layers vertical";
     };
     LayersUIControl.prototype.update = function () {
-        var _this = this;
-        console.log(this.trigger.getClassName(), this.children.length, this.trigger.getLayers().length);
-        if (this.children.length != this.trigger.getLayers().length) {
-            this.clear();
-            console.log("CLEARED");
-            this.trigger.getLayers().forEach(function (layer) {
-                _this.append(new LayerUIControl(layer));
-            });
+        var layerControls = this.getLayerControls();
+        if (this.trigger.getLayers().length != layerControls.length) {
+            this.repopulate();
+            return;
+        }
+        for (var from = 0; from < layerControls.length; from++) {
+            var layer = layerControls[from];
+            var element = this.trigger.getLayers()[from];
+            if (layer.trigger != element) {
+                this.repopulate();
+                return;
+            }
         }
         this.updateVisibility();
+    };
+    LayersUIControl.prototype.getLayerControls = function () {
+        var layerControls = [];
+        for (var i = 0; i < this.children.length; i++) {
+            if (this.children[i] instanceof LayerUIControl) {
+                layerControls.push(this.children[i]);
+            }
+        }
+        return layerControls;
+    };
+    LayersUIControl.prototype.repopulate = function () {
+        var _this = this;
+        this.clear();
+        console.log("CLEARED");
+        this.trigger.getLayers().forEach(function (layer) {
+            _this.append(new LayerUIControl(layer));
+        });
     };
     LayersUIControl.prototype.updateVisibility = function () {
         if (this.isVisible() != this.trigger.isVisible()) {
@@ -3451,68 +3842,45 @@ var LayersUIControl = (function (_super) {
     };
     return LayersUIControl;
 }(TriggeredUIControl));
-var VerticalToolBarUIControl = (function (_super) {
-    __extends(VerticalToolBarUIControl, _super);
-    function VerticalToolBarUIControl() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    VerticalToolBarUIControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " vertical";
-    };
-    return VerticalToolBarUIControl;
-}(ToolBar));
-var SideBar = (function (_super) {
-    __extends(SideBar, _super);
-    function SideBar() {
-        var _this = _super.call(this) || this;
-        _this.buttons = [];
-        var panel = ConstructorUI.instance.sidePanel;
-        _this.appendSwitch(panel.addElementsPanel, Icon.PLUS);
-        _this.appendSwitch(panel.layersPanel, Icon.LAYER_GROUP);
-        _this.appendSwitch(panel.selectionPanel, Icon.SLIDERS_H);
-        _this.append(new Spacer());
-        _this.hideOthers(panel.layersPanel);
+var SelectionPanel = (function (_super) {
+    __extends(SelectionPanel, _super);
+    function SelectionPanel() {
+        var _this = _super.call(this, Constructor.instance) || this;
+        _this.update();
         return _this;
     }
-    SideBar.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " sidebar";
+    SelectionPanel.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " selection-panel vertical";
     };
-    SideBar.prototype.appendSwitch = function (control, icon) {
+    SelectionPanel.prototype.show = function () {
+        _super.prototype.show.call(this);
+        this.update();
+    };
+    SelectionPanel.prototype.update = function () {
         var _this = this;
-        var button = new SwitchButton(control, icon);
-        this.buttons.push(button);
-        control.onVisibilityChange(function (trigger) {
-            if (trigger.isVisible()) {
-                _this.hideOthers(trigger);
-            }
-        });
-        this.append(button);
+        this.clear();
+        if (!this.c.getSelection()) {
+            return;
+        }
+        this.append(new SelectRangePropertyControl("Transparency", function (value) { return _this.c.getSelection().setAlpha(value / 100); }, function () { return _this.c.getSelection().getAlpha() * 100; }), new SelectionColorControl("Color", function (value) { return _this.c.getSelection().setColor(value); }, function () { return _this.c.getSelection().getColor().toHex(); }));
+        if (this.c.getSelection().type == ElementType.TEXT) {
+            this.append(new SelectRangePropertyControl("Font Size", function (value) { return _this.c.getSelection().setFontSize(value); }, function () { return _this.c.getSelection().getFontSize(); }, 4, 96, 2), new TextBar());
+        }
     };
-    SideBar.prototype.hideOthers = function (activeTrigger) {
-        this.buttons.forEach(function (button) {
-            if (button.trigger != activeTrigger) {
-                button.trigger.hide();
-                button.removeClass("selected");
-            }
-            else {
-                button.addClass("selected");
-            }
-        });
+    SelectionPanel.prototype.updateVisibility = function () {
+        this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
     };
-    return SideBar;
-}(VerticalToolBarUIControl));
+    return SelectionPanel;
+}(TriggeredUIControl));
 var SidePanel = (function (_super) {
     __extends(SidePanel, _super);
     function SidePanel() {
         var _this = _super.call(this) || this;
-        _this.layersPanel = new LayersPanelUIControl(_this.c);
-        _this.selectionPanel = new SelectionPanel(_this.c);
-        _this.addElementsPanel = new ToolBar()
-            .append(new Button(function () { return _this.c.addElement(ElementType.CIRCLE); }, Icon.CIRCLE))
-            .append(new Button(function () { return _this.c.addElement(ElementType.RECTANGLE); }, Icon.SQUARE))
-            .append(new Button(function () { return _this.c.addElement(ElementType.TRIANGLE); }, Icon.CARET_UP))
-            .append(new Button(function () { return _this.c.addElement(ElementType.TEXT); }, Icon.FONT));
-        _this.append(_this.addElementsPanel, _this.layersPanel, _this.selectionPanel);
+        _this.layersPanel = new LayersPanelUIControl();
+        _this.selectionPanel = new SelectionPanel();
+        _this.newElementPanel = new NewElementPanel();
+        _this.fontFamilyPanel = new FontFamilyPanel();
+        _this.append(_this.newElementPanel, _this.layersPanel, _this.selectionPanel, _this.fontFamilyPanel);
         return _this;
     }
     SidePanel.prototype.getClassName = function () {
@@ -3522,192 +3890,172 @@ var SidePanel = (function (_super) {
     };
     return SidePanel;
 }(ToolBar));
-var SwitchButton = (function (_super) {
-    __extends(SwitchButton, _super);
-    function SwitchButton(view, icon) {
-        var _this = _super.call(this, view) || this;
-        _this.container.innerHTML = icon;
-        _this.container.onclick = function () {
-            _this.trigger.show();
-        };
+var SelectRangePropertyControl = (function (_super) {
+    __extends(SelectRangePropertyControl, _super);
+    function SelectRangePropertyControl(label, setter, getter, min, max, step) {
+        var _this = _super.call(this) || this;
+        _this.input = Utils.isCompact()
+            ? new SelectControl(setter, getter, min, max, step)
+            : new RangeControl(setter, getter, min, max, step);
+        _this.append(new Row(new LabelControl(label), new Spacer(), _this.input));
         return _this;
     }
-    SwitchButton.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " button";
+    SelectRangePropertyControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " property-control";
     };
-    SwitchButton.prototype.updateVisibility = function () {
+    return SelectRangePropertyControl;
+}(UIControl));
+var SelectPropertyControl = (function (_super) {
+    __extends(SelectPropertyControl, _super);
+    function SelectPropertyControl(label, setter, getter, min, max, step) {
+        var _this = _super.call(this) || this;
+        _this.append(new Row(new LabelControl(label), new Spacer(), new SelectControl(setter, getter, min, max, step)));
+        return _this;
+    }
+    SelectPropertyControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " property-control select";
+    };
+    return SelectPropertyControl;
+}(UIControl));
+var NewElementPanel = (function (_super) {
+    __extends(NewElementPanel, _super);
+    function NewElementPanel() {
+        var _this = _super.call(this, Constructor.instance) || this;
+        _this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);
+        _this.addButton("Rectangle", ElementType.RECTANGLE, Icon.SQUARE);
+        _this.addButton("Triangle", ElementType.TRIANGLE, Icon.CARET_UP);
+        _this.addButton("Text", ElementType.TEXT, Icon.FONT);
+        _this.update();
+        return _this;
+    }
+    NewElementPanel.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " vertical";
+    };
+    NewElementPanel.prototype.show = function () {
+        _super.prototype.show.call(this);
         this.update();
     };
-    SwitchButton.prototype.update = function () {
-        if (this.trigger.isVisible()) {
-            this.addClass("active");
-        }
-        else {
-            this.removeClass("active");
-        }
-    };
-    return SwitchButton;
-}(TriggeredUIControl));
-var TopBar = (function (_super) {
-    __extends(TopBar, _super);
-    function TopBar() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    TopBar.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " top";
-    };
-    return TopBar;
-}(ToolBar));
-var InputControl = (function (_super) {
-    __extends(InputControl, _super);
-    function InputControl(type, action) {
-        var _this = _super.call(this, "input") || this;
-        _this.container.type = "color";
-        _this.onChange(action, _this);
-        _this.container.onchange = function () { return _this.changed(); };
-        return _this;
-    }
-    InputControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " input";
-    };
-    return InputControl;
-}(UIControl));
-var ColorPicker = (function (_super) {
-    __extends(ColorPicker, _super);
-    function ColorPicker() {
-        var _this = _super.call(this, Constructor.instance) || this;
-        _this.input = new InputControl("color", function () {
-            _this.c.getSelection().setColor(_this.input.container.value);
-        });
-        _this.label = new LabelControl("");
-        _this.append(_this.label, _this.input);
-        _this.update();
-        return _this;
-    }
-    ColorPicker.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " color-picker";
-    };
-    ColorPicker.prototype.update = function () {
-        var selection = this.c.getSelection();
-        if (selection) {
-            var color = selection.getColor().toHex();
-            this.label.setValue(color);
-            this.input.container.value = color;
-        }
-        else {
-        }
-    };
-    return ColorPicker;
-}(TriggeredUIControl));
-var AlphaPicker = (function (_super) {
-    __extends(AlphaPicker, _super);
-    function AlphaPicker() {
-        var _this = _super.call(this) || this;
-        _this.input = document.createElement("select");
-        for (var i = 0; i <= 100; i += 10) {
-            var option = document.createElement("option");
-            option.value = i.toString();
-            option.innerText = i.toString();
-            _this.input.appendChild(option);
-        }
-        _this.input.onchange = function (e) {
-            console.log(_this.input.value);
-            _this.c.getSelection().setAlpha(parseInt(_this.input.value) / 100);
-        };
-        _this.container.appendChild(_this.input);
-        _this.c.onChange(function (trigger) {
-            var selection = _this.c.getSelection();
-            if (selection) {
-                _this.show();
-                _this.input.value = (selection.getAlpha() * 100).toString();
-            }
-            else {
-                _this.hide();
-            }
-        }, _this);
-        return _this;
-    }
-    AlphaPicker.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " alpha-picker";
-    };
-    return AlphaPicker;
-}(UIControl));
-var SelectionPanel = (function (_super) {
-    __extends(SelectionPanel, _super);
-    function SelectionPanel(c) {
-        var _this = _super.call(this, c) || this;
-        _this.update();
-        return _this;
-    }
-    SelectionPanel.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " selection-panel vertical";
-    };
-    SelectionPanel.prototype.update = function () {
-        this.clear();
-        var selection = this.c.getSelection();
-        if (!selection) {
-            return;
-        }
-        console.log("SELECTION PANEL UPDATE");
-        this.append(new Row(new LabelControl("Transparency"), new Spacer(), new AlphaPicker()), new Row(new LabelControl("Color"), new Spacer(), new ColorPicker()));
-    };
-    SelectionPanel.prototype.updateVisibility = function () {
+    NewElementPanel.prototype.updateVisibility = function () {
         this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
     };
-    return SelectionPanel;
+    NewElementPanel.prototype.addButton = function (label, type, icon) {
+        var _this = this;
+        this.append(new Row(new Button(function () { return _this.c.addElement(type); }, icon, label)));
+    };
+    return NewElementPanel;
 }(TriggeredUIControl));
-var LabelControl = (function (_super) {
-    __extends(LabelControl, _super);
-    function LabelControl(value) {
+var IconControl = (function (_super) {
+    __extends(IconControl, _super);
+    function IconControl(icon) {
         var _this = _super.call(this) || this;
-        _this.container.innerText = value;
+        _this.container.innerHTML = icon;
         return _this;
     }
-    LabelControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " label";
+    IconControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " icon";
     };
-    LabelControl.prototype.setValue = function (value) {
-        console.log(value);
-        this.container.innerText = value;
-    };
-    return LabelControl;
+    return IconControl;
 }(UIControl));
-var Row = (function (_super) {
-    __extends(Row, _super);
-    function Row() {
-        var controls = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            controls[_i] = arguments[_i];
+var FontFamilyPanel = (function (_super) {
+    __extends(FontFamilyPanel, _super);
+    function FontFamilyPanel() {
+        var _this = _super.call(this, Constructor.instance) || this;
+        var fontFamilies = _this.getFontFamilies();
+        for (var i = 0; i < fontFamilies.length; i++) {
+            var fontFamily = fontFamilies[i];
+            _this.append(new FontFamilyButton(fontFamily));
         }
-        var _this = _super.call(this) || this;
-        controls.forEach(function (control) {
-            _this.append(control);
-        });
         return _this;
     }
-    Row.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " row";
+    FontFamilyPanel.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " font-family-panel vertical";
     };
-    return Row;
-}(UIControl));
-var Column = (function (_super) {
-    __extends(Column, _super);
-    function Column() {
-        var controls = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            controls[_i] = arguments[_i];
+    FontFamilyPanel.prototype.show = function () {
+        _super.prototype.show.call(this);
+    };
+    FontFamilyPanel.prototype.update = function () {
+    };
+    FontFamilyPanel.prototype.updateVisibility = function () {
+        this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
+    };
+    FontFamilyPanel.prototype.getFontFamilies = function () {
+        var fonts = document.fonts;
+        var iterator = fonts.entries();
+        var list = [];
+        var done = false;
+        while (!done) {
+            var font = iterator.next();
+            if (!font.done) {
+                var fontFamily = font.value[0].family;
+                if (!list.includes(fontFamily)) {
+                    list.push(fontFamily);
+                }
+            }
+            else {
+                done = font.done;
+            }
         }
+        return list;
+    };
+    return FontFamilyPanel;
+}(TriggeredUIControl));
+var FontFamilyButton = (function (_super) {
+    __extends(FontFamilyButton, _super);
+    function FontFamilyButton(fontFamily) {
         var _this = _super.call(this) || this;
-        _this.append(new Spacer());
-        controls.forEach(function (control) {
-            _this.append(control);
-            _this.append(new Spacer());
-        });
+        _this.append(new Spacer(), new LabelControl(fontFamily)
+            .setFontFamily(fontFamily), new Spacer());
+        _this.container.onclick = function () {
+            _this.c.getSelection().setFontFamily(fontFamily, true);
+            console.log("font", fontFamily);
+        };
         return _this;
     }
-    Column.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " column";
+    FontFamilyButton.initCharset = function () {
+        var s = "";
+        for (var i = 32; i <= 1024; i++)
+            s += String.fromCharCode(i);
+        return s;
     };
-    return Column;
+    FontFamilyButton.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " button font-family";
+    };
+    FontFamilyButton.charset = FontFamilyButton.initCharset();
+    return FontFamilyButton;
 }(UIControl));
+var TogglePropertyControl = (function (_super) {
+    __extends(TogglePropertyControl, _super);
+    function TogglePropertyControl(icons, label, setter, getter) {
+        var _this = _super.call(this) || this;
+        _this.append(new Row(new LabelControl(label), new Spacer(), new ToggleButton(setter, getter, label, label)));
+        return _this;
+    }
+    TogglePropertyControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " property-control toggle";
+    };
+    return TogglePropertyControl;
+}(UIControl));
+var TextBar = (function (_super) {
+    __extends(TextBar, _super);
+    function TextBar() {
+        var _this = _super.call(this) || this;
+        _this.update();
+        return _this;
+    }
+    TextBar.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " text";
+    };
+    TextBar.prototype.update = function () {
+        this.clear();
+        this.append(new Row(new LabelControl("Text"), new Spacer(), this.button("Bold"), this.button("Italic"), this.button("Underline"), this.button("Linethrough")));
+    };
+    TextBar.prototype.button = function (property) {
+        var _this = this;
+        return new ToggleButton(function () {
+            Constructor.instance.getSelection()["toggle" + property]();
+            _this.update();
+        }, function () { return Constructor.instance.getSelection()["is" + property](); }, Icon[property.toUpperCase()]);
+    };
+    return TextBar;
+}(ToolBar));
 //# sourceMappingURL=constructor.js.map

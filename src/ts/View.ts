@@ -50,6 +50,7 @@ abstract class View<T> extends Trigger<T> {
         if (!this.hasClass(className)){
             this.container.classList.add(className);
         }
+        return this;
     }
 
     removeClass(className: string) {
@@ -66,6 +67,16 @@ abstract class View<T> extends Trigger<T> {
         this.hasClass(className)
             ? this.removeClass(className)
             : this.addClass(className);
+    }
+
+    setFontFamily(fontFamily: string){
+        this.container.style.fontFamily = fontFamily;
+        return this;
+    }
+
+    setFontSize(fontSize: number){
+        this.container.style.fontSize = fontSize + "px";
+        return this;
     }
 
 }
