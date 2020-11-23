@@ -10,9 +10,27 @@ class TopBar extends ToolBar {
         super();
         this.append(
             new Spacer(),
-            new Button(() => this.c.undo(), Icon.UNDO),
-            new Button(() => this.c.redo(), Icon.REDO),
-            new Spacer(),
+            new ConditionalButton(
+                () => this.c.undo(),
+                () => this.c.getActiveSide().history.hasPrevious(),
+                Icon.UNDO_ALT
+            ),
+            new ConditionalButton(
+                () => this.c.redo(),
+                () => this.c.getActiveSide().history.hasNext(),
+                Icon.REDO_ALT
+            ),
+            new ConditionalButton(
+                () => this.c.getSelection().remove(),
+                () => this.c.hasSelection(),
+                Icon.TRASH
+            ),
+            new ConditionalButton(
+                () => this.c.duplicate(),
+                () => this.c.hasSelection(),
+                Icon.CLONE
+            ),
+            new Spacer()
         );
     }
 

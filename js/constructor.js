@@ -913,7 +913,7 @@ var Constructor = (function (_super) {
         if (selection) {
             var element = selection.clone();
             this.getActiveSide().add(element);
-            element.offset();
+            element.randomizePosition();
             return this.getActiveSide().select(element);
         }
     };
@@ -1042,6 +1042,12 @@ var HistoryList = (function () {
     };
     HistoryList.prototype.current = function () {
         return this.state.value;
+    };
+    HistoryList.prototype.hasNext = function () {
+        return !!this.state.next;
+    };
+    HistoryList.prototype.hasPrevious = function () {
+        return !!this.state.previous;
     };
     HistoryList.prototype.back = function () {
         if (this.state.previous) {
@@ -2804,6 +2810,9 @@ var Element2D = (function (_super) {
             });
         }
     };
+    Element2D.prototype.isEditing = function () {
+        return this.type == ElementType.TEXT && this.object.isEditing;
+    };
     Element2D.prototype.getText = function () {
         return this.type === ElementType.TEXT
             ? this.object.text
@@ -3119,7 +3128,8 @@ var Element2D = (function (_super) {
         return element;
     };
     Element2D.prototype.remove = function () {
-        this.side.remove(this);
+        var _this = this;
+        setTimeout(function () { return _this.side.remove(_this); }, 100);
     };
     Element2D.prototype.calculateGuides = function () {
         if (this.side) {
@@ -3725,6 +3735,7 @@ var Side2D = (function (_super) {
         this.canvas.add(this.horizontalGuide);
         this.canvas.add(this.verticalGuide);
         this.changed();
+        Constructor.instance.changed();
     };
     Side2D.prototype.removeElements = function () {
         Utils.logMethodName();
@@ -3793,6 +3804,7 @@ var Side2D = (function (_super) {
         this.canvas.requestRenderAll();
         setTimeout(function () {
             _this.history.unlock();
+            Constructor.instance.changed();
         }, 50);
     };
     Side2D.prototype.getLocalStorageKey = function () {
@@ -3801,7 +3813,13 @@ var Side2D = (function (_super) {
     Side2D.prototype.saveToLocalStorage = function (state) {
         if (!this.history.isLocked()) {
             Utils.logMethodName();
-            localStorage.setItem(this.getLocalStorageKey(), JSON.stringify(state));
+            var json = JSON.stringify(state);
+            if (json.length < 1e5) {
+                localStorage.setItem(this.getLocalStorageKey(), json);
+            }
+            else {
+                console.error("state.length > " + 1e5);
+            }
         }
     };
     Side2D.prototype.loadFromLocalStorage = function () {
@@ -3820,6 +3838,7 @@ var Side2D = (function (_super) {
         var state = new Side2DStateObjects(this);
         this.history.add(state);
         this.saveToLocalStorage(state);
+        Constructor.instance.changed();
     };
     Side2D.prototype.undo = function () {
         var state = this.history.back();
@@ -4158,11 +4177,10 @@ var ConstructorUI = (function (_super) {
         });
     };
     ConstructorUI.prototype.bindDelKey = function () {
-        var _this = this;
         document.addEventListener("keydown", function (e) {
             if (e.keyCode == 46) {
-                var selection = _this.c.getSelection();
-                if (selection) {
+                var selection = Constructor.instance.getSelection();
+                if (selection && !selection.isEditing()) {
                     selection.remove();
                 }
             }
@@ -4297,7 +4315,11 @@ var TriggeredButton = (function (_super) {
 var ConditionalButton = (function (_super) {
     __extends(ConditionalButton, _super);
     function ConditionalButton(action, check, icon, label) {
-        var _this = _super.call(this, action, icon, label) || this;
+        var _this = _super.call(this, function () {
+            if (!_this.hasClass("disabled")) {
+                action();
+            }
+        }, icon, label) || this;
         _this.check = check;
         _this.update();
         return _this;
@@ -4306,7 +4328,9 @@ var ConditionalButton = (function (_super) {
         return _super.prototype.getClassName.call(this) + " button conditional";
     };
     ConditionalButton.prototype.update = function () {
-        this.setVisible(this.check());
+        this.check()
+            ? this.removeClass("disabled")
+            : this.addClass("disabled");
     };
     return ConditionalButton;
 }(TriggeredButton));
@@ -4737,7 +4761,7 @@ var LayerUIControl = (function (_super) {
     function LayerUIControl(element) {
         var _this = _super.call(this, element) || this;
         _this.container.onclick = function (e) { return _this.trigger.side.select(_this.trigger); };
-        _this.labelControl = new LabelControl("")
+        _this.labelControl = new LabelControl()
             .addClass("mobile-landscape")
             .addClass("desktop");
         _this.iconContainerElement = document.createElement(Constants.DIV);
@@ -4929,6 +4953,7 @@ var NewElementPanel = (function (_super) {
         _this.addButton("Triangle", ElementType.TRIANGLE, Icon.CARET_UP);
         _this.addButton("Text", ElementType.TEXT, Icon.FONT);
         _this.append(new Row(new Button(function () { return input.click(); }, Icon.IMAGE, "Image")));
+        _this.append(new Row(new ConditionalButton(function () { return _this.c.getActiveSide().clear(); }, function () { return !_this.c.getActiveSide().isEmpty(); }, null, "Clear All")));
         _this.update();
         return _this;
     }
@@ -5126,7 +5151,7 @@ var TopBar = (function (_super) {
     __extends(TopBar, _super);
     function TopBar() {
         var _this = _super.call(this) || this;
-        _this.append(new Spacer(), new Button(function () { return _this.c.undo(); }, Icon.UNDO), new Button(function () { return _this.c.redo(); }, Icon.REDO), new Spacer());
+        _this.append(new Spacer(), new ConditionalButton(function () { return _this.c.undo(); }, function () { return _this.c.getActiveSide().history.hasPrevious(); }, Icon.UNDO_ALT), new ConditionalButton(function () { return _this.c.redo(); }, function () { return _this.c.getActiveSide().history.hasNext(); }, Icon.REDO_ALT), new ConditionalButton(function () { return _this.c.getSelection().remove(); }, function () { return _this.c.hasSelection(); }, Icon.TRASH), new ConditionalButton(function () { return _this.c.duplicate(); }, function () { return _this.c.hasSelection(); }, Icon.CLONE), new Spacer());
         return _this;
     }
     TopBar.prototype.getClassName = function () {

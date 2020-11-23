@@ -32,6 +32,8 @@ body {
     flex-flow: row;
     align-items: stretch;
     font-family: sans-serif;
+    letter-spacing: 0.05em;
+    font-weight: lighter;
 }
 
 .row {
@@ -58,8 +60,6 @@ body {
 
 .label {
     color: #cccccc;
-    letter-spacing: 0.05em;
-    font-weight: lighter;
 }
 
 .constructor-ui-container {
@@ -269,12 +269,27 @@ input[type="color"] {
     color: #000;
 }
 
+.toolbar.top .toggle.active *:hover, .toolbar.bottom .toggle.active *:hover {
+    color: #000 !important;
+}
+
 .button.font-family .label {
     /*height: 24px;*/
 }
 
 .mobile-portrait, .mobile {
     display: none;
+}
+
+.disabled, .disabled * {
+    opacity: 0.5;
+    cursor: default !important;
+    color: #777 !important;
+    transition: .4s;
+}
+
+.disabled:hover, .disabled:hover * {
+    color: #777 !important;
 }
 
 @media (max-height: 600px) and (orientation: landscape) {

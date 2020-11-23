@@ -196,6 +196,10 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         }
     }
 
+    isEditing(): boolean {
+        return this.type == ElementType.TEXT && this.object.isEditing;
+    }
+
     getText(): string {
         return this.type === ElementType.TEXT
             ? (this.object as fabric.IText).text
@@ -549,7 +553,8 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
     }
 
     remove() {
-        this.side.remove(this);
+        setTimeout(() => this.side.remove(this), 100);
+
     }
 
     private calculateGuides() {

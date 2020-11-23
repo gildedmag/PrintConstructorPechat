@@ -25,7 +25,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     /** @hidden */
     verticalGuide: VerticalGuide;
 
-    private history: HistoryList<Side2DStateObjects>;
+    history: HistoryList<Side2DStateObjects>;
 
     private needsHistoryUpdate;
 
@@ -254,6 +254,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         this.canvas.add(this.horizontalGuide);
         this.canvas.add(this.verticalGuide);
         this.changed();
+        Constructor.instance.changed();
     }
 
     removeElements() {
@@ -314,7 +315,8 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         this.saveToLocalStorage(state);
         this.canvas.requestRenderAll();
         setTimeout(() => {
-            this.history.unlock()
+            this.history.unlock();
+            Constructor.instance.changed();
         }, 50);
     }
 
@@ -325,7 +327,12 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     saveToLocalStorage(state: Side2DStateObjects) {
         if (!this.history.isLocked()) {
             Utils.logMethodName();
-            localStorage.setItem(this.getLocalStorageKey(), JSON.stringify(state));
+            let json = JSON.stringify(state);
+            if (json.length < 1e5){
+                localStorage.setItem(this.getLocalStorageKey(), json);
+            } else {
+                console.error("state.length > " + 1e5);
+            }
         }
     }
 
@@ -346,6 +353,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         let state = new Side2DStateObjects(this);
         this.history.add(state);
         this.saveToLocalStorage(state);
+        Constructor.instance.changed();
     }
 
     undo() {

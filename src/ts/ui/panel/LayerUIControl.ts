@@ -31,7 +31,7 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
 
         this.container.onclick = e => this.trigger.side.select(this.trigger);
 
-        this.labelControl = new LabelControl("")
+        this.labelControl = new LabelControl()
             .addClass("mobile-landscape")
             .addClass("desktop");
 

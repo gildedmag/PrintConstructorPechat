@@ -40,6 +40,16 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                 )
             )
         );
+        this.append(
+            new Row(
+                new ConditionalButton(
+                    () => this.c.getActiveSide().clear(),
+                    () => !this.c.getActiveSide().isEmpty(),
+                    null,
+                    "Clear All"
+                )
+            )
+        );
 
 
         this.update();

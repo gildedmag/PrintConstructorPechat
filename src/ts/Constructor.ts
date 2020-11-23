@@ -405,7 +405,7 @@ class Constructor extends View<Constructor> {
         if (selection) {
             let element = selection.clone();
             this.getActiveSide().add(element);
-            element.offset();
+            element.randomizePosition();
             return this.getActiveSide().select(element);
         }
     }

@@ -146,8 +146,8 @@ class ConstructorUI extends UIControl {
     bindDelKey() {
         document.addEventListener("keydown", e => {
             if (e.keyCode == 46) {
-                let selection = this.c.getSelection();
-                if (selection) {
+                let selection = Constructor.instance.getSelection();
+                if (selection && !selection.isEditing()) {
                     selection.remove();
                 }
             }

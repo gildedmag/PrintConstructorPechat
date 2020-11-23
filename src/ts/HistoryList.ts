@@ -25,6 +25,14 @@ class HistoryList<T extends Equalable<T>> {
         return this.state.value;
     }
 
+    hasNext(): boolean {
+        return !!this.state.next;
+    }
+
+    hasPrevious(): boolean {
+        return !!this.state.previous;
+    }
+
     back(): T {
         if (this.state.previous) {
             this.state = this.state.previous;

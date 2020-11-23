@@ -13,13 +13,19 @@ class ConditionalButton extends TriggeredButton {
         icon: Icon | string,
         label?: string
     ) {
-        super(action, icon, label);
+        super(() => {
+            if (!this.hasClass("disabled")){
+                action();
+            }
+        }, icon, label);
         this.check = check;
         this.update();
     }
 
     update() {
-        this.setVisible(this.check());
+        this.check()
+            ? this.removeClass("disabled")
+            : this.addClass("disabled");
     }
 
 }
