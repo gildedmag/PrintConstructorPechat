@@ -7,10 +7,41 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
 
     constructor() {
         super(Constructor.instance);
+
+        let input = document.createElement("input");
+        input.type = "file";
+        input.size = 24;
+        input.hidden = true;
+        input.onchange = evt => {
+            var tgt = evt.target || window.event.srcElement,
+                files = tgt.files;
+
+            if (FileReader && files && files.length) {
+                var fr = new FileReader();
+                fr.onload = function () {
+                    Constructor.instance.addImage(fr.result);
+                }
+                fr.readAsDataURL(files[0]);
+            }
+
+        }
+        this.container.appendChild(input);
+
         this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);
         this.addButton("Rectangle", ElementType.RECTANGLE, Icon.SQUARE);
         this.addButton("Triangle", ElementType.TRIANGLE, Icon.CARET_UP);
         this.addButton("Text", ElementType.TEXT, Icon.FONT);
+        this.append(
+            new Row(
+                new Button(
+                    () => input.click(),
+                    Icon.IMAGE,
+                    "Image"
+                )
+            )
+        );
+
+
         this.update();
     }
 

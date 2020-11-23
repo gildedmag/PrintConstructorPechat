@@ -9,9 +9,11 @@ class ConstructorController extends UIControl {
     constructor() {
         super();
         this.c = new Constructor(this.container);
+
         this.c.addElement(ElementType.CIRCLE);
         this.c.addElement(ElementType.RECTANGLE);
         this.c.addElement(ElementType.TEXT);
+        //this.c.addImage('examples/images/bug.png')
     }
 
 }

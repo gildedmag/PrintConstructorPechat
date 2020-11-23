@@ -374,7 +374,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
             background.object.setCoords();
             background.toBack();
             this.canvas.renderAll();
-            let src = this.canvas.toDataURL({format: Constants.JPG, multiplier: multiplier});
+            let src = this.canvas.toDataURL({format: 'image/jpeg', multiplier: multiplier, quality: 0.5});
             background.remove();
             this.canvas.renderAll();
             this.history.unlock();

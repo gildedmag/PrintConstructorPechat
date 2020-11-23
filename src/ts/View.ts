@@ -79,4 +79,19 @@ abstract class View<T> extends Trigger<T> {
         return this;
     }
 
+    isEmpty(): boolean {
+        return this.container.innerHTML == "";
+    }
+
+    setColor(value: string){
+        this.container.style.color = value;
+        return this;
+    }
+
+
+    setBackgroundColor(value: string){
+        this.container.style.backgroundColor = value;
+        return this;
+    }
+
 }

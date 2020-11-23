@@ -23,8 +23,8 @@ class Spinner extends View<Spinner> {
         this.bar.style.animation = Spinner.animation;
         this.bar.style.position = Constants.ABSOLUTE;
         let offset = Spinner.size / 2;
-        this.bar.style.left = (container.clientWidth / 2 - offset) + Constants.PX;
-        this.bar.style.top = (container.clientHeight / 2 - offset) + Constants.PX;
+        this.bar.style.left = "50%";
+        this.bar.style.top = "50%";
 
         this.container.appendChild(this.bar);
 
@@ -35,8 +35,19 @@ class Spinner extends View<Spinner> {
         this.hide();
     }
 
+    update(){
+        // let offset = Spinner.size / 2;
+        // this.bar.style.left = this.container.offsetLeft + (this.container.clientWidth / 2 - offset) + Constants.PX;
+        // this.bar.style.top = this.container.offsetTop + (this.container.clientHeight / 2 - offset) + Constants.PX;
+    }
+
     getElement(): HTMLElement {
         return this.bar;
     }
 
+
+    show() {
+        super.show();
+        this.update();
+    }
 }

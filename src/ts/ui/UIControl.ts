@@ -1,3 +1,5 @@
+/// <reference path="../Utils.ts"/>
+
 abstract class UIControl extends View<UIControl> implements Identifiable {
 
     static map: { [key: number]: UIControl; } = {};

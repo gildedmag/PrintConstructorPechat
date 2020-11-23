@@ -10,18 +10,54 @@ class SideBar extends VerticalToolBarUIControl {
     constructor() {
         super();
         let panel = ConstructorUI.instance.sidePanel;
-        this.appendSwitch(panel.newElementPanel, Icon.PLUS);
-        this.appendSwitch(panel.layersPanel, Icon.LAYER_GROUP);
-        this.appendSwitch(panel.selectionPanel, Icon.SLIDERS_H);
-        this.appendSwitch(panel.fontFamilyPanel, Icon.FONT);
+        this.appendSwitch(panel.newElementPanel, Icon.SHAPES);
+        this.appendSwitch(
+            panel.layersPanel,
+            Icon.LAYER_GROUP,
+            () => Constructor.instance.is2D()
+        );
+        this.appendSwitch(
+            panel.selectionPanel,
+            Icon.SLIDERS_H,
+            () => Constructor.instance.hasSelection()
+        );
+        this.appendSwitch(
+            panel.fontFamilyPanel,
+            Icon.FONT,
+            () => Constructor.instance.hasSelection() && Constructor.instance.getSelection().type == ElementType.TEXT
+        );
+        this.appendSwitch(
+            panel.filtersPanel,
+            Icon.TINT,
+            () => Constructor.instance.hasSelection() && Constructor.instance.getSelection().type == ElementType.IMAGE
+        );
+        this.appendSwitch(
+            panel.modelsPanel,
+            Icon.MUG_HOT,
+            //Icon.SHOPPING_BAG,
+
+        );
+        this.appendSwitch(
+            panel.optionsPanel,
+            Icon.CLIPBOARD_LIST,
+            //Icon.SHOPPING_BAG,
+
+        );
+        this.appendSwitch(
+            panel.sharePanel,
+            Icon.FILE_DOWNLOAD,
+            //Icon.SHOPPING_BAG,
+
+        );
         this.append(new Spacer());
         this.hideOthers(panel.layersPanel);
 
     }
 
-    private appendSwitch(control: UIControl, icon: Icon){
-        let button = new SwitchButton(control, icon);
+    private appendSwitch(control: UIControl, icon: Icon, visibility?: () => boolean){
+        let button = new SwitchButton(control, icon, visibility);
         this.buttons.push(button);
+        Constructor.instance.onChange(() => button.update(), button);
         control.onVisibilityChange(trigger => {
             if (trigger.isVisible()) {
                 this.hideOthers(trigger);

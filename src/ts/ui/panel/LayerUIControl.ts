@@ -5,7 +5,7 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
 
     iconElement: HTMLImageElement;
     iconContainerElement: HTMLDivElement;
-    labelElement: HTMLDivElement;
+    labelControl: LabelControl;
     visibilityButton: ToggleButton;
     lockButton: ToggleButton;
     deleteButton: Button;
@@ -31,7 +31,10 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
 
         this.container.onclick = e => this.trigger.side.select(this.trigger);
 
-        this.labelElement = document.createElement(Constants.DIV);
+        this.labelControl = new LabelControl("")
+            .addClass("mobile-landscape")
+            .addClass("desktop");
+
         this.iconContainerElement = document.createElement(Constants.DIV);
 
         this.container.style.userSelect = "none";
@@ -63,6 +66,16 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
         // this.iconContainerElement.style.width = Constructor.settings.ui.layerIconSize + "px";
         // this.iconContainerElement.style.height = Constructor.settings.ui.layerIconSize + "px";
 
+        let moveUpButton = new Button(
+            () => element.bringUp(),
+            Icon.CHEVRON_UP,
+        ).addClass("mobile");
+
+        let moveDownButton = new Button(
+            () => element.bringDown(),
+            Icon.CHEVRON_DOWN,
+        ).addClass("mobile");
+
         this.visibilityButton = new ToggleButton(
             () => element.toggleVisibility(),
             () => element.isVisible(),
@@ -84,8 +97,12 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
 
         this.container.appendChild(this.iconContainerElement);
         this.iconContainerElement.appendChild(this.iconElement);
-        this.container.appendChild(this.labelElement);
+        this.append(this.labelControl);
         this.append(new Spacer());
+        //if (Utils.isCompact()) {
+        this.append(moveUpButton);
+        this.append(moveDownButton);
+        //}
         this.container.appendChild(this.deleteButton.getElement());
         this.container.appendChild(this.visibilityButton.getElement());
         this.container.appendChild(this.lockButton.getElement());
@@ -95,7 +112,7 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
 
     update() {
         this.removeClass("drag-over");
-        this.labelElement.innerText = this.trigger.type.getName();
+        this.labelControl.setValue(this.trigger.type.getName());
         let maxSize = Math.max(this.trigger.object.width * this.trigger.object.scaleX, this.trigger.object.height * this.trigger.object.scaleY);
         if (this.trigger.isVisible()) {
             this.getIcon(maxSize);
@@ -115,7 +132,7 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
         this.updateVisibility();
     }
 
-    getIcon(maxSize: number){
+    getIcon(maxSize: number) {
         let multiplier = Constructor.settings.ui.layerIconSize / maxSize;
         let options = {
             format: "png",
@@ -129,7 +146,6 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
     updateVisibility() {
         this.visibilityButton.update();
     }
-
 
 
     // updateControl(){

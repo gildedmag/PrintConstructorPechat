@@ -19,6 +19,8 @@ class Filter extends Associated<Filter> {
 
     static BRIGHTNESS = new Filter("brightness", new fabric.Image.filters.Brightness({brightness: 0.1}));
 
+    static DARKNESS = new Filter("darkness", new fabric.Image.filters.Brightness({brightness: -0.1}));
+
     static BLUR = new Filter(
         "blur",
         new fabric.Image.filters.Convolute({

@@ -21,22 +21,23 @@ class FontFamilyButton extends UIControl {
         let font = new FontFaceObserver(fontFamily);
         let element = this;
         font.load(FontFamilyButton.charset)
-            .then(function() {
+            .then(function () {
                 element.append(
-                    new Row(
-                    new Spacer(),
-                    new LabelControl(fontFamily)
-                        .setFontFamily(fontFamily),
-                    new Spacer(),
-                    )
+                    //new Row(
+                        //new Spacer(),
+                        new LabelControl(fontFamily)
+                            .setFontFamily(fontFamily),
+                        //new Spacer(),
+                    //)
                 );
-            }).catch(function(e) {
-            alert(e)
-        });
+            })
+            .catch(function (e) {
+                //console.log(e.message);
+            });
 
         this.container.onclick = () => {
             this.c.getSelection().setFontFamily(fontFamily, true);
-            console.log("font", fontFamily);
+            //console.log("font", fontFamily);
         }
     }
 

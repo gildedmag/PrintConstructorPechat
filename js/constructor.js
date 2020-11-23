@@ -286,6 +286,17 @@ var View = (function (_super) {
         this.container.style.fontSize = fontSize + "px";
         return this;
     };
+    View.prototype.isEmpty = function () {
+        return this.container.innerHTML == "";
+    };
+    View.prototype.setColor = function (value) {
+        this.container.style.color = value;
+        return this;
+    };
+    View.prototype.setBackgroundColor = function (value) {
+        this.container.style.backgroundColor = value;
+        return this;
+    };
     return View;
 }(Trigger));
 var Preview = (function (_super) {
@@ -305,7 +316,7 @@ var Preview = (function (_super) {
             _this.renderer.setClearColor(Color.BACKGROUND_GRAY.toHex());
         }
         _this.renderer.setPixelRatio(window.devicePixelRatio);
-        _this.renderer.setSize(constructor.container.clientWidth, constructor.container.clientHeight);
+        _this.renderer.setSize(400, 300);
         _this.camera = new THREE.PerspectiveCamera(70, _this.renderer.getSize().width / _this.renderer.getSize().height, 0.1);
         _this.scene = new THREE.Scene();
         _this.scene.add(_this.camera);
@@ -352,10 +363,23 @@ var Preview = (function (_super) {
         Constructor.instance.spinner.hide();
         Preview.instance.render();
     };
+    Preview.prototype.setModel = function (modelName, json, callback) {
+        var _this = this;
+        Constructor.instance.spinner.show();
+        this.modelName = modelName;
+        Preview.objectLoader.manager.onError = function () { return Constructor.instance.spinner.hide(); };
+        Preview.objectLoader.parse(json, function (object) {
+            _this.setScene(object);
+            Constructor.instance.spinner.hide();
+            if (callback)
+                callback();
+        });
+    };
     Preview.prototype.loadModel = function (modelName, callback) {
         var _this = this;
         Constructor.instance.spinner.show();
         this.modelName = modelName;
+        Preview.objectLoader.crossOrigin = '';
         Preview.objectLoader.manager.onError = function () { return Constructor.instance.spinner.hide(); };
         Preview.objectLoader.load(Constructor.settings.urls.models + this.modelName + Constructor.settings.fileExtensions.model, function (object) {
             _this.setScene(object);
@@ -596,7 +620,7 @@ var Settings = (function () {
                 height: 100
             },
             "i-text": {
-                text: "Текст",
+                text: "Text",
                 fontSize: 25,
                 fontFamily: "Helvetica"
             }
@@ -607,7 +631,7 @@ var Settings = (function () {
         this.duplicateOffset = 10;
         this.stateBufferSize = 100;
         this.previewTextureSize = 1024;
-        this.previewBackgroundColor = "#dddddd";
+        this.previewBackgroundColor = "#eeeeee";
         this.fitIntoMargins = false;
         this.localStorage = {
             enabled: true,
@@ -636,25 +660,26 @@ var Constructor = (function (_super) {
         Constructor.instance = _this;
         _this.clipboard = null;
         _this.snapToObjects = false;
+        _this.setMode(Mode.Mode2D);
+        _this.spinner = new Spinner(_this.container);
+        _this.preview = new Preview(_this);
         _this.setState({
             sides: [{
                     width: 400,
                     height: 300
-                }]
+                }],
+            model: "cup_remastered"
         }, function () { return _this.zoomToFit(); });
-        _this.preview = new Preview(_this);
-        _this.spinner = new Spinner(_this.container);
         _this.preview.hide();
         _this.background = _this.container.style.background;
         _this.container.style.background = null;
         console.log("Constructor.version: ", Constructor.version);
         console.log("fabric.js.version: ", fabric.version);
         window.addEventListener("resize", function () {
+            Constructor.instance.preview.autoSize();
+            Constructor.instance.spinner.update();
             var div = container;
-            console.log("resize");
-            if (div.scrollWidth > div.clientWidth || div.scrollHeight > div.clientHeight) {
-                Constructor.instance.zoomToFit();
-            }
+            Constructor.instance.zoomToFit();
         });
         return _this;
     }
@@ -763,6 +788,12 @@ var Constructor = (function (_super) {
     Constructor.prototype.resetZoom = function () {
         this.getActiveSide().resetZoom();
     };
+    Constructor.prototype.is3D = function () {
+        return this.getMode() === Mode.Mode3D;
+    };
+    Constructor.prototype.is2D = function () {
+        return this.getMode() === Mode.Mode2D;
+    };
     Constructor.prototype.getMode = function () {
         return (this.preview && this.preview.isVisible()) ? Mode.Mode3D : Mode.Mode2D;
     };
@@ -784,6 +815,7 @@ var Constructor = (function (_super) {
                     this.onModeChangeHandler();
             }
             else if (this.getActiveSide && this.preview) {
+                this.preview.autoSize();
                 this.getActiveSide().deselect();
                 this.preview.updateSideMaterials();
                 this.getActiveSide().hide();
@@ -810,6 +842,9 @@ var Constructor = (function (_super) {
     Constructor.prototype.onElementModification = function (handler) {
         this.onElementModificationHandler = handler;
     };
+    Constructor.prototype.hasSelection = function () {
+        return this.getSelection() != null;
+    };
     Constructor.prototype.getSelection = function () {
         return this.getActiveSide().selection;
     };
@@ -834,6 +869,7 @@ var Constructor = (function (_super) {
             element.randomizePosition();
             side.canvas.renderAll();
             side.saveState();
+            element.changed();
             callback && callback(element);
         });
         return element;
@@ -2513,8 +2549,8 @@ var Spinner = (function (_super) {
         _this.bar.style.animation = Spinner.animation;
         _this.bar.style.position = Constants.ABSOLUTE;
         var offset = Spinner.size / 2;
-        _this.bar.style.left = (container.clientWidth / 2 - offset) + Constants.PX;
-        _this.bar.style.top = (container.clientHeight / 2 - offset) + Constants.PX;
+        _this.bar.style.left = "50%";
+        _this.bar.style.top = "50%";
         _this.container.appendChild(_this.bar);
         _this.style = document.createElement(Constants.STYLE);
         _this.style.type = Constants.TEXT_CSS;
@@ -2523,8 +2559,14 @@ var Spinner = (function (_super) {
         _this.hide();
         return _this;
     }
+    Spinner.prototype.update = function () {
+    };
     Spinner.prototype.getElement = function () {
         return this.bar;
+    };
+    Spinner.prototype.show = function () {
+        _super.prototype.show.call(this);
+        this.update();
     };
     Spinner.size = 64;
     Spinner.border = 6;
@@ -2605,7 +2647,7 @@ var Utils = (function () {
         return window.innerWidth == screen.width && window.innerHeight == screen.height;
     };
     Utils.isCompact = function () {
-        return window.devicePixelRatio > 1;
+        return window.innerWidth < 800;
     };
     return Utils;
 }());
@@ -2910,6 +2952,7 @@ var Element2D = (function (_super) {
                 var index = this.filters.indexOf(filter);
                 if (index != -1) {
                     this.filters.splice(index, 1);
+                    Constructor.instance.changed();
                     if (this.filters.length === 0)
                         this.filters = null;
                     this.applyFilters(callback);
@@ -2917,11 +2960,45 @@ var Element2D = (function (_super) {
                 }
             }
             this.filters.push(filter);
+            Constructor.instance.changed();
             this.applyFilters(callback);
         }
     };
+    Element2D.prototype.removeFilter = function (filter, callback) {
+        if (this.object instanceof fabric.Image) {
+            if (!this.filters) {
+                this.filters = [];
+                return;
+            }
+            var index = this.filters.indexOf(filter);
+            if (index != -1) {
+                this.filters.splice(index, 1);
+                this.changed();
+                Constructor.instance.changed();
+                if (this.filters.length === 0)
+                    this.filters = null;
+                this.applyFilters(callback);
+                return;
+            }
+            this.applyFilters(callback);
+        }
+    };
+    Element2D.prototype.hasFilters = function () {
+        return this.filters && this.filters.length > 0;
+    };
+    Element2D.prototype.hasFilter = function (filter) {
+        if (this.object instanceof fabric.Image) {
+            if (!this.filters) {
+                return false;
+            }
+            var index = this.filters.indexOf(filter);
+            return index != -1;
+        }
+        return false;
+    };
     Element2D.prototype.resetFilters = function (callback) {
         this.filters = null;
+        Constructor.instance.changed();
         if (this.object instanceof fabric.Image) {
             this.object.filters = [];
             this.applyFilters(callback);
@@ -3235,6 +3312,7 @@ var Filter = (function (_super) {
     Filter.GRAYSCALE = new Filter("grayscale", new fabric.Image.filters.Grayscale(), true);
     Filter.INVERT = new Filter("invert", new fabric.Image.filters.Invert(), true);
     Filter.BRIGHTNESS = new Filter("brightness", new fabric.Image.filters.Brightness({ brightness: 0.1 }));
+    Filter.DARKNESS = new Filter("darkness", new fabric.Image.filters.Brightness({ brightness: -0.1 }));
     Filter.BLUR = new Filter("blur", new fabric.Image.filters.Convolute({
         matrix: [
             1 / 9, 1 / 9, 1 / 9,
@@ -3770,7 +3848,7 @@ var Side2D = (function (_super) {
             background.object.setCoords();
             background.toBack();
             this.canvas.renderAll();
-            var src = this.canvas.toDataURL({ format: Constants.JPG, multiplier: multiplier });
+            var src = this.canvas.toDataURL({ format: 'image/jpeg', multiplier: multiplier, quality: 0.5 });
             background.remove();
             this.canvas.renderAll();
             this.history.unlock();
@@ -3926,6 +4004,92 @@ var ConstructorController = (function (_super) {
     };
     return ConstructorController;
 }(UIControl));
+var ToolBar = (function (_super) {
+    __extends(ToolBar, _super);
+    function ToolBar() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    ToolBar.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " toolbar";
+    };
+    ToolBar.prototype.update = function () {
+    };
+    return ToolBar;
+}(UIControl));
+var TriggeredUIControl = (function (_super) {
+    __extends(TriggeredUIControl, _super);
+    function TriggeredUIControl(trigger, tag) {
+        var _this = _super.call(this, tag) || this;
+        trigger.onChange(function () { return _this.update(); }, _this);
+        trigger.onVisibilityChange(function () { return _this.updateVisibility(); });
+        _this.trigger = trigger;
+        return _this;
+    }
+    TriggeredUIControl.prototype.updateVisibility = function () {
+    };
+    return TriggeredUIControl;
+}(UIControl));
+var pechat;
+(function (pechat) {
+    var PrintUtils = (function () {
+        function PrintUtils() {
+        }
+        PrintUtils.getCategforyOptions = function (categoryId, callback) {
+            var url = PrintUtils.url + categoryId;
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url);
+            xhr.setRequestHeader('x-requested-with', 'XMLHttpRequest');
+            xhr.onreadystatechange = function (res) {
+                if (xhr.readyState === 4 && callback) {
+                    callback(JSON.parse(xhr.response));
+                }
+            };
+            xhr.send();
+        };
+        PrintUtils.getModel = function (modelName, callback) {
+            var url = PrintUtils.modelUrl + modelName + '.json';
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.withCredentials = true;
+            xhr.onreadystatechange = function (res) {
+                if (xhr.readyState === 4 && callback) {
+                    callback(xhr.response);
+                }
+            };
+            try {
+                xhr.send();
+            }
+            catch (e) {
+                console.log(e.message);
+            }
+        };
+        PrintUtils.url = 'https://pechat.photo/index.php?route=product/category/category&category_id=';
+        PrintUtils.modelUrl = 'https://pechat.photo/catalog/view/javascript/constructor/v2/models/';
+        return PrintUtils;
+    }());
+    pechat.PrintUtils = PrintUtils;
+})(pechat || (pechat = {}));
+var PechatUtils = pechat.PrintUtils;
+var ModelsPanel = (function (_super) {
+    __extends(ModelsPanel, _super);
+    function ModelsPanel() {
+        return _super.call(this, Constructor.instance) || this;
+    }
+    ModelsPanel.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " models-panel vertical";
+    };
+    ModelsPanel.prototype.update = function () {
+    };
+    ModelsPanel.prefix = "https://pechat.photo/image/cache/";
+    return ModelsPanel;
+}(TriggeredUIControl));
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
 var ConstructorUI = (function (_super) {
     __extends(ConstructorUI, _super);
     function ConstructorUI() {
@@ -3945,10 +4109,7 @@ var ConstructorUI = (function (_super) {
         _this.append(_this.constructorControl, _this.toolBar, _this.sidePanel, _this.sideBar, _this.topBar, _this.bottomBar);
         host.appendChild(_this.container);
         _this.bindDelKey();
-        setTimeout(function () {
-            var viewportmeta = document.querySelector('meta[name=viewport]');
-            viewportmeta.setAttribute('content', "initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0");
-        }, 1000);
+        _this.loadPrintOptions();
         return _this;
     }
     ConstructorUI.prototype.getClassName = function () {
@@ -3957,6 +4118,43 @@ var ConstructorUI = (function (_super) {
     ConstructorUI.init = function () {
         document.addEventListener("DOMContentLoaded", function () {
             new ConstructorUI();
+        });
+    };
+    ConstructorUI.prototype.loadPrintOptions = function () {
+        var _this = this;
+        Constructor.settings.urls.models = 'https://pechat.photo/catalog/view/javascript/constructor/v2/models/';
+        PechatUtils.getCategforyOptions(42, function (options) {
+            console.log(options);
+            options.options.forEach(function (option) {
+                option.option_values.forEach(function (value) {
+                });
+            });
+            options.constructor_models.forEach(function (model) {
+                if (model.file_main == Constructor.instance.preview.modelName.trim()) {
+                    var group_1 = "";
+                    model.constructor_model_option.forEach(function (option) {
+                        if (option.namegroup != group_1) {
+                            group_1 = option.namegroup;
+                            _this.sidePanel.optionsPanel.append(new Row(new Spacer()), new Row(new Spacer(), new LabelControl(group_1).addClass("bold"), new Spacer()));
+                        }
+                        var array = option.zalivka.split(',').map(function (s) { return parseInt(s); });
+                        _this.sidePanel.optionsPanel.append(Button.of(function () {
+                            var _a;
+                            Constructor.instance.preview.clearFills();
+                            (_a = Constructor.instance.preview).setFills.apply(_a, __spreadArrays([option.constructor_value], array));
+                        }, new IconControl(Icon.SQUARE)
+                            .setColor(option.constructor_value), new LabelControl(option.name), new Spacer(), new LabelControl(option.priceText)));
+                    });
+                }
+                ;
+                var url = model.thumb;
+                var modelUrl = model.file_main;
+                _this.sidePanel.modelsPanel.append(Button.of(function () {
+                    PechatUtils.getModel(model.file_main, function (json) {
+                        Constructor.instance.preview.setModel(model.file_main, json);
+                    });
+                }, new Row(new Spacer(), new ImageControl(url), new Spacer())), new Row(new Spacer(), new LabelControl(model.name), new Spacer()));
+            });
         });
     };
     ConstructorUI.prototype.bindDelKey = function () {
@@ -3973,11 +4171,41 @@ var ConstructorUI = (function (_super) {
     ConstructorUI.test = ConstructorUI.init();
     return ConstructorUI;
 }(UIControl));
+var IconControl = (function (_super) {
+    __extends(IconControl, _super);
+    function IconControl(icon) {
+        var _this = _super.call(this) || this;
+        _this.container.innerHTML = icon;
+        return _this;
+    }
+    IconControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " icon";
+    };
+    IconControl.prototype.setValue = function (icon) {
+        this.container.innerHTML = icon;
+    };
+    return IconControl;
+}(UIControl));
+var ImageControl = (function (_super) {
+    __extends(ImageControl, _super);
+    function ImageControl(value) {
+        var _this = _super.call(this, "img") || this;
+        _this.container.src = (value || "");
+        return _this;
+    }
+    ImageControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " image";
+    };
+    ImageControl.prototype.setValue = function (value) {
+        this.container.src = value;
+    };
+    return ImageControl;
+}(UIControl));
 var LabelControl = (function (_super) {
     __extends(LabelControl, _super);
     function LabelControl(value) {
         var _this = _super.call(this) || this;
-        _this.container.innerText = value;
+        _this.container.innerText = (value || "");
         return _this;
     }
     LabelControl.prototype.getClassName = function () {
@@ -3997,9 +4225,7 @@ var Row = (function (_super) {
             controls[_i] = arguments[_i];
         }
         var _this = _super.call(this) || this;
-        controls.forEach(function (control) {
-            _this.append(control);
-        });
+        _this.append.apply(_this, controls);
         return _this;
     }
     Row.prototype.getClassName = function () {
@@ -4023,124 +4249,222 @@ var Spacer = (function (_super) {
     };
     return Spacer;
 }(UIControl));
-var TriggeredUIControl = (function (_super) {
-    __extends(TriggeredUIControl, _super);
-    function TriggeredUIControl(trigger, tag) {
-        var _this = _super.call(this, tag) || this;
-        trigger.onChange(function () { return _this.update(); }, _this);
-        trigger.onVisibilityChange(function () { return _this.updateVisibility(); });
-        _this.trigger = trigger;
+var Button = (function (_super) {
+    __extends(Button, _super);
+    function Button(action, icon, label) {
+        var _this = _super.call(this) || this;
+        if (icon) {
+            _this.append(new IconControl(icon));
+        }
+        if (label) {
+            _this.append(new LabelControl(label), new Spacer());
+        }
+        _this.container.onclick = function () { return action(); };
         return _this;
     }
-    TriggeredUIControl.prototype.updateVisibility = function () {
+    Button.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " button";
     };
-    return TriggeredUIControl;
+    Button.of = function (action) {
+        var controls = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            controls[_i - 1] = arguments[_i];
+        }
+        var button = new Button(action);
+        button.append.apply(button, controls);
+        return button;
+    };
+    return Button;
 }(UIControl));
-var ToolBar = (function (_super) {
-    __extends(ToolBar, _super);
-    function ToolBar() {
-        return _super !== null && _super.apply(this, arguments) || this;
+var TriggeredButton = (function (_super) {
+    __extends(TriggeredButton, _super);
+    function TriggeredButton(action, icon, label) {
+        var _this = _super.call(this, Constructor.instance) || this;
+        if (icon) {
+            _this.append(new IconControl(icon));
+        }
+        if (label) {
+            _this.append(new LabelControl(label));
+        }
+        _this.container.onclick = function () { return action(); };
+        return _this;
     }
-    ToolBar.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " toolbar";
+    TriggeredButton.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " button";
     };
-    ToolBar.prototype.update = function () {
-    };
-    return ToolBar;
-}(UIControl));
-var BottomBar = (function (_super) {
-    __extends(BottomBar, _super);
-    function BottomBar() {
-        var _this = _super.call(this) || this;
+    return TriggeredButton;
+}(TriggeredUIControl));
+var ConditionalButton = (function (_super) {
+    __extends(ConditionalButton, _super);
+    function ConditionalButton(action, check, icon, label) {
+        var _this = _super.call(this, action, icon, label) || this;
+        _this.check = check;
         _this.update();
         return _this;
     }
-    BottomBar.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " bottom";
+    ConditionalButton.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " button conditional";
     };
-    BottomBar.prototype.update = function () {
-        var _this = this;
-        this.clear();
-        this.append(new Button(function () {
-            ConstructorUI.instance.toggleClass("collapsed");
-            ConstructorUI.instance.sidePanel.toggleVisibility();
-            ConstructorUI.instance.sideBar.buttons.forEach(function (button) { return button.toggleVisibility(); });
-        }, Icon.BARS), new Spacer(), new Button(function () {
-            _this.c.zoomIn();
-        }, Icon.SEARCH_PLUS), new Button(function () {
-            _this.c.zoomOut();
-        }, Icon.SEARCH_MINUS), new Button(function () {
-            _this.c.zoomToFit();
-        }, Icon.SEARCH), new ToggleButton(function () { return _this.c.toggleSnapToGrid(); }, function () { return _this.c.snapToGrid; }, Icon.BORDER_ALL), new ToggleButton(function () { return _this.c.toggleSnapToObjects(); }, function () { return _this.c.snapToObjects; }, Icon.VECTOR_SQUARE), new Spacer(), new ToggleButton(function () {
-            _this.c.toggleMode();
-            _this.update();
-        }, function () { return _this.c.getMode() == Mode.Mode3D; }, Icon.SQUARE, Icon.CUBE));
+    ConditionalButton.prototype.update = function () {
+        this.setVisible(this.check());
     };
-    return BottomBar;
-}(ToolBar));
-var VerticalToolBarUIControl = (function (_super) {
-    __extends(VerticalToolBarUIControl, _super);
-    function VerticalToolBarUIControl() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    VerticalToolBarUIControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " vertical";
-    };
-    return VerticalToolBarUIControl;
-}(ToolBar));
-var SideBar = (function (_super) {
-    __extends(SideBar, _super);
-    function SideBar() {
+    return ConditionalButton;
+}(TriggeredButton));
+var FontFamilyButton = (function (_super) {
+    __extends(FontFamilyButton, _super);
+    function FontFamilyButton(fontFamily) {
         var _this = _super.call(this) || this;
-        _this.buttons = [];
-        var panel = ConstructorUI.instance.sidePanel;
-        _this.appendSwitch(panel.newElementPanel, Icon.PLUS);
-        _this.appendSwitch(panel.layersPanel, Icon.LAYER_GROUP);
-        _this.appendSwitch(panel.selectionPanel, Icon.SLIDERS_H);
-        _this.appendSwitch(panel.fontFamilyPanel, Icon.FONT);
-        _this.append(new Spacer());
-        _this.hideOthers(panel.layersPanel);
+        _this.fontFamily = fontFamily;
+        var font = new FontFaceObserver(fontFamily);
+        var element = _this;
+        font.load(FontFamilyButton.charset)
+            .then(function () {
+            element.append(new LabelControl(fontFamily)
+                .setFontFamily(fontFamily));
+        })
+            .catch(function (e) {
+        });
+        _this.container.onclick = function () {
+            _this.c.getSelection().setFontFamily(fontFamily, true);
+        };
         return _this;
     }
-    SideBar.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " sidebar";
+    FontFamilyButton.initCharset = function () {
+        var s = "";
+        for (var i = 32; i <= 1024; i++)
+            s += String.fromCharCode(i);
+        return s;
     };
-    SideBar.prototype.appendSwitch = function (control, icon) {
-        var _this = this;
-        var button = new SwitchButton(control, icon);
-        this.buttons.push(button);
-        control.onVisibilityChange(function (trigger) {
-            if (trigger.isVisible()) {
-                _this.hideOthers(trigger);
-            }
-        });
-        this.append(button);
+    FontFamilyButton.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " button font-family";
     };
-    SideBar.prototype.hideOthers = function (activeTrigger) {
-        this.buttons.forEach(function (button) {
-            if (button.trigger != activeTrigger) {
-                button.trigger.hide();
-                button.removeClass("selected");
+    FontFamilyButton.charset = FontFamilyButton.initCharset();
+    return FontFamilyButton;
+}(UIControl));
+var ToggleButton = (function (_super) {
+    __extends(ToggleButton, _super);
+    function ToggleButton(action, check, iconOn, iconOff, label) {
+        var _this = _super.call(this, Constructor.instance) || this;
+        _this.action = action;
+        _this.check = check;
+        _this.iconOn = iconOn;
+        _this.iconOn = iconOn;
+        _this.iconOff = (iconOff || iconOn);
+        if (_this.iconOn != _this.iconOff) {
+            _this.addClass("active");
+        }
+        _this.container.onclick = function () { return _this.action(); };
+        _this.update();
+        if (iconOn) {
+            _this.icon = new IconControl(iconOn);
+            _this.append(_this.icon);
+        }
+        if (label) {
+            _this.label = new LabelControl(label);
+            _this.append(_this.label);
+        }
+        _this.container.onclick = function () { return action(); };
+        return _this;
+    }
+    ToggleButton.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " button toggle";
+    };
+    ToggleButton.prototype.update = function () {
+        var isOn = false;
+        try {
+            isOn = this.check();
+        }
+        catch (e) {
+            console.log(e.message);
+        }
+        if (isOn) {
+            if (this.icon && this.iconOn != this.iconOff) {
+                this.icon.setValue(this.iconOn);
             }
             else {
-                button.addClass("selected");
+                this.addClass("active");
             }
-        });
+        }
+        else {
+            if (this.icon && this.iconOn != this.iconOff) {
+                this.icon.setValue(this.iconOff);
+            }
+            else if (this.iconOn == this.iconOff) {
+                this.removeClass("active");
+            }
+        }
     };
-    return SideBar;
-}(VerticalToolBarUIControl));
-var TopBar = (function (_super) {
-    __extends(TopBar, _super);
-    function TopBar() {
-        var _this = _super.call(this) || this;
-        _this.append(new Spacer(), new Button(function () { return _this.c.undo(); }, Icon.UNDO), new Button(function () { return _this.c.redo(); }, Icon.REDO), new Spacer());
+    return ToggleButton;
+}(TriggeredUIControl));
+var FullScreenButton = (function (_super) {
+    __extends(FullScreenButton, _super);
+    function FullScreenButton() {
+        var _this = _super.call(this, function () { return _this.toggleFullscreen(); }, function () { return Utils.isFullscreen(); }, Icon.COMPRESS, Icon.EXPAND) || this;
         return _this;
     }
-    TopBar.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " top";
+    FullScreenButton.prototype.toggleFullscreen = function () {
+        var _this = this;
+        Utils.isFullscreen()
+            ? document.exitFullscreen()
+            : this.c.container.requestFullscreen();
+        setTimeout(function () { return _this.update(); }, 100);
     };
-    return TopBar;
-}(ToolBar));
+    FullScreenButton.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " fullscreen";
+    };
+    return FullScreenButton;
+}(ToggleButton));
+var RightButton = (function (_super) {
+    __extends(RightButton, _super);
+    function RightButton(action, icon, label) {
+        var _this = _super.call(this) || this;
+        if (label) {
+            _this.append(new LabelControl(label), new Spacer());
+        }
+        if (icon) {
+            _this.append(new IconControl(icon));
+        }
+        _this.container.onclick = function () { return action(); };
+        return _this;
+    }
+    RightButton.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " button";
+    };
+    return RightButton;
+}(UIControl));
+var SwitchButton = (function (_super) {
+    __extends(SwitchButton, _super);
+    function SwitchButton(view, icon, visibility) {
+        var _this = _super.call(this, view) || this;
+        _this.visibility = visibility;
+        _this.container.innerHTML = icon;
+        _this.container.onclick = function () {
+            _this.trigger.show();
+        };
+        return _this;
+    }
+    SwitchButton.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " button";
+    };
+    SwitchButton.prototype.updateVisibility = function () {
+        this.update();
+    };
+    SwitchButton.prototype.update = function () {
+        if (this.visibility && !this.visibility()) {
+            this.hide();
+        }
+        else {
+            this.show();
+        }
+        if (this.trigger.isVisible()) {
+            this.addClass("active");
+        }
+        else {
+            this.removeClass("active");
+        }
+    };
+    return SwitchButton;
+}(TriggeredUIControl));
 var InputControl = (function (_super) {
     __extends(InputControl, _super);
     function InputControl(type, setter, getter, min, max, step) {
@@ -4234,6 +4558,33 @@ var SelectControl = (function (_super) {
     };
     return SelectControl;
 }(TriggeredUIControl));
+var SelectPropertyControl = (function (_super) {
+    __extends(SelectPropertyControl, _super);
+    function SelectPropertyControl(label, setter, getter, min, max, step) {
+        var _this = _super.call(this) || this;
+        _this.append(new Row(new LabelControl(label), new Spacer(), new SelectControl(setter, getter, min, max, step)));
+        return _this;
+    }
+    SelectPropertyControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " property-control select";
+    };
+    return SelectPropertyControl;
+}(UIControl));
+var SelectRangePropertyControl = (function (_super) {
+    __extends(SelectRangePropertyControl, _super);
+    function SelectRangePropertyControl(label, setter, getter, min, max, step) {
+        var _this = _super.call(this) || this;
+        _this.input = Utils.isCompact()
+            ? new SelectControl(setter, getter, min, max, step)
+            : new RangeControl(setter, getter, min, max, step);
+        _this.append(new Row(new LabelControl(label), new Spacer(), _this.input));
+        return _this;
+    }
+    SelectRangePropertyControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " property-control";
+    };
+    return SelectRangePropertyControl;
+}(UIControl));
 var SelectionColorControl = (function (_super) {
     __extends(SelectionColorControl, _super);
     function SelectionColorControl(label, setter, getter, max, step) {
@@ -4248,127 +4599,147 @@ var SelectionColorControl = (function (_super) {
     };
     return SelectionColorControl;
 }(UIControl));
-var Button = (function (_super) {
-    __extends(Button, _super);
-    function Button(action, icon, label) {
+var TogglePropertyControl = (function (_super) {
+    __extends(TogglePropertyControl, _super);
+    function TogglePropertyControl(icons, label, setter, getter) {
         var _this = _super.call(this) || this;
-        if (icon) {
-            _this.append(new IconControl(icon));
-        }
-        if (label) {
-            _this.append(new LabelControl(label), new Spacer());
-        }
-        _this.container.onclick = function () { return action(); };
+        _this.append(new Row(new LabelControl(label), new Spacer(), new ToggleButton(setter, getter, label, label)));
         return _this;
     }
-    Button.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " button";
+    TogglePropertyControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " property-control toggle";
     };
-    return Button;
+    return TogglePropertyControl;
 }(UIControl));
-var SwitchButton = (function (_super) {
-    __extends(SwitchButton, _super);
-    function SwitchButton(view, icon) {
-        var _this = _super.call(this, view) || this;
-        _this.container.innerHTML = icon;
-        _this.container.onclick = function () {
-            _this.trigger.show();
-        };
+var ExportPanel = (function (_super) {
+    __extends(ExportPanel, _super);
+    function ExportPanel() {
+        var _this = _super.call(this) || this;
+        _this.append(new Row(new Button(function () { return _this.download(ImageType.JPG); }, null, "Export JPEG")), new Row(new Button(function () { return _this.download(ImageType.PNG); }, null, "Export PNG")), new Row(new ConditionalButton(function () { return _this.download(ImageType.SVG); }, function () { return Constructor.instance.is2D(); }, "Export SVG")), new Row(new Button(function () { return Constructor.instance.getActiveSide().exportImage(800, ImageType.SVG); }, null, "Share link")));
         return _this;
     }
-    SwitchButton.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " button";
+    ExportPanel.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " share-panel vertical";
     };
-    SwitchButton.prototype.updateVisibility = function () {
-        this.update();
-    };
-    SwitchButton.prototype.update = function () {
-        if (this.trigger.isVisible()) {
-            this.addClass("active");
+    ExportPanel.prototype.download = function (format) {
+        var data;
+        if (Constructor.instance.is3D()) {
+            data = Constructor.instance.preview.exportImageSync(window.outerWidth, format);
         }
         else {
-            this.removeClass("active");
+            data = Constructor.instance.getActiveSide().exportImage(window.outerWidth, format);
         }
+        if (format == ImageType.SVG) {
+            data = 'data:image/svg+xml;charset=utf-8,' + data;
+        }
+        var downloadLink = document.createElement('a');
+        document.body.appendChild(downloadLink);
+        downloadLink.href = data;
+        downloadLink.target = '_self';
+        var extension;
+        if (format == ImageType.SVG) {
+            extension = "svg";
+        }
+        else if (format == ImageType.JPG) {
+            extension = "jpg";
+        }
+        else {
+            extension = format.substr("image/".length, 3);
+        }
+        downloadLink.download = "image-" + new Date().toLocaleString() + "." + extension;
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
     };
-    return SwitchButton;
-}(TriggeredUIControl));
-var TriggeredButton = (function (_super) {
-    __extends(TriggeredButton, _super);
-    function TriggeredButton(action, icon, label) {
+    ExportPanel.prototype.update = function () {
+    };
+    return ExportPanel;
+}(UIControl));
+var FiltersPanel = (function (_super) {
+    __extends(FiltersPanel, _super);
+    function FiltersPanel() {
         var _this = _super.call(this, Constructor.instance) || this;
-        if (icon) {
-            _this.append(new IconControl(icon));
-        }
-        if (label) {
-            _this.append(new LabelControl(label));
-        }
-        _this.container.onclick = function () { return action(); };
-        return _this;
-    }
-    TriggeredButton.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " button";
-    };
-    return TriggeredButton;
-}(TriggeredUIControl));
-var ToggleButton = (function (_super) {
-    __extends(ToggleButton, _super);
-    function ToggleButton(action, check, iconOn, iconOff) {
-        var _this = _super.call(this, action, iconOn) || this;
-        _this.action = action;
-        _this.check = check;
-        _this.iconOn = iconOn;
-        _this.iconOn = iconOn;
-        _this.iconOff = iconOff || iconOn;
-        _this.container.onclick = function () { return _this.action(); };
+        _this.addFilterButton(Filter.BRIGHTNESS, "Brightness");
+        _this.addFilterButton(Filter.DARKNESS, "Darkness");
+        _this.addFilterButton(Filter.BLUR, "Blur");
+        _this.addFilterButton(Filter.SHARPEN, "Sharpen");
+        _this.addFilterButton(Filter.EMBOSS, "Sharpen");
+        _this.addFilterButton(Filter.INVERT, "Invert");
+        _this.addFilterButton(Filter.GRAYSCALE, "Grayscale");
+        _this.append(new Row(new Spacer(), new ConditionalButton(function () { return Constructor.instance.getSelection().resetFilters(); }, function () { return Constructor.instance.getSelection() && Constructor.instance.getSelection().hasFilters(); }, "Reset Filters"), new Spacer()));
         _this.update();
         return _this;
     }
-    ToggleButton.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " toggle";
+    FiltersPanel.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " filters vertical";
     };
-    ToggleButton.prototype.update = function () {
-        var isOn = false;
-        try {
-            isOn = this.check();
-        }
-        catch (e) {
-            console.log(e.message);
-        }
-        if (isOn) {
-            this.container.innerHTML = this.iconOn;
-            this.addClass("active");
+    FiltersPanel.prototype.addFilterButton = function (filter, label) {
+        if (filter.isBoolean) {
+            this.append(new Row(new LabelControl(label), new Spacer(), new ToggleButton(function () { return Constructor.instance.getSelection().addFilter(filter); }, function () { return Constructor.instance.getSelection().hasFilter(filter); }, Icon.TOGGLE_ON, Icon.TOGGLE_OFF)));
         }
         else {
-            this.container.innerHTML = this.iconOff;
-            this.removeClass("active");
+            this.append(new Row(new LabelControl(label), new Spacer(), new ConditionalButton(function () { return Constructor.instance.getSelection().removeFilter(filter); }, function () { return Constructor.instance.getSelection() && Constructor.instance.getSelection().hasFilter(filter); }, Icon.MINUS_CIRCLE), new Button(function () { return Constructor.instance.getSelection().addFilter(filter); }, Icon.PLUS_CIRCLE)));
         }
     };
-    return ToggleButton;
-}(TriggeredButton));
-var FullScreenButton = (function (_super) {
-    __extends(FullScreenButton, _super);
-    function FullScreenButton() {
-        var _this = _super.call(this, function () { return _this.toggleFullscreen(); }, function () { return Utils.isFullscreen(); }, Icon.COMPRESS, Icon.EXPAND) || this;
+    FiltersPanel.prototype.show = function () {
+        _super.prototype.show.call(this);
+        this.update();
+    };
+    return FiltersPanel;
+}(TriggeredUIControl));
+var FontFamilyPanel = (function (_super) {
+    __extends(FontFamilyPanel, _super);
+    function FontFamilyPanel() {
+        var _this = _super.call(this, Constructor.instance) || this;
+        var fontFamilies = _this.getFontFamilies();
+        for (var i = 0; i < fontFamilies.length; i++) {
+            var fontFamily = fontFamilies[i];
+            _this.append(new FontFamilyButton(fontFamily));
+        }
         return _this;
     }
-    FullScreenButton.prototype.toggleFullscreen = function () {
-        var _this = this;
-        Utils.isFullscreen()
-            ? document.exitFullscreen()
-            : this.c.container.requestFullscreen();
-        setTimeout(function () { return _this.update(); }, 100);
+    FontFamilyPanel.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " font-family-panel vertical";
     };
-    FullScreenButton.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " fullscreen";
+    FontFamilyPanel.prototype.show = function () {
+        _super.prototype.show.call(this);
     };
-    return FullScreenButton;
-}(ToggleButton));
+    FontFamilyPanel.prototype.update = function () {
+    };
+    FontFamilyPanel.prototype.updateVisibility = function () {
+        this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
+    };
+    FontFamilyPanel.prototype.getFontFamilies = function () {
+        var fonts = document.fonts;
+        var iterator = fonts.entries();
+        var list = [];
+        var done = false;
+        while (!done) {
+            var font = iterator.next();
+            if (!font.done) {
+                var fontFamily = font.value.family;
+                if (!fontFamily) {
+                    fontFamily = font.value[0].family;
+                }
+                if (!list.includes(fontFamily) && !fontFamily.includes("Awesome")) {
+                    list.push(fontFamily);
+                }
+            }
+            else {
+                done = font.done;
+            }
+        }
+        return list;
+    };
+    return FontFamilyPanel;
+}(TriggeredUIControl));
 var LayerUIControl = (function (_super) {
     __extends(LayerUIControl, _super);
     function LayerUIControl(element) {
         var _this = _super.call(this, element) || this;
         _this.container.onclick = function (e) { return _this.trigger.side.select(_this.trigger); };
-        _this.labelElement = document.createElement(Constants.DIV);
+        _this.labelControl = new LabelControl("")
+            .addClass("mobile-landscape")
+            .addClass("desktop");
         _this.iconContainerElement = document.createElement(Constants.DIV);
         _this.container.style.userSelect = "none";
         _this.container.draggable = true;
@@ -4386,13 +4757,17 @@ var LayerUIControl = (function (_super) {
         };
         _this.iconElement = document.createElement(Constants.IMG);
         _this.iconContainerElement.className = "constructor-layer-control-icon-frame";
+        var moveUpButton = new Button(function () { return element.bringUp(); }, Icon.CHEVRON_UP).addClass("mobile");
+        var moveDownButton = new Button(function () { return element.bringDown(); }, Icon.CHEVRON_DOWN).addClass("mobile");
         _this.visibilityButton = new ToggleButton(function () { return element.toggleVisibility(); }, function () { return element.isVisible(); }, Icon.EYE, Icon.EYE_SLASH);
         _this.lockButton = new ToggleButton(function () { return element.toggleLock(); }, function () { return element.isLocked(); }, Icon.LOCK, Icon.UNLOCK_ALT);
         _this.deleteButton = new Button(function () { return element.remove(); }, Icon.TRASH);
         _this.container.appendChild(_this.iconContainerElement);
         _this.iconContainerElement.appendChild(_this.iconElement);
-        _this.container.appendChild(_this.labelElement);
+        _this.append(_this.labelControl);
         _this.append(new Spacer());
+        _this.append(moveUpButton);
+        _this.append(moveDownButton);
         _this.container.appendChild(_this.deleteButton.getElement());
         _this.container.appendChild(_this.visibilityButton.getElement());
         _this.container.appendChild(_this.lockButton.getElement());
@@ -4410,7 +4785,7 @@ var LayerUIControl = (function (_super) {
     };
     LayerUIControl.prototype.update = function () {
         this.removeClass("drag-over");
-        this.labelElement.innerText = this.trigger.type.getName();
+        this.labelControl.setValue(this.trigger.type.getName());
         var maxSize = Math.max(this.trigger.object.width * this.trigger.object.scaleX, this.trigger.object.height * this.trigger.object.scaleY);
         if (this.trigger.isVisible()) {
             this.getIcon(maxSize);
@@ -4508,11 +4883,20 @@ var LayersUIControl = (function (_super) {
     };
     LayersUIControl.prototype.repopulate = function () {
         var _this = this;
+        var scroll;
+        try {
+            scroll = this.container.parentElement.parentElement.scrollTop;
+        }
+        catch (e) {
+        }
         this.clear();
         console.log("CLEARED");
         this.trigger.getLayers().forEach(function (layer) {
             _this.append(new LayerUIControl(layer));
         });
+        if (scroll) {
+            this.container.parentElement.parentElement.scrollTop = scroll;
+        }
     };
     LayersUIControl.prototype.updateVisibility = function () {
         if (this.isVisible() != this.trigger.isVisible()) {
@@ -4520,6 +4904,61 @@ var LayersUIControl = (function (_super) {
         }
     };
     return LayersUIControl;
+}(TriggeredUIControl));
+var NewElementPanel = (function (_super) {
+    __extends(NewElementPanel, _super);
+    function NewElementPanel() {
+        var _this = _super.call(this, Constructor.instance) || this;
+        var input = document.createElement("input");
+        input.type = "file";
+        input.size = 24;
+        input.hidden = true;
+        input.onchange = function (evt) {
+            var tgt = evt.target || window.event.srcElement, files = tgt.files;
+            if (FileReader && files && files.length) {
+                var fr = new FileReader();
+                fr.onload = function () {
+                    Constructor.instance.addImage(fr.result);
+                };
+                fr.readAsDataURL(files[0]);
+            }
+        };
+        _this.container.appendChild(input);
+        _this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);
+        _this.addButton("Rectangle", ElementType.RECTANGLE, Icon.SQUARE);
+        _this.addButton("Triangle", ElementType.TRIANGLE, Icon.CARET_UP);
+        _this.addButton("Text", ElementType.TEXT, Icon.FONT);
+        _this.append(new Row(new Button(function () { return input.click(); }, Icon.IMAGE, "Image")));
+        _this.update();
+        return _this;
+    }
+    NewElementPanel.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " vertical";
+    };
+    NewElementPanel.prototype.show = function () {
+        _super.prototype.show.call(this);
+        this.update();
+    };
+    NewElementPanel.prototype.updateVisibility = function () {
+        this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
+    };
+    NewElementPanel.prototype.addButton = function (label, type, icon) {
+        var _this = this;
+        this.append(new Row(new Button(function () { return _this.c.addElement(type); }, icon, label)));
+    };
+    return NewElementPanel;
+}(TriggeredUIControl));
+var OptionsPanel = (function (_super) {
+    __extends(OptionsPanel, _super);
+    function OptionsPanel() {
+        return _super.call(this, Constructor.instance) || this;
+    }
+    OptionsPanel.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " options-panel vertical";
+    };
+    OptionsPanel.prototype.update = function () {
+    };
+    return OptionsPanel;
 }(TriggeredUIControl));
 var SelectionPanel = (function (_super) {
     __extends(SelectionPanel, _super);
@@ -4559,7 +4998,11 @@ var SidePanel = (function (_super) {
         _this.selectionPanel = new SelectionPanel();
         _this.newElementPanel = new NewElementPanel();
         _this.fontFamilyPanel = new FontFamilyPanel();
-        _this.append(_this.newElementPanel, _this.layersPanel, _this.selectionPanel, _this.fontFamilyPanel);
+        _this.modelsPanel = new ModelsPanel();
+        _this.optionsPanel = new OptionsPanel();
+        _this.filtersPanel = new FiltersPanel();
+        _this.sharePanel = new ExportPanel();
+        _this.append(_this.newElementPanel, _this.layersPanel, _this.selectionPanel, _this.fontFamilyPanel, _this.modelsPanel, _this.optionsPanel, _this.filtersPanel, _this.sharePanel);
         return _this;
     }
     SidePanel.prototype.getClassName = function () {
@@ -4569,164 +5012,93 @@ var SidePanel = (function (_super) {
     };
     return SidePanel;
 }(ToolBar));
-var SelectRangePropertyControl = (function (_super) {
-    __extends(SelectRangePropertyControl, _super);
-    function SelectRangePropertyControl(label, setter, getter, min, max, step) {
+var BottomBar = (function (_super) {
+    __extends(BottomBar, _super);
+    function BottomBar() {
         var _this = _super.call(this) || this;
-        _this.input = Utils.isCompact()
-            ? new SelectControl(setter, getter, min, max, step)
-            : new RangeControl(setter, getter, min, max, step);
-        _this.append(new Row(new LabelControl(label), new Spacer(), _this.input));
-        return _this;
-    }
-    SelectRangePropertyControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " property-control";
-    };
-    return SelectRangePropertyControl;
-}(UIControl));
-var SelectPropertyControl = (function (_super) {
-    __extends(SelectPropertyControl, _super);
-    function SelectPropertyControl(label, setter, getter, min, max, step) {
-        var _this = _super.call(this) || this;
-        _this.append(new Row(new LabelControl(label), new Spacer(), new SelectControl(setter, getter, min, max, step)));
-        return _this;
-    }
-    SelectPropertyControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " property-control select";
-    };
-    return SelectPropertyControl;
-}(UIControl));
-var NewElementPanel = (function (_super) {
-    __extends(NewElementPanel, _super);
-    function NewElementPanel() {
-        var _this = _super.call(this, Constructor.instance) || this;
-        _this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);
-        _this.addButton("Rectangle", ElementType.RECTANGLE, Icon.SQUARE);
-        _this.addButton("Triangle", ElementType.TRIANGLE, Icon.CARET_UP);
-        _this.addButton("Text", ElementType.TEXT, Icon.FONT);
         _this.update();
         return _this;
     }
-    NewElementPanel.prototype.getClassName = function () {
+    BottomBar.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " bottom";
+    };
+    BottomBar.prototype.update = function () {
+        var _this = this;
+        this.clear();
+        this.append(new Button(function () {
+            ConstructorUI.instance.toggleClass("collapsed");
+            ConstructorUI.instance.sidePanel.toggleVisibility();
+            ConstructorUI.instance.sideBar.buttons.forEach(function (button) { return button.toggleVisibility(); });
+            window.dispatchEvent(new Event('resize'));
+        }, Icon.BARS), new Spacer(), new Button(function () {
+            _this.c.zoomIn();
+        }, Icon.SEARCH_PLUS), new Button(function () {
+            _this.c.zoomOut();
+        }, Icon.SEARCH_MINUS), new Button(function () {
+            _this.c.zoomToFit();
+        }, Icon.SEARCH), new ToggleButton(function () { return _this.c.toggleSnapToGrid(); }, function () { return _this.c.snapToGrid; }, Icon.BORDER_ALL), new ToggleButton(function () { return _this.c.toggleSnapToObjects(); }, function () { return _this.c.snapToObjects; }, Icon.VECTOR_SQUARE), new Spacer(), new ToggleButton(function () {
+            _this.c.toggleMode();
+            _this.update();
+        }, function () { return _this.c.getMode() == Mode.Mode3D; }, Icon.DICE_D6));
+    };
+    return BottomBar;
+}(ToolBar));
+var VerticalToolBarUIControl = (function (_super) {
+    __extends(VerticalToolBarUIControl, _super);
+    function VerticalToolBarUIControl() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    VerticalToolBarUIControl.prototype.getClassName = function () {
         return _super.prototype.getClassName.call(this) + " vertical";
     };
-    NewElementPanel.prototype.show = function () {
-        _super.prototype.show.call(this);
-        this.update();
-    };
-    NewElementPanel.prototype.updateVisibility = function () {
-        this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
-    };
-    NewElementPanel.prototype.addButton = function (label, type, icon) {
-        var _this = this;
-        this.append(new Row(new Button(function () { return _this.c.addElement(type); }, icon, label)));
-    };
-    return NewElementPanel;
-}(TriggeredUIControl));
-var IconControl = (function (_super) {
-    __extends(IconControl, _super);
-    function IconControl(icon) {
+    return VerticalToolBarUIControl;
+}(ToolBar));
+var SideBar = (function (_super) {
+    __extends(SideBar, _super);
+    function SideBar() {
         var _this = _super.call(this) || this;
-        _this.container.innerHTML = icon;
+        _this.buttons = [];
+        var panel = ConstructorUI.instance.sidePanel;
+        _this.appendSwitch(panel.newElementPanel, Icon.SHAPES);
+        _this.appendSwitch(panel.layersPanel, Icon.LAYER_GROUP, function () { return Constructor.instance.is2D(); });
+        _this.appendSwitch(panel.selectionPanel, Icon.SLIDERS_H, function () { return Constructor.instance.hasSelection(); });
+        _this.appendSwitch(panel.fontFamilyPanel, Icon.FONT, function () { return Constructor.instance.hasSelection() && Constructor.instance.getSelection().type == ElementType.TEXT; });
+        _this.appendSwitch(panel.filtersPanel, Icon.TINT, function () { return Constructor.instance.hasSelection() && Constructor.instance.getSelection().type == ElementType.IMAGE; });
+        _this.appendSwitch(panel.modelsPanel, Icon.MUG_HOT);
+        _this.appendSwitch(panel.optionsPanel, Icon.CLIPBOARD_LIST);
+        _this.appendSwitch(panel.sharePanel, Icon.FILE_DOWNLOAD);
+        _this.append(new Spacer());
+        _this.hideOthers(panel.layersPanel);
         return _this;
     }
-    IconControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " icon";
+    SideBar.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " sidebar";
     };
-    return IconControl;
-}(UIControl));
-var FontFamilyPanel = (function (_super) {
-    __extends(FontFamilyPanel, _super);
-    function FontFamilyPanel() {
-        var _this = _super.call(this, Constructor.instance) || this;
-        var fontFamilies = _this.getFontFamilies();
-        for (var i = 0; i < fontFamilies.length; i++) {
-            var fontFamily = fontFamilies[i];
-            _this.append(new FontFamilyButton(fontFamily));
-        }
-        return _this;
-    }
-    FontFamilyPanel.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " font-family-panel vertical";
+    SideBar.prototype.appendSwitch = function (control, icon, visibility) {
+        var _this = this;
+        var button = new SwitchButton(control, icon, visibility);
+        this.buttons.push(button);
+        Constructor.instance.onChange(function () { return button.update(); }, button);
+        control.onVisibilityChange(function (trigger) {
+            if (trigger.isVisible()) {
+                _this.hideOthers(trigger);
+            }
+        });
+        this.append(button);
     };
-    FontFamilyPanel.prototype.show = function () {
-        _super.prototype.show.call(this);
-    };
-    FontFamilyPanel.prototype.update = function () {
-    };
-    FontFamilyPanel.prototype.updateVisibility = function () {
-        this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
-    };
-    FontFamilyPanel.prototype.getFontFamilies = function () {
-        var fonts = document.fonts;
-        var iterator = fonts.entries();
-        var list = [];
-        var done = false;
-        while (!done) {
-            var font = iterator.next();
-            if (!font.done) {
-                console.log(font);
-                var fontFamily = font.value.family;
-                if (!fontFamily) {
-                    fontFamily = font.value[0].family;
-                }
-                console.log(fontFamily);
-                if (!list.includes(fontFamily) && !fontFamily.includes("Awesome")) {
-                    list.push(fontFamily);
-                }
+    SideBar.prototype.hideOthers = function (activeTrigger) {
+        this.buttons.forEach(function (button) {
+            if (button.trigger != activeTrigger) {
+                button.trigger.hide();
+                button.removeClass("selected");
             }
             else {
-                done = font.done;
+                button.addClass("selected");
             }
-        }
-        return list;
-    };
-    return FontFamilyPanel;
-}(TriggeredUIControl));
-var FontFamilyButton = (function (_super) {
-    __extends(FontFamilyButton, _super);
-    function FontFamilyButton(fontFamily) {
-        var _this = _super.call(this) || this;
-        _this.fontFamily = fontFamily;
-        var font = new FontFaceObserver(fontFamily);
-        var element = _this;
-        font.load(FontFamilyButton.charset)
-            .then(function () {
-            element.append(new Row(new Spacer(), new LabelControl(fontFamily)
-                .setFontFamily(fontFamily), new Spacer()));
-        }).catch(function (e) {
-            alert(e);
         });
-        _this.container.onclick = function () {
-            _this.c.getSelection().setFontFamily(fontFamily, true);
-            console.log("font", fontFamily);
-        };
-        return _this;
-    }
-    FontFamilyButton.initCharset = function () {
-        var s = "";
-        for (var i = 32; i <= 1024; i++)
-            s += String.fromCharCode(i);
-        return s;
     };
-    FontFamilyButton.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " button font-family";
-    };
-    FontFamilyButton.charset = FontFamilyButton.initCharset();
-    return FontFamilyButton;
-}(UIControl));
-var TogglePropertyControl = (function (_super) {
-    __extends(TogglePropertyControl, _super);
-    function TogglePropertyControl(icons, label, setter, getter) {
-        var _this = _super.call(this) || this;
-        _this.append(new Row(new LabelControl(label), new Spacer(), new ToggleButton(setter, getter, label, label)));
-        return _this;
-    }
-    TogglePropertyControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " property-control toggle";
-    };
-    return TogglePropertyControl;
-}(UIControl));
+    return SideBar;
+}(VerticalToolBarUIControl));
 var TextBar = (function (_super) {
     __extends(TextBar, _super);
     function TextBar() {
@@ -4749,5 +5121,17 @@ var TextBar = (function (_super) {
         }, function () { return Constructor.instance.getSelection()["is" + property](); }, Icon[property.toUpperCase()]);
     };
     return TextBar;
+}(ToolBar));
+var TopBar = (function (_super) {
+    __extends(TopBar, _super);
+    function TopBar() {
+        var _this = _super.call(this) || this;
+        _this.append(new Spacer(), new Button(function () { return _this.c.undo(); }, Icon.UNDO), new Button(function () { return _this.c.redo(); }, Icon.REDO), new Spacer());
+        return _this;
+    }
+    TopBar.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " top";
+    };
+    return TopBar;
 }(ToolBar));
 //# sourceMappingURL=constructor.js.map

@@ -10,4 +10,8 @@ class IconControl extends UIControl {
         this.container.innerHTML = icon;
     }
 
+    setValue(icon: Icon | string){
+        this.container.innerHTML = icon;
+    }
+
 }

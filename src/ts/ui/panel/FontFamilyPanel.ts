@@ -11,7 +11,6 @@ class FontFamilyPanel extends TriggeredUIControl<Constructor> {
         let fontFamilies = this.getFontFamilies();
         for (let i = 0; i < fontFamilies.length; i++) {
             let fontFamily = fontFamilies[i];
-
             this.append(
                 new FontFamilyButton(fontFamily)
             );
@@ -41,12 +40,10 @@ class FontFamilyPanel extends TriggeredUIControl<Constructor> {
         while (!done) {
             const font = iterator.next();
             if (!font.done) {
-                console.log(font);
                 let fontFamily: string = font.value.family;
                 if (!fontFamily) {
                     fontFamily = font.value[0].family;
                 }
-                console.log(fontFamily);
                 if (!list.includes(fontFamily) && !fontFamily.includes("Awesome")) {
                     list.push(fontFamily);
                 }

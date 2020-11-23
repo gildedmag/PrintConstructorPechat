@@ -5,7 +5,7 @@ class Button extends UIControl {
         return super.getClassName() + " button";
     }
 
-    constructor(action: () => void, icon: Icon | string, label?: string) {
+    constructor(action: () => void, icon?: Icon | string, label?: string) {
         super();
         if (icon) {
             this.append(
@@ -19,6 +19,12 @@ class Button extends UIControl {
             );
         }
         this.container.onclick = () => action();
+    }
+
+    static of(action: () => void, ...controls: UIControl[]): Button {
+        let button = new Button(action);
+        button.append(...controls);
+        return button;
     }
 
 }

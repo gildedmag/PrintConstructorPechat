@@ -7,9 +7,7 @@ class Row extends UIControl {
 
     constructor(...controls: UIControl[]) {
         super();
-        controls.forEach(control => {
-            this.append(control);
-        });
+        this.append(...controls);
     }
 
 }

@@ -113,7 +113,7 @@ class Utils {
     }
 
     static isCompact(): boolean {
-        return window.devicePixelRatio > 1;
+        return window.innerWidth < 800;
     }
 
 }

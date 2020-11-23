@@ -36,7 +36,8 @@ class Preview extends View<Preview> {
             this.renderer.setClearColor(Color.BACKGROUND_GRAY.toHex());
         }
         this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.setSize(constructor.container.clientWidth, constructor.container.clientHeight);
+        //this.renderer.setSize(constructor.container.clientWidth, constructor.container.clientHeight);
+        this.renderer.setSize(400, 300);
         this.camera = new THREE.PerspectiveCamera(70, this.renderer.getSize().width / this.renderer.getSize().height, 0.1);
         this.scene = new THREE.Scene();
         this.scene.add(this.camera);
@@ -95,9 +96,22 @@ class Preview extends View<Preview> {
         Preview.instance.render();
     }
 
+    setModel(modelName: string, json: string, callback?: () => void) {
+        Constructor.instance.spinner.show();
+        this.modelName = modelName;
+        Preview.objectLoader.manager.onError = () => Constructor.instance.spinner.hide();
+        Preview.objectLoader.parse(json, object => {
+            this.setScene(object as THREE.Scene);
+            Constructor.instance.spinner.hide();
+            if (callback) callback();
+        });
+
+    }
+
     loadModel(modelName: string, callback?: () => void) {
         Constructor.instance.spinner.show();
         this.modelName = modelName;
+        Preview.objectLoader.crossOrigin = '';
         Preview.objectLoader.manager.onError = () => Constructor.instance.spinner.hide();
         Preview.objectLoader.load(Constructor.settings.urls.models + this.modelName + Constructor.settings.fileExtensions.model, object => {
             this.setScene(object as THREE.Scene);
@@ -164,7 +178,7 @@ class Preview extends View<Preview> {
         }
     }
 
-    setFills(color: number, ...indices: number[]) {
+    setFills(color: any, ...indices: number[]) {
         if (this.fills && this.fills.length) {
             for (let index of indices) {
                 if (this.fills.length > index) {

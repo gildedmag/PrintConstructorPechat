@@ -38,11 +38,22 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
     }
 
     repopulate() {
+        let scroll;
+        try {
+            scroll = this.container.parentElement.parentElement.scrollTop;
+        } catch (e){
+
+        }
+
         this.clear();
         console.log("CLEARED");
         this.trigger.getLayers().forEach(layer => {
             this.append(new LayerUIControl(layer));
         });
+
+        if (scroll){
+            this.container.parentElement.parentElement.scrollTop = scroll;
+        }
     }
 
     // fixOrder() {

@@ -31,7 +31,7 @@ class Settings {
             height: 100
         },
         "i-text": {
-            text: "Текст",
+            text: "Text",
             fontSize: 25,
             fontFamily: "Helvetica"
         }
@@ -50,7 +50,7 @@ class Settings {
      * Maximum size of rendered 2d-side projected on 3d-surface
      */
     previewTextureSize = 1024;
-    previewBackgroundColor = "#dddddd";
+    previewBackgroundColor = "#eeeeee";
     fitIntoMargins = false;
     localStorage = {
         enabled: true,

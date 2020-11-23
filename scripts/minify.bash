@@ -15,7 +15,7 @@ fi
 echo "compiling typescript..."
 time tsc
 echo "compressing js..."
-time uglifyjs js/three.js js/OrbitControls.js js/fabric.js js/constructor.js -c -m -o build/constructor.min.js
+time uglifyjs js/three.js js/OrbitControls.js js/fabric.js js/fontfaceobserver.js js/constructor.js -c -m -o build/constructor.min.js
 #time uglifyjs js/three.js js/OrbitControls.js js/fabric.js js/constructor.js -o build/constructor.min.js
 cp -R "build/constructor.min.js" "examples/constructor.min.js"
 echo `du -sh "build/constructor.min.js"`

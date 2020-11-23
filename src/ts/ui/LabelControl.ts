@@ -5,9 +5,9 @@ class LabelControl extends UIControl {
         return super.getClassName() + " label";
     }
 
-    constructor(value: string) {
+    constructor(value?: string) {
         super();
-        this.container.innerText = value;
+        this.container.innerText = (value || "");
     }
 
     setValue(value: string){

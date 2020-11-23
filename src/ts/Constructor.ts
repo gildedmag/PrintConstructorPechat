@@ -62,27 +62,29 @@ class Constructor extends View<Constructor> {
         Constructor.instance = this;
         this.clipboard = null;
         this.snapToObjects = false;
-        //this.setMode(Mode.Mode2D);
+        this.setMode(Mode.Mode2D);
+        this.spinner = new Spinner(this.container);
+        this.preview = new Preview(this);
         this.setState({
             sides: [{
                 width: 400,
                 height: 300
-            }]
+            }],
+            model: "cup_remastered"
         }, () => this.zoomToFit());
         //this.addSide(this.container.clientWidth - 50, this.container.clientHeight - 50);
-        this.preview = new Preview(this);
-        this.spinner = new Spinner(this.container);
         this.preview.hide();
         this.background = this.container.style.background;
         this.container.style.background = null;
         console.log("Constructor.version: ", Constructor.version);
         console.log("fabric.js.version: ", fabric.version);
         window.addEventListener("resize", function () {
+            Constructor.instance.preview.autoSize();
+            Constructor.instance.spinner.update();
             let div = container as HTMLDivElement;
-            console.log("resize");
-            if (div.scrollWidth > div.clientWidth || div.scrollHeight > div.clientHeight) {
-                Constructor.instance.zoomToFit();
-            }
+            Constructor.instance.zoomToFit();
+            //if (div.scrollWidth > div.clientWidth || div.scrollHeight > div.clientHeight) {
+            //}
         })
     }
 
@@ -243,6 +245,14 @@ class Constructor extends View<Constructor> {
         this.getActiveSide().resetZoom();
     }
 
+    is3D(): boolean {
+        return this.getMode() === Mode.Mode3D;
+    }
+
+    is2D(): boolean {
+        return this.getMode() === Mode.Mode2D;
+    }
+
     getMode(): Mode {
         return (this.preview && this.preview.isVisible()) ? Mode.Mode3D : Mode.Mode2D;
     }
@@ -265,6 +275,7 @@ class Constructor extends View<Constructor> {
                 this.getActiveSide().show();
                 if (this.onModeChangeHandler) this.onModeChangeHandler();
             } else if (this.getActiveSide && this.preview) {
+                this.preview.autoSize();
                 this.getActiveSide().deselect();
                 this.preview.updateSideMaterials();
                 this.getActiveSide().hide();
@@ -296,6 +307,10 @@ class Constructor extends View<Constructor> {
         this.onElementModificationHandler = handler;
     }
 
+    hasSelection(): boolean {
+        return this.getSelection() != null;
+    }
+
     getSelection(): Element2D {
         return this.getActiveSide().selection;
     }
@@ -321,6 +336,7 @@ class Constructor extends View<Constructor> {
             element.randomizePosition();
             side.canvas.renderAll();
             side.saveState();
+            element.changed();
             callback && callback(element)
         });
         return element;

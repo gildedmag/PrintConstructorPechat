@@ -177,11 +177,11 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
             let font = new FontFaceObserver(fontFamily);
             let element = this;
             font.load(FontFamilyButton.charset)
-                .then(function() {
+                .then(function () {
                     console.log(fontFamily);
                     element.object.set("fontFamily", fontFamily);
                     element.side.canvas.requestRenderAll();
-                }).catch(function(e) {
+                }).catch(function (e) {
                 console.log(e)
             });
 
@@ -287,31 +287,31 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         }
     }
 
-    toggleUnderline(){
-        if (!this.isUnderline()){
+    toggleUnderline() {
+        if (!this.isUnderline()) {
             this.setTextDecoration(TextDecoration.UNDERLINE)
         } else {
             this.setTextDecoration(null)
         }
     }
 
-    toggleOverline(){
-        if (!this.isOverline()){
+    toggleOverline() {
+        if (!this.isOverline()) {
             this.setTextDecoration(TextDecoration.OVERLINE)
         } else {
             this.setTextDecoration(null)
         }
     }
 
-    toggleLinethrough(){
-        if (!this.isLinethrough()){
+    toggleLinethrough() {
+        if (!this.isLinethrough()) {
             this.setTextDecoration(TextDecoration.LINETHROUGH)
         } else {
             this.setTextDecoration(null)
         }
     }
 
-    clearDecoration(){
+    clearDecoration() {
         this.setTextDecoration(null);
     }
 
@@ -362,18 +362,56 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
                 let index = this.filters.indexOf(filter);
                 if (index != -1) {
                     this.filters.splice(index, 1);
+                    Constructor.instance.changed();
                     if (this.filters.length === 0) this.filters = null;
                     this.applyFilters(callback);
                     return;
                 }
             }
             this.filters.push(filter);
+            Constructor.instance.changed();
             this.applyFilters(callback);
         }
     }
 
+    removeFilter(filter: Filter, callback?: (element: Element2D) => void) {
+        if (this.object instanceof fabric.Image) {
+            if (!this.filters) {
+                this.filters = [];
+                return;
+            }
+            let index = this.filters.indexOf(filter);
+            if (index != -1) {
+                this.filters.splice(index, 1);
+                this.changed();
+                Constructor.instance.changed();
+                if (this.filters.length === 0) this.filters = null;
+                this.applyFilters(callback);
+                return;
+            }
+            this.applyFilters(callback);
+        }
+    }
+
+    hasFilters(): boolean {
+        return this.filters && this.filters.length > 0;
+    }
+
+    hasFilter(filter: Filter): boolean {
+        if (this.object instanceof fabric.Image) {
+            if (!this.filters) {
+                return false;
+            }
+            let index = this.filters.indexOf(filter);
+            return index != -1;
+        }
+        return false;
+    }
+
+
     resetFilters(callback?: (element: Element2D) => void) {
         this.filters = null;
+        Constructor.instance.changed();
         if (this.object instanceof fabric.Image) {
             (<fabric.Image>this.object).filters = [];
             this.applyFilters(callback);
@@ -400,7 +438,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         this.object.rotate(angle)
     }
 
-    toggleLock(){
+    toggleLock() {
         this.setLocked(!this.isLocked());
     }
 
@@ -474,7 +512,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         return Constructor.instance.getSelection() == this;
     }
 
-    toggleVisibility(){
+    toggleVisibility() {
         this.isVisible() ? this.hide() : this.show();
     }
 

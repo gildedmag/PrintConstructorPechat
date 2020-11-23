@@ -18,6 +18,7 @@ class BottomBar extends ToolBar {
                     ConstructorUI.instance.toggleClass("collapsed");
                     ConstructorUI.instance.sidePanel.toggleVisibility();
                     ConstructorUI.instance.sideBar.buttons.forEach(button => button.toggleVisibility());
+                    window.dispatchEvent(new Event('resize'));
                 },
                 Icon.BARS
             ),
@@ -53,8 +54,7 @@ class BottomBar extends ToolBar {
                     this.update();
                 },
                 () => this.c.getMode() == Mode.Mode3D,
-                Icon.SQUARE,
-                Icon.CUBE
+                Icon.DICE_D6
             )
         );
     }
