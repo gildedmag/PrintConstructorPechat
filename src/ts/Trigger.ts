@@ -6,11 +6,6 @@ abstract class Trigger<T> {
     private visibilityActions: ((trigger: any) => any)[] = [];
 
     changed() {
-        if (this.getClassName) {
-            console.log(this.getClassName(), "changed");
-        } else {
-            console.log(typeof this, "changed");
-        }
         Object.keys(this.actions).forEach((key, id) => {
             let control = UIControl.getById(key);
             if (!control){

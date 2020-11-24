@@ -3,7 +3,7 @@ class Settings {
 
     debug = false;
     ui = {
-        layerIconSize: 24
+        layerIconSize: 38
     };
     urls = {
         textures: "textures/",

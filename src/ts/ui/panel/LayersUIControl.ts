@@ -48,7 +48,7 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
         this.clear();
         console.log("CLEARED");
         this.trigger.getLayers().forEach(layer => {
-            this.append(new LayerUIControl(layer));
+            this.append(new LayerUIControl(layer, this));
         });
 
         if (scroll){

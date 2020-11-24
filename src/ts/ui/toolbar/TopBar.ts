@@ -21,14 +21,14 @@ class TopBar extends ToolBar {
                 Icon.REDO_ALT
             ),
             new ConditionalButton(
-                () => this.c.getSelection().remove(),
-                () => this.c.hasSelection(),
-                Icon.TRASH
-            ),
-            new ConditionalButton(
                 () => this.c.duplicate(),
                 () => this.c.hasSelection(),
                 Icon.CLONE
+            ),
+            new ConditionalButton(
+                () => this.c.getSelection().remove(),
+                () => this.c.hasSelection(),
+                Icon.TRASH
             ),
             new Spacer()
         );

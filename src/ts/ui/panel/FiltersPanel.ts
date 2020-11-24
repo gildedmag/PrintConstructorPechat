@@ -40,7 +40,7 @@ class FiltersPanel extends TriggeredUIControl<Constructor> {
                     new Spacer(),
                     new ToggleButton(
                         () => Constructor.instance.getSelection().addFilter(filter),
-                        () => Constructor.instance.getSelection().hasFilter(filter),
+                        () => Constructor.instance.hasSelection() && Constructor.instance.getSelection().hasFilter(filter),
                         Icon.TOGGLE_ON,
                         Icon.TOGGLE_OFF
                     ),

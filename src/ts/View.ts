@@ -53,10 +53,11 @@ abstract class View<T> extends Trigger<T> {
         return this;
     }
 
-    removeClass(className: string) {
+    removeClass(className: string): View<T> {
         if (this.hasClass(className)) {
             this.container.classList.remove(className);
         }
+        return this;
     }
 
     hasClass(className: string): boolean {

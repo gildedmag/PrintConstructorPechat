@@ -65,10 +65,18 @@ class Constructor extends View<Constructor> {
         this.setMode(Mode.Mode2D);
         this.spinner = new Spinner(this.container);
         this.preview = new Preview(this);
+        let width = this.container.parentElement
+            ? this.container.parentElement.clientWidth
+            : 400;
+        let height = this.container.parentElement
+            ? this.container.parentElement.clientHeight
+            : 300;
+
+
         this.setState({
             sides: [{
-                width: 400,
-                height: 300
+                width: width,
+                height: height
             }],
             model: "cup_remastered"
         }, () => this.zoomToFit());

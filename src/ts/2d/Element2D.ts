@@ -8,7 +8,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         cornerSize: 8 * window.devicePixelRatio,
         originX: Constants.CENTER,
         originY: Constants.CENTER,
-        rotatingPointOffset: 30 * window.devicePixelRatio
+        rotatingPointOffset: 8 * window.devicePixelRatio * 2
     };
 
     type: ElementType;
@@ -506,6 +506,8 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         Utils.arrayMove(this.side.elements, this.getIndex(), index);
         this.side.deselect();
         this.side.canvas.renderAll();
+        this.changed();
+        
     }
 
     isVisible(): boolean {
@@ -553,8 +555,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
     }
 
     remove() {
-        setTimeout(() => this.side.remove(this), 100);
-
+        setTimeout(() => this.side.remove(this), 0);
     }
 
     private calculateGuides() {
