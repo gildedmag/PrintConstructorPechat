@@ -180,6 +180,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
                 .then(function () {
                     console.log(fontFamily);
                     element.object.set("fontFamily", fontFamily);
+                    Constructor.instance.changed();
                     element.side.canvas.requestRenderAll();
                 }).catch(function (e) {
                 console.log(e)

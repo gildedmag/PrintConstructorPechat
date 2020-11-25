@@ -14,4 +14,8 @@ class IconControl extends UIControl {
         this.container.innerHTML = icon;
     }
 
+    getValue(){
+        return this.container.innerHTML;
+    }
+
 }

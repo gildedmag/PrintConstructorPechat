@@ -320,6 +320,14 @@ class Constructor extends View<Constructor> {
         return this.getSelection() != null;
     }
 
+    hasTextSelection(): boolean {
+        return this.getSelection() != null && this.getSelection().type == ElementType.TEXT;
+    }
+
+    hasImageSelection(): boolean {
+        return this.getSelection() != null && this.getSelection().type == ElementType.IMAGE;
+    }
+
     getSelection(): Element2D {
         return this.getActiveSide().selection;
     }
