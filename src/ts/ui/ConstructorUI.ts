@@ -74,9 +74,9 @@ class ConstructorUI extends UIControl {
 
         PechatUtils.getCategforyOptions(categoryId, options => {
             Constructor.instance.preview.modelName = null;
-            options.constructor_setting.forEach(value => {
-                console.log('!!!options.constructor_setting', value);
-            })
+            // options.constructor_setting.forEach(value => {
+            //     console.log('!!!options.constructor_setting', value);
+            // })
             options.options.forEach(option => {
                 option.option_values.forEach(value => {
                     //value

@@ -178,7 +178,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "25.11.2020 15:40";
+    Version.version = "25.11.2020 20:06";
     return Version;
 }());
 var Trigger = (function () {
@@ -4154,9 +4154,6 @@ var ConstructorUI = (function (_super) {
         var _this = this;
         PechatUtils.getCategforyOptions(categoryId, function (options) {
             Constructor.instance.preview.modelName = null;
-            options.constructor_setting.forEach(function (value) {
-                console.log('!!!options.constructor_setting', value);
-            });
             options.options.forEach(function (option) {
                 option.option_values.forEach(function (value) {
                 });
