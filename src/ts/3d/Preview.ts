@@ -111,7 +111,6 @@ class Preview extends View<Preview> {
     loadModel(modelName: string, callback?: () => void) {
         Constructor.instance.spinner.show();
         this.modelName = modelName;
-        Preview.objectLoader.crossOrigin = '';
         Preview.objectLoader.manager.onError = () => Constructor.instance.spinner.hide();
         Preview.objectLoader.load(Constructor.settings.urls.models + this.modelName + Constructor.settings.fileExtensions.model, object => {
             this.setScene(object as THREE.Scene);

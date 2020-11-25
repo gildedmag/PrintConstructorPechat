@@ -10,6 +10,8 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     selection: Element2D;
     canvasElement: HTMLCanvasElement;
 
+    private name: string;
+
     /** width in centimeters */
     width: number;
 
@@ -28,6 +30,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     history: HistoryList<Side2DStateObjects>;
 
     private needsHistoryUpdate;
+    private id: number
 
     /**
      *
@@ -35,12 +38,15 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
      * @param {number} width side width in centimeters
      * @param {number} height side height in centimeters
      * @param {number} roundCorners round corners in percents
+     * @param name
      */
-    constructor(htmlElement: HTMLElement, width: number, height: number, roundCorners?: number) {
+    constructor(htmlElement: HTMLElement, width: number, height: number, roundCorners?: number, name?: string) {
         super(htmlElement);
+        this.id = Math.random() * 1e18;
         this.history = new HistoryList(new Side2DState(this));
         this.width = width;
         this.height = height;
+        this.name = name;
         this.canvasElement = document.createElement(Constants.CANVAS);
         this.container.appendChild(this.canvasElement);
         this.canvas = new fabric.Canvas(this.canvasElement, null);
@@ -84,6 +90,14 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         this.canvasElement.style.border = Constants.LINE_STYLE_PREFIX + Color.GRAY.toHex();
     }
 
+    getName() {
+        return this.name || this.getIndex().toString();
+    }
+
+    setName(value: string){
+        this.name = value;
+    }
+
     setRoundCorners() {
         let smallestSide = Math.min(this.canvasElement.width, this.canvasElement.height);
         this.canvasElement.style.borderRadius = smallestSide / 2 * this.roundCorners / 100 + Constants.PX;
@@ -104,6 +118,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         this.canvas.setWidth(this.width * value);
         this.canvas.setHeight(this.height * value);
         this.canvas.renderAll();
+        this.setRoundCorners();
         //this.centerPosition();
     }
 
@@ -116,7 +131,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         this.canvas.setWidth(this.width);
         this.canvas.setHeight(this.height);
         this.canvas.renderAll();
-        this.centerPosition();
+        //this.centerPosition();
     }
 
     zoomToFit() {
@@ -138,7 +153,12 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     }
 
     getIndex(): number {
-        return Constructor.instance.sides.indexOf(this);
+        for (let i = 0; i < Constructor.instance.sides.length; i++){
+            if (Constructor.instance.sides[i].equals(this)){
+                return i;
+            }
+        }
+        return -1;
     }
 
     fixElementPosition(element: Element2D): void {
@@ -406,7 +426,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     }
 
     public equals(side: Side2D): boolean {
-        return this.getState().equals(side.getState());
+        return this.id == side.id;
     }
 
     public isEmpty(): boolean {

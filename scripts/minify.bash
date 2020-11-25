@@ -26,4 +26,5 @@ HOST=${CONSTRUCTOR_REMOTE_HOST}
 DIR=${CONSTRUCTOR_REMOTE_DIR}
 DEST="${USER}@${HOST}:${DIR}"
 rsync --update --progress build/constructor.min.js $DEST
+rsync --update --progress examples/style.css $DEST/css
 echo DONE!

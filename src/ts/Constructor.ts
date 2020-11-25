@@ -66,10 +66,10 @@ class Constructor extends View<Constructor> {
         this.spinner = new Spinner(this.container);
         this.preview = new Preview(this);
         let width = this.container.parentElement
-            ? this.container.parentElement.clientWidth
+            ? this.container.parentElement.clientWidth * .8
             : 400;
         let height = this.container.parentElement
-            ? this.container.parentElement.clientHeight
+            ? this.container.parentElement.clientHeight * .8
             : 300;
 
 
@@ -78,7 +78,7 @@ class Constructor extends View<Constructor> {
                 width: width,
                 height: height
             }],
-            model: "cup_remastered"
+            //model: "cup_remastered"
         }, () => this.zoomToFit());
         //this.addSide(this.container.clientWidth - 50, this.container.clientHeight - 50);
         this.preview.hide();
@@ -106,9 +106,9 @@ class Constructor extends View<Constructor> {
         this.preview.loadModel(modelName, callback);
     }
 
-    addSide(width: number, height: number): Side2D {
+    addSide(width: number, height: number, roundCorners?: number, name?: string): Side2D {
         Utils.logMethodName();
-        let side = new Side2D(this.container, width, height);
+        let side = new Side2D(this.container, width, height, roundCorners, name);
         this.insertSide(side);
         return side;
     }
@@ -162,7 +162,7 @@ class Constructor extends View<Constructor> {
         });
     }
 
-    private deleteAllSides() {
+    deleteAllSides() {
         Utils.logMethodName();
         this.sides.forEach(side => {
             side.getElement().parentElement.removeChild(side.getElement());
@@ -203,7 +203,8 @@ class Constructor extends View<Constructor> {
             this.activeSideIndex = index;
             this.getActiveSide().show();
             this.getActiveSide().canvas.renderAll();
-            this.visibilityChanged();
+            this.zoomToFit();
+            this.changed();
         }
     }
 

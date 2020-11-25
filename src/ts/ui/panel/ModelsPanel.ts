@@ -1,5 +1,5 @@
 /// <reference path="../TriggeredUIControl.ts" />
-/// <reference path="../pechat.photo/PechatUtils.ts" />
+/// <reference path="../pechat.photo/PrintUtils.ts" />
 
 import Options = pechat.Options;
 import PechatUtils = pechat.PrintUtils;

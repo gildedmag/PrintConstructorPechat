@@ -8,7 +8,11 @@ class TopBar extends ToolBar {
 
     constructor() {
         super();
+
+        let pager = new Pager()
+
         this.append(
+            pager,
             new Spacer(),
             new ConditionalButton(
                 () => this.c.undo(),

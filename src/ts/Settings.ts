@@ -8,7 +8,7 @@ class Settings {
     urls = {
         textures: "textures/",
         maps: "textures/maps/",
-        models: "models/",
+        models: window.constructorConfiguration && window.constructorConfiguration.modelsUrl || "models/",
         presets: "presets/"
     };
     fileExtensions = {

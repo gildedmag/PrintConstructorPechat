@@ -5,7 +5,9 @@ class ToolBar extends UIControl {
         return super.getClassName() + " toolbar";
     }
 
-    update() {
+    constructor(...controls: UIControl[]) {
+        super();
+        this.append(...controls);
     }
 
 }

@@ -2,7 +2,7 @@
 class Container extends UIControl {
 
     getClassName(): string {
-        return super.getClassName() + " container";
+        return super.getClassName();
     }
 
     constructor(...controls: UIControl[]) {

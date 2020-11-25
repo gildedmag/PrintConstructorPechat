@@ -18,7 +18,20 @@
 <script src="js/fabric.js" type="application/javascript"></script>
 <script src="js/constructor.js" type="application/javascript"></script>
 
+<script type="text/javascript">
+    constructorConfiguration = {
+        modelsUrl: 'https://pechat.photo/catalog/view/javascript/constructor/v2/models/',
+        categoryId: 55
+    }
+</script>
+
 <div id="constructor-ui"></div>
+
+<script>
+    window.addEventListener("load", function () {
+        ConstructorUI.instance.loadCategory(window.constructorConfiguration.categoryId);
+    });
+</script>
 
 </body>
 </html>

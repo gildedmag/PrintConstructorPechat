@@ -51,10 +51,12 @@ body {
     font-family: sans-serif;
     letter-spacing: 0.05em;
     font-weight: lighter;
+    box-sizing: content-box;
 }
 
-.row {
+.control.row {
     width: 100%;
+    margin: 0;
 }
 
 .vertical {
@@ -62,16 +64,16 @@ body {
     width: 100%;
 }
 
-.row > .control {
+.control.row > .control {
     margin: 8px;
 }
 
-.row .control {
+.control.row .control {
     margin-left: 8px;
     margin-right: 8px;
 }
 
-.label {
+.control.label {
     color: #cccccc;
 }
 
@@ -159,6 +161,7 @@ body {
 }
 
 .lower-canvas {
+    border: none !important;
     box-shadow: 0 0 10px 4px rgba(0, 0, 0, .2);
     background: white;
     transition: .4s;
@@ -274,7 +277,7 @@ body {
     width: 12px;
 }
 
-.control.grip .container {
+.control.grip > div {
     background: repeating-linear-gradient(0deg, #aaa, #aaa 1px, transparent 1px, transparent 3px);
     width: 8px;
     height: 100%;
@@ -360,11 +363,15 @@ input[type="color"] {
     display: block;
 }
 
+.pager {
+    position: absolute;
+}
+
 .toolbar.top .button:hover *, .toolbar.bottom .button:hover * {
     color: #aaa;
 }
 
-.toolbar.top .toggle.active, .toolbar.bottom .toggle.active {
+.toolbar.top .toggle.active, .toolbar.bottom .toggle.active, .control.button.toggle.active .label {
     color: #000;
 }
 
