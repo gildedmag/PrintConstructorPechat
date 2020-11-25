@@ -3653,6 +3653,10 @@ var Side2D = (function (_super) {
     };
     Side2D.prototype.add = function (element) {
         var _this = this;
+        if (this.elements.length >= 20) {
+            alert("Too many objects on the canvas! Please consider removing some objects before adding new.");
+            return null;
+        }
         Utils.logMethodName();
         element.side = this;
         this.elements.push(element);

@@ -153,6 +153,10 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     }
 
     add(element: Element2D): Element2D {
+        if (this.elements.length >= 20){
+            alert("Too many objects on the canvas! Please consider removing some objects before adding new.")
+            return null;
+        }
         Utils.logMethodName();
         element.side = this;
         this.elements.push(element);

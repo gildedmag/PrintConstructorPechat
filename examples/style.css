@@ -218,8 +218,8 @@ body {
     background: #333 !important;
 }
 
-.layer.source, .layer.source img {
-    background: #999 !important;
+.layer.source * {
+    opacity: 0.6 !important;
 }
 
 .layer.touch .grip > div, .layer.source .grip > div {
@@ -227,9 +227,9 @@ body {
     /*background: #999 !important;*/
 }
 
-.layer.source img, .layer.source .button {
-    display: none;
-}
+/*.layer.source img, .layer.source .button {*/
+/*    display: none;*/
+/*}*/
 
 .control.layer.touch .button {
     /*display: none;*/
