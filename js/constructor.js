@@ -181,7 +181,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "25.11.2020 20:06";
+    Version.version = "26.11.2020 11:38";
     return Version;
 }());
 var Trigger = (function () {
@@ -4815,16 +4815,11 @@ var LayerUIControl = (function (_super) {
         _this.iconCanvas = new fabric.Canvas(document.createElement("canvas"));
         _this.parent = layers;
         var grip = new Container(new Container())
-            .addClass("grip")
-            .addClass("mobile");
+            .addClass("grip");
         _this.container.onclick = function (e) { return _this.trigger.side.select(_this.trigger); };
         _this.iconContainerElement = document.createElement(Constants.DIV);
         _this.container.style.userSelect = "none";
         _this.container.draggable = true;
-        _this.container.ondragend = function (e) {
-            _this.trigger.side.moveLayer(_this.trigger.getLayerIndex(), LayerUIControl.dragTo);
-            _this.trigger.side.select(_this.trigger);
-        };
         grip.container.ontouchstart = function (e) {
             e.preventDefault();
             LayerUIControl.touchStart = e.touches.item(0).clientY;
@@ -4879,14 +4874,29 @@ var LayerUIControl = (function (_super) {
         };
         _this.container.ontouchcancel = function (e) {
             console.log("ontouchcancel", _this.trigger.getLayerIndex());
+            _this.removeClass("touch")
+                .removeClass("drag-over");
+        };
+        _this.container.ondragstart = function (e) {
+            LayerUIControl.dragSource = _this;
+            _this.addClass("source");
         };
         _this.container.ondragover = function (e) {
             e.preventDefault();
             LayerUIControl.dragTo = _this.trigger.getLayerIndex();
-            _this.addClass("drag-over");
+            _this
+                .addClass("drag-over")
+                .swapIcon(LayerUIControl.dragSource.iconElement.src);
         };
         _this.container.ondragleave = function (e) {
-            _this.removeClass("drag-over");
+            _this
+                .removeClass("drag-over")
+                .removeClass("source")
+                .swapIcon();
+        };
+        _this.container.ondragend = function (e) {
+            _this.trigger.side.moveLayer(_this.trigger.getLayerIndex(), LayerUIControl.dragTo);
+            _this.trigger.side.select(_this.trigger);
         };
         _this.iconElement = document.createElement(Constants.IMG);
         _this.iconContainerElement.className = "icon-frame";

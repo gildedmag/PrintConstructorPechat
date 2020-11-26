@@ -14,6 +14,7 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
     private iconCanvas = new fabric.Canvas(document.createElement("canvas"))
 
     static dragTo = 0;
+    static dragSource: LayerUIControl;
     static touchStart = 0;
 
     cachedIcon: string;
@@ -58,8 +59,8 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
         let grip = new Container(
             new Container()
         )
-            .addClass("grip")
-            .addClass("mobile");
+            .addClass("grip");
+            //.addClass("mobile");
 
         this.container.onclick = e => this.trigger.side.select(this.trigger);
 
@@ -67,11 +68,6 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
 
         this.container.style.userSelect = "none";
         this.container.draggable = true;
-
-        this.container.ondragend = e => {
-            this.trigger.side.moveLayer(this.trigger.getLayerIndex(), LayerUIControl.dragTo);
-            this.trigger.side.select(this.trigger);
-        };
 
         grip.container.ontouchstart = e => {
             e.preventDefault();
@@ -114,34 +110,6 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
                 }
             }
 
-            //this.trigger.side.moveLayer(this.trigger.getLayerIndex(), LayerUIControl.dragTo);
-            //this.trigger.side.select(this.trigger);
-
-
-            // let touchedElement = document.elementFromPoint(
-            //     e.touches.item(0).screenX,
-            //     e.touches.item(0).screenY
-            // );
-            // let index = this.traverseLayerIndex(touchedElement);
-            // console.log(index);
-            // let from = this.trigger.getLayerIndex();
-            // if (index && index != this.trigger.getLayerIndex()){
-            //     this.trigger.side.moveLayer(from, index);
-            // }
-
-            // let event: TouchEvent = e as TouchEvent;
-            // event.path.forEach(element => {
-            //     if (element.classList && element.classList.contains("layer")) {
-            //         for (let i = 0; i < element.parentElement.childNodes.length; i++) {
-            //             if (element.parentElement.childNodes[i] === element) {
-            //                 console.log(i);
-            //             }
-            //         }
-            //     }
-            // })
-
-            //e.preventDefault();
-
         };
         grip.container.ontouchend = e => {
 
@@ -157,82 +125,45 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
                     .removeClass("touch")
                     .removeClass("drag-over");
             }
-
-            //console.log(e);
-            // let event: TouchEvent = e as TouchEvent;
-            // event.path.forEach(element => {
-            //     if (element && element.classList && element.classList.contains("layer")) {
-            //         for (let i = 0; i < element.parentElement.childNodes.length; i++) {
-            //             if (element.parentElement.childNodes[i] === element) {
-            //                 //console.log(i);
-            //             }
-            //         }
-            //     }
-            // });
-            //
-            // let touchedElement = document.elementFromPoint(
-            //     event.changedTouches.item(0).screenX,
-            //     event.changedTouches.item(0).screenY
-            // );
-            // let index = this.traverseLayerIndex(touchedElement);
-            // console.log(index);
-            //
-            //
-            // console.log("ontouchend", this.trigger.getLayerIndex());
-            // this.trigger.side.moveLayer(this.trigger.getLayerIndex(), LayerUIControl.dragTo);
-            // this.trigger.side.select(this.trigger);
         };
 
         this.container.ontouchcancel = e => {
             console.log("ontouchcancel", this.trigger.getLayerIndex());
+            this.removeClass("touch")
+                .removeClass("drag-over");
+        }
+
+        this.container.ondragstart = e => {
+            LayerUIControl.dragSource = this;
+            this.addClass("source");
         }
 
         this.container.ondragover = e => {
             e.preventDefault();
             LayerUIControl.dragTo = this.trigger.getLayerIndex();
-            this.addClass("drag-over");
-        };
-        this.container.ondragleave = e => {
-            this.removeClass("drag-over");
+            this
+                .addClass("drag-over")
+                .swapIcon(LayerUIControl.dragSource.iconElement.src);
         };
 
-        // this.container.addEventListener('touchmove', function (e) {
-        //     // grab the location of touch
-        //     var touchLocation = e.targetTouches[0];
-        //
-        //     // assign box new coordinates based on the touch.
-        //     this.container.style.left = touchLocation.pageX + 'px';
-        //     this.container.style.top = touchLocation.pageY + 'px';
-        // });
+        this.container.ondragleave = e => {
+            this
+                .removeClass("drag-over")
+                .removeClass("source")
+                .swapIcon();
+        };
+
+        this.container.ondragend = e => {
+            this.trigger.side.moveLayer(this.trigger.getLayerIndex(), LayerUIControl.dragTo);
+            this.trigger.side.select(this.trigger);
+        };
 
         this.iconElement = document.createElement(Constants.IMG);
         this.iconContainerElement.className = "icon-frame";
-        // this.iconContainerElement.style.width = Constructor.settings.ui.layerIconSize + "px";
-        // this.iconContainerElement.style.height = Constructor.settings.ui.layerIconSize + "px";
-
-        // let moveUpButton = new Button(
-        //     () => element.bringUp(),
-        //     Icon.CHEVRON_UP,
-        // ).addClass("mobile");
-        //
-        // let moveDownButton = new Button(
-        //     () => element.bringDown(),
-        //     Icon.CHEVRON_DOWN,
-        // ).addClass("mobile");
-
-
-        // .addClass("mobile-landscape")
-        // .addClass("desktop");
-
 
         this.container.appendChild(this.iconContainerElement);
         this.iconContainerElement.appendChild(this.iconElement);
         this.append(
-            // new Row(
-            //     new Spacer(),
-            //     new LabelControl("Move here"),
-            //     new Spacer(),
-            // ).addClass("touch-destination"),
 
             new Spacer(),
 
