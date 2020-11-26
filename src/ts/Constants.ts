@@ -72,6 +72,8 @@ enum Constants {
     MESH_PHYSICAL_MATERIAL = "MeshPhysicalMaterial",
     MARGIN = "margin",
     PERSPECTIVE_CAMERA = "PerspectiveCamera",
+    MESH = "Mesh",
+    GROUP = "Group",
     MULTI_MATERIAL_NAME_SEPARATOR = "+",
     MATERIAL_NAME_SEPARATOR = "_",
 

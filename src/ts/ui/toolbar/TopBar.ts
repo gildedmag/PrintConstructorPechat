@@ -1,6 +1,6 @@
-/// <reference path="ToolBar.ts" />
+/// <reference path="TriggeredToolBar.ts" />
 
-class TopBar extends ToolBar {
+class TopBar extends TriggeredToolBar {
 
     getClassName(): string {
         return super.getClassName() + " top";
@@ -38,4 +38,8 @@ class TopBar extends ToolBar {
         );
     }
 
+
+    update() {
+        this.trigger.is2D() ? this.show() : this.hide();
+    }
 }

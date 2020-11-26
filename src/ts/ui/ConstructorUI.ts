@@ -90,7 +90,7 @@ class ConstructorUI extends UIControl {
 
                 if (!Constructor.instance.preview.modelName) {
                     this.loadModelOptions(model);
-                    Constructor.instance.loadModel(model.file_main, () => Constructor.instance.toggleMode());
+                    Constructor.instance.loadModel(model.file_main);
                 }
 
                 let url = model.thumb;
@@ -134,6 +134,7 @@ class ConstructorUI extends UIControl {
                 parseInt(area.roundCorners),
                 area.name
             );
+            Constructor.instance.zoomToFit();
         });
 
         model.constructor_model_option.forEach(option => {

@@ -98,7 +98,7 @@ class Utils {
 
     public static div(innerText?: string): HTMLDivElement {
         let div = document.createElement(Constants.DIV);
-        if (innerText){
+        if (innerText) {
             div.innerText = innerText;
         }
         return div;
@@ -108,12 +108,24 @@ class Utils {
         return document.createElement(Constants.INPUT)
     }
 
-    static isFullscreen(){
+    static isFullscreen() {
         return window.innerWidth == screen.width && window.innerHeight == screen.height
     }
 
     static isCompact(): boolean {
         return window.innerWidth < 800;
+    }
+
+    static isIos() {
+        return [
+                'iPad Simulator',
+                'iPhone Simulator',
+                'iPod Simulator',
+                'iPad',
+                'iPhone',
+                'iPod'
+            ].includes(navigator.platform)
+            || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
     }
 
 }

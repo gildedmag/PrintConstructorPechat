@@ -3,6 +3,7 @@ class ToggleButton extends TriggeredUIControl<Constructor> {
 
     action: () => void;
     check: () => boolean;
+    enabledCheck: () => boolean;
     iconOn: Icon | string;
     iconOff: Icon | string;
 
@@ -18,11 +19,13 @@ class ToggleButton extends TriggeredUIControl<Constructor> {
         check: () => boolean,
         iconOn: Icon | string,
         iconOff?: Icon | string,
+        enabledCheck?: () => boolean,
         label?: string
     ) {
         super(Constructor.instance);
         this.action = action;
         this.check = check;
+        this.enabledCheck = enabledCheck;
         this.iconOn = iconOn;
         this.iconOn = iconOn;
         this.iconOff = (iconOff || iconOn);
@@ -43,7 +46,19 @@ class ToggleButton extends TriggeredUIControl<Constructor> {
         this.container.onclick = () => action();
     }
 
+    updateEnabled(){
+        if (this.enabledCheck) {
+            if (this.enabledCheck()) {
+                this.removeClass("disabled")
+            } else {
+                this.addClass("disabled");
+            }
+        }
+    }
+
     update() {
+        this.updateEnabled();
+        
         let isOn = false;
         try {
             isOn = this.check();

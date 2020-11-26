@@ -9,7 +9,7 @@ class SelectRangePropertyControl extends UIControl {
 
     constructor(label: string, setter: (any) => any, getter: () => any, min?: number, max?: number, step?: number) {
         super();
-        this.input = Utils.isCompact()
+        this.input = Utils.isIos()
             ? new SelectControl(setter, getter, min, max, step)
             : new RangeControl(setter, getter, min, max, step);
         this.append(

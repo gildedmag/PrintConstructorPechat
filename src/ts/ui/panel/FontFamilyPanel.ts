@@ -25,10 +25,10 @@ class FontFamilyPanel extends TriggeredUIControl<Constructor> {
     }
 
     updateVisibility() {
-        this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
+        this.trigger.getMode() == Mode.Mode2D && this.trigger.hasTextSelection()
+            ? this.show()
+            : this.hide();
     }
-
-
 
     getFontFamilies(): [string] {
         let {fonts} = document;

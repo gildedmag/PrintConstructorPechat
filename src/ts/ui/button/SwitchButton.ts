@@ -21,12 +21,12 @@ class SwitchButton extends TriggeredUIControl<View<any>> {
     }
 
     update() {
-        if (this.visibility && !this.visibility()){
+        if (this.visibility && !this.visibility()) {
             this.hide();
         } else {
             this.show();
         }
-        if (this.trigger.isVisible()){
+        if (this.trigger.isVisible()) {
             this.addClass("active")
         } else {
             this.removeClass("active")

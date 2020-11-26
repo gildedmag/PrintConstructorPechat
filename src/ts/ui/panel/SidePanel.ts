@@ -36,20 +36,6 @@ class SidePanel extends ToolBar {
             this.filtersPanel,
             this.sharePanel,
         );
-
-        //this.switch(1);
-    }
-
-    // public switch(index: number) {
-    //     for (let i = 0; i < this.children.length; i++) {
-    //         i == index
-    //             ? this.children[i].show()
-    //             : this.children[i].hide();
-    //     }
-    // }
-
-    update() {
-
     }
 
 }

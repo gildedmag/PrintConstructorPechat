@@ -3,7 +3,7 @@
 
 class LayerUIControl extends TriggeredUIControl<Element2D> {
 
-    iconElement: HTMLImageElement;
+    iconElement: HTMLObjectElement;
     iconContainerElement: HTMLDivElement;
 
     static iconSize = 38;
@@ -21,6 +21,9 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
 
     private parent: LayersUIControl;
 
+    private updateLocked = false;
+    private updateQueued = false;
+
     getClassName(): string {
         return super.getClassName() + " layer";
     }
@@ -33,13 +36,13 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
         this.removeClass("select");
     }
 
-    swapIcon(src?: string){
-        if (!src && this.cachedIcon){
-            this.iconElement.src = this.cachedIcon;
+    swapIcon(src?: string) {
+        if (!src && this.cachedIcon) {
+            this.iconElement.data = this.cachedIcon;
             this.cachedIcon = null;
         } else if (src && !this.cachedIcon) {
-            this.cachedIcon = this.iconElement.src;
-            this.iconElement.src = src;
+            this.cachedIcon = this.iconElement.data;
+            this.iconElement.data = src;
         }
     }
 
@@ -60,7 +63,7 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
             new Container()
         )
             .addClass("grip");
-            //.addClass("mobile");
+        //.addClass("mobile");
 
         this.container.onclick = e => this.trigger.side.select(this.trigger);
 
@@ -87,9 +90,9 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
             let deltaIndex = Math.floor(deltaY / this.container.clientHeight) + 1;
             let layerIndex = this.trigger.getLayerIndex();
             let to = layerIndex - deltaIndex;
-            if (to >= this.parent.children.length){
+            if (to >= this.parent.children.length) {
                 to = this.parent.children.length - 1;
-            } else if (to < 0){
+            } else if (to < 0) {
                 to = 0;
             }
 
@@ -101,7 +104,7 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
                     layer
                         .addClass("touch")
                         .addClass("drag-over")
-                        .swapIcon(this.iconElement.src);
+                        .swapIcon(this.iconElement.data);
                 } else {
                     layer
                         .removeClass("touch")
@@ -143,7 +146,7 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
             LayerUIControl.dragTo = this.trigger.getLayerIndex();
             this
                 .addClass("drag-over")
-                .swapIcon(LayerUIControl.dragSource.iconElement.src);
+                .swapIcon(LayerUIControl.dragSource.iconElement.data);
         };
 
         this.container.ondragleave = e => {
@@ -158,13 +161,12 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
             this.trigger.side.select(this.trigger);
         };
 
-        this.iconElement = document.createElement(Constants.IMG);
+        this.iconElement = document.createElement("object");
         this.iconContainerElement.className = "icon-frame";
 
         this.container.appendChild(this.iconContainerElement);
         this.iconContainerElement.appendChild(this.iconElement);
         this.append(
-
             new Spacer(),
 
             new ToggleButton(
@@ -205,12 +207,19 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
     }
 
     update() {
+        if (this.updateLocked){
+            this.updateQueued = true;
+            return;
+        }
+
+        this.updateLocked = true;
+
         this.removeClass("drag-over");
         //this.labelControl.setValue(this.trigger.type.getName());
         let maxSize = Math.max(this.trigger.object.width * this.trigger.object.scaleX, this.trigger.object.height * this.trigger.object.scaleY);
         if (this.trigger.isVisible()) {
             this.getIcon(maxSize);
-        } else if (this.iconElement.src) {
+        } else if (this.iconElement.data) {
             //this.iconElement.src = this.cachedIcon;
         } else {
             this.trigger.show();
@@ -222,26 +231,44 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
         } else {
             this.removeClass("selected")
         }
-        //this.lockButton.update();
+        
+        let that = this;
+        setTimeout(() => {
+            that.updateLocked = false;
+            // if (that.updateQueued){
+            //     that.update();
+            //     that.updateQueued = false;
+            // }
+        }, 200)
     }
 
     getIcon(maxSize: number) {
-        this.trigger.type == ElementType.IMAGE
-            ? this.getPngIcon(maxSize)
-            : this.getSvgIcon()
+        this.getPngIcon(maxSize);
+        // this.trigger.isText() || this.trigger.isImage()
+        //     ? this.getPngIcon(maxSize)
+        //     : this.getSvgIcon()
     }
 
     getPngIcon(maxSize: number) {
         let multiplier = LayerUIControl.iconSize / maxSize;
         let options = {
             format: "png",
-            multiplier: multiplier
+            multiplier: multiplier * 4
         };
         let src = this.trigger.object.toDataURL(options).toString();
-        this.iconElement.src = src;
+        this.iconElement.data = src;
     }
 
     getSvgIcon() {
+        let defs;
+        if (this.trigger.isText()) {
+            let fontFamily = this.trigger.getFontFamily();
+            defs =
+                '<defs>' +
+                '   <style type="text/css">@import url(\'https://fonts.googleapis.com/css?family=' + fontFamily + '\');</style>' +
+                '</defs>';
+        }
+
         let w = this.trigger.object.width * this.trigger.object.scaleX;
         let h = this.trigger.object.height * this.trigger.object.scaleY;
 
@@ -253,8 +280,12 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
             o.left = w / 2;
             o.top = h / 2;
             let svg = this.iconCanvas.toSVG({width: LayerUIControl.iconSize, height: LayerUIControl.iconSize} as any);
-            let src = 'data:image/svg+xml;charset=utf-8,' + svg;
-            this.iconElement.src = src;
+            svg = svg.replace(/<defs>[\s\S.]+<\/defs>/m, defs);
+            let data = 'data:image/svg+xml;charset=utf-8,' + svg;
+            if (this.iconElement.data.length != data.length){
+                console.log("data set");
+                this.iconElement.data = data;
+            }
         })
 
         //let src = this.trigger.object.toDataURL(options).toString();

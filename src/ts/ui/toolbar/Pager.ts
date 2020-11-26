@@ -14,7 +14,6 @@ class Pager extends TriggeredUIControl<Constructor> {
 
 
     update() {
-        console.log("Pager update");
         this.clear();
         if (Constructor.instance.is2D() && Constructor.instance.sides.length > 1) {
             for (let i = 0; i < this.c.sides.length; i++) {

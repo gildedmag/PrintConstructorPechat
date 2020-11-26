@@ -10,7 +10,11 @@ class SideBar extends VerticalToolBarUIControl {
     constructor() {
         super();
         let panel = ConstructorUI.instance.sidePanel;
-        this.appendSwitch(panel.newElementPanel, Icon.SHAPES);
+        this.appendSwitch(
+            panel.newElementPanel,
+            Icon.SHAPES,
+            () => Constructor.instance.is2D()
+        );
         this.appendSwitch(
             panel.layersPanel,
             Icon.LAYER_GROUP,
@@ -24,12 +28,12 @@ class SideBar extends VerticalToolBarUIControl {
         this.appendSwitch(
             panel.fontFamilyPanel,
             Icon.FONT,
-            () => Constructor.instance.hasSelection() && Constructor.instance.getSelection().type == ElementType.TEXT
+            () => Constructor.instance.hasTextSelection()
         );
         this.appendSwitch(
             panel.filtersPanel,
             Icon.TINT,
-            () => Constructor.instance.hasSelection() && Constructor.instance.getSelection().type == ElementType.IMAGE
+            () => Constructor.instance.hasImageSelection()
         );
         this.appendSwitch(
             panel.modelsPanel,
@@ -50,11 +54,11 @@ class SideBar extends VerticalToolBarUIControl {
 
         );
         this.append(new Spacer());
-        this.hideOthers(panel.layersPanel);
+        this.hideOthers(this.c.getActiveSide().isEmpty() ? panel.newElementPanel : panel.layersPanel);
 
     }
 
-    private appendSwitch(control: UIControl, icon: Icon, visibility?: () => boolean){
+    private appendSwitch(control: UIControl, icon: Icon, visibility?: () => boolean) {
         let button = new SwitchButton(control, icon, visibility);
         this.buttons.push(button);
         Constructor.instance.onChange(() => button.update(), button);
@@ -66,9 +70,9 @@ class SideBar extends VerticalToolBarUIControl {
         this.append(button);
     }
 
-    hideOthers(activeTrigger: UIControl){
+    hideOthers(activeTrigger: UIControl) {
         this.buttons.forEach(button => {
-            if (button.trigger != activeTrigger){
+            if (button.trigger != activeTrigger) {
                 button.trigger.hide();
                 button.removeClass("selected");
             } else {

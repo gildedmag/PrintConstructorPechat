@@ -1,11 +1,14 @@
 abstract class Trigger<T> {
 
-    //private actions: ((trigger: any) => any)[] = [];
     private actions: { [key: number]: (trigger: any) => any } = {};
-
     private visibilityActions: ((trigger: any) => any)[] = [];
 
+    static preventUpdate = false;
+
     changed() {
+        if (Trigger.preventUpdate){
+            return;
+        }
         Object.keys(this.actions).forEach((key, id) => {
             let control = UIControl.getById(key);
             if (!control){
@@ -30,7 +33,6 @@ abstract class Trigger<T> {
     }
 
     public onVisibilityChange(action: (trigger: T) => any) {
-        //console.log("visibilityChanged");
         this.visibilityActions.push(action);
     }
 

@@ -20,9 +20,8 @@ class LayersPanelUIControl extends TriggeredUIControl<Constructor> {
         }
     }
 
-    updateVisibility() {
-        this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
-    }
-
+    // updateVisibility() {
+    //     this.trigger.is2D() ? this.show() : this.hide();
+    // }
 
 }

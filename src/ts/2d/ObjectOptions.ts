@@ -22,6 +22,7 @@ class ObjectOptions implements Equalable<ObjectOptions> {
         "src",
         "text",
         "textAlign",
+        "charSpacing",
         "textBackgroundColor",
         'underline',
         'overline',

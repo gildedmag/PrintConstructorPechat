@@ -127,8 +127,7 @@ class Preview extends View<Preview> {
                 this.camera.aspect = this.renderer.domElement.width / this.renderer.domElement.height;
                 this.camera.updateProjectionMatrix();
                 this.setupControls();
-            }
-            else if (object.material && object.material.type && object.material.name) {
+            } else if (object.material && object.material.type && object.material.name) {
                 let material = object.material as THREE.MeshPhysicalMaterial;
                 let materialNames = material.name.split(Constants.MULTI_MATERIAL_NAME_SEPARATOR);
                 for (let i = 0; i < materialNames.length; i++) {
@@ -289,7 +288,7 @@ class Preview extends View<Preview> {
         return this.exportRenderer.domElement.toDataURL(format, quality);
     }
 
-    setBackgroundColor(value: Color | number | string) {
+    setSceneBackgroundColor(value: Color | number | string) {
         let color;
         if (value instanceof Color) {
             color = (value as Color).toRgb();

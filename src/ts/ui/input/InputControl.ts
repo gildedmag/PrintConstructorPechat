@@ -19,10 +19,15 @@ class InputControl extends TriggeredUIControl<Constructor> {
         element.step = step || 10;
         element.value = getter();
         element.onchange = () => {
+            Trigger.preventUpdate = false;
             let value = this.container.value;
-            console.log("this.container.value", value);
             this.setter(value);
             this.changed();
+        }
+        element.oninput = e => {
+            Trigger.preventUpdate = true;
+            let value = this.container.value;
+            this.setter(value);
         }
         // this.onChange((control) => {
         //     let value = this.container.value;
@@ -32,16 +37,15 @@ class InputControl extends TriggeredUIControl<Constructor> {
     }
 
     update() {
+        if (this.preventUpdate){
+            return;
+        }
         let selection = this.c.getSelection();
         if (selection) {
             let value = this.getter();
             (this.container as HTMLInputElement).value = value;
         } else {
         }
-    }
-
-    changed() {
-
     }
 
 }

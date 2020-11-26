@@ -24,7 +24,10 @@ class SelectionPanel extends TriggeredUIControl<Constructor> {
             new SelectRangePropertyControl(
                 "Transparency",
                 value => this.c.getSelection().setAlpha(value / 100),
-                () => this.c.getSelection().getAlpha() * 100
+                () => this.c.getSelection().getAlpha() * 100,
+                10,
+                100,
+                10
             ),
             new SelectRangePropertyControl(
                 "Shadow",
@@ -37,7 +40,7 @@ class SelectionPanel extends TriggeredUIControl<Constructor> {
                 () => this.c.getSelection().getColor().toHex()
             ),
         );
-        if (this.c.getSelection().type == ElementType.TEXT) {
+        if (this.c.hasTextSelection()) {
             this.append(
                 new SelectRangePropertyControl(
                     "Font Size",
@@ -45,7 +48,23 @@ class SelectionPanel extends TriggeredUIControl<Constructor> {
                     () => this.c.getSelection().getFontSize(),
                     4,
                     96,
-                    2
+                    8
+                ),
+                new SelectRangePropertyControl(
+                    "Letter Spacing",
+                    value => this.c.getSelection().setLetterSpacing(value),
+                    () => this.c.getSelection().getLetterSpacing(),
+                    -200,
+                    2000,
+                    50
+                ),
+                new SelectRangePropertyControl(
+                    "Line Height",
+                    value => this.c.getSelection().setLineHeight(value),
+                    () => this.c.getSelection().getLineHeight(),
+                    0.5,
+                    3,
+                    0.25
                 ),
                 new Row(
                     new LabelControl("Font Family"),
@@ -56,7 +75,22 @@ class SelectionPanel extends TriggeredUIControl<Constructor> {
                         this.c.getSelection().getFontFamily()
                     )
                 ),
-                new TextBar()
+                new Row(
+                    new LabelControl("Font"),
+                    new Spacer(),
+                    this.textPropertyToggleButton("Bold"),
+                    this.textPropertyToggleButton("Italic"),
+                    this.textPropertyToggleButton("Underline"),
+                    this.textPropertyToggleButton("Linethrough"),
+                ),
+                new Row(
+                    new LabelControl("Alignment"),
+                    new Spacer(),
+                    this.textAlignmentButton(TextAlignment.LEFT, Icon.ALIGN_LEFT),
+                    this.textAlignmentButton(TextAlignment.CENTER, Icon.ALIGN_CENTER),
+                    this.textAlignmentButton(TextAlignment.RIGHT, Icon.ALIGN_RIGHT),
+                    this.textAlignmentButton(TextAlignment.JUSTIFY, Icon.ALIGN_JUSTIFY),
+                )
             );
         }
 
@@ -64,6 +98,25 @@ class SelectionPanel extends TriggeredUIControl<Constructor> {
 
     updateVisibility() {
         this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
+    }
+
+    textAlignmentButton(alignment: TextAlignment, icon: Icon){
+        return new ToggleButton(
+            () => this.c.getSelection().setTextAlignment(alignment),
+            () => this.c.hasTextSelection() && this.c.getSelection().getTextAlignment() == alignment,
+            icon
+        )
+    }
+
+    textPropertyToggleButton(property: string): ToggleButton {
+        return new ToggleButton(
+            () => {
+                Constructor.instance.getSelection()["toggle" + property]();
+                this.update();
+            },
+            () => Constructor.instance.getSelection()["is" + property](),
+            Icon[property.toUpperCase()]
+        );
     }
 
 

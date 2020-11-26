@@ -26,13 +26,13 @@ class FontFamilyButton extends TriggeredUIControl<Constructor> {
         font.load(FontFamilyButton.charset)
             .then(function () {
                 element.append(
-                    new Row(
+                    //new Row(
                         //new Spacer(),
-                        icon,
+                        //icon,
                         new LabelControl(fontFamily)
                             .setFontFamily(fontFamily),
                         //new Spacer(),
-                    )
+                    //)
                 );
             })
             .catch(function (e) {
@@ -50,6 +50,7 @@ class FontFamilyButton extends TriggeredUIControl<Constructor> {
         if (this.c.hasTextSelection() && this.c.getSelection().getFontFamily() == this.fontFamily){
             this.icon.setValue(Icon.CHECK_CIRCLE);
             this.addClass("selected");
+            this.container.scrollIntoView();
         } else if (!this.isEmpty()) {
             this.icon.setValue(Icon.CIRCLE);
             this.removeClass("selected");

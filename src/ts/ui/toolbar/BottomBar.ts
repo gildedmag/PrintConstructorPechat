@@ -30,28 +30,43 @@ class BottomBar extends ToolBar {
             new Button(() => {
                 this.c.zoomOut();
             }, Icon.SEARCH_MINUS),
-            new Button(() => {
-                this.c.zoomToFit();
-            }, Icon.SEARCH),
+            new ConditionalButton(
+                () => this.c.zoomToFit(),
+                () => this.c.is2D(),
+                Icon.SEARCH
+            ),
 
 
             new ToggleButton(
                 () => this.c.toggleSnapToGrid(),
                 () => this.c.snapToGrid,
-                Icon.BORDER_ALL
+                Icon.BORDER_ALL,
+                null,
+                () => this.c.is2D(),
             ),
             new ToggleButton(
                 () => this.c.toggleSnapToObjects(),
                 () => this.c.snapToObjects,
-                Icon.VECTOR_SQUARE
+                Icon.VECTOR_SQUARE,
+                null,
+                () => this.c.is2D(),
             ),
 
             new Spacer(),
 
             new ToggleButton(
                 () => {
+                    if (this.c.is2D()){
+                        ConstructorUI.instance.sidePanel.optionsPanel.show();
+                    } else {
+                        if (this.c.getActiveSide().isEmpty()){
+                            ConstructorUI.instance.sidePanel.newElementPanel.show();
+                        } else {
+                            ConstructorUI.instance.sidePanel.layersPanel.show();
+                        }
+                    }
                     this.c.toggleMode();
-                    this.update();
+                    //this.update();
                 },
                 () => this.c.getMode() == Mode.Mode3D,
                 Icon.DICE_D6

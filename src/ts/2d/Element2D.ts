@@ -173,27 +173,19 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
     }
 
     setFontFamily(fontFamily: string, repeat?: boolean) {
-        if (this.type === ElementType.TEXT) {
+        if (this.isText()) {
             let font = new FontFaceObserver(fontFamily);
             let element = this;
             font.load(FontFamilyButton.charset)
                 .then(function () {
                     console.log(fontFamily);
                     element.object.set("fontFamily", fontFamily);
-                    Constructor.instance.changed();
                     element.side.canvas.requestRenderAll();
+                    element.changed();
+                    Constructor.instance.changed();
                 }).catch(function (e) {
                 console.log(e)
             });
-
-            // (fabric as any).charWidthsCache[fontFamily] = {};
-            // let object = this.object as any;
-            // object.fontFamily = fontFamily;
-            // this.object.dirty = true;
-            // this.side.canvas.requestRenderAll();
-            // if (repeat){
-            //     setTimeout(() => this.setFontFamily(fontFamily), 10)
-            // }
         }
     }
 
@@ -202,38 +194,38 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
     }
 
     getText(): string {
-        return this.type === ElementType.TEXT
+        return this.isText()
             ? (this.object as fabric.IText).text
             : null
     }
 
     setText(value: string): void {
-        if (this.type === ElementType.TEXT) {
+        if (this.isText()) {
             ((this.object as fabric.IText).text as String) = value;
             this.side.canvas.renderAll();
         }
     }
 
     getFontFamily(): string {
-        return this.type === ElementType.TEXT ? (this.object as fabric.IText).fontFamily : null;
+        return this.isText() ? (this.object as fabric.IText).fontFamily : null;
     }
 
     setFontSize(value: number) {
-        if (this.type === ElementType.TEXT) {
+        if (this.isText()) {
             (this.object as fabric.IText).fontSize = value;
             this.object.dirty = true;
             this.side.canvas.requestRenderAll();
-            this.side.saveState();
+            Constructor.instance.changed();
             this.changed();
         }
     }
 
     getFontSize(): number {
-        return this.type === ElementType.TEXT ? (this.object as fabric.IText).fontSize : null;
+        return this.isText() ? (this.object as fabric.IText).fontSize : null;
     }
 
     setItalic(value: boolean) {
-        if (this.type === ElementType.TEXT) {
+        if (this.isText()) {
             (this.object as fabric.IText).fontStyle = value ? Constants.ITALIC : Constants.NORMAL;
             this.object.dirty = true;
             this.side.canvas.requestRenderAll();
@@ -243,7 +235,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
     }
 
     isItalic(): boolean {
-        return this.type === ElementType.TEXT ? (this.object as fabric.IText).fontStyle === Constants.ITALIC : null;
+        return this.isText() ? (this.object as fabric.IText).fontStyle === Constants.ITALIC : null;
     }
 
     toggleItalic() {
@@ -251,7 +243,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
     }
 
     setBold(value: boolean) {
-        if (this.type === ElementType.TEXT) {
+        if (this.isText()) {
             (this.object as fabric.IText).fontWeight = value ? Constants.BOLD : Constants.NORMAL;
             this.side.canvas.renderAll();
             this.side.saveState();
@@ -259,8 +251,16 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         }
     }
 
+    isText(): boolean {
+        return this.type === ElementType.TEXT;
+    }
+
+    isImage(): boolean {
+        return this.type === ElementType.IMAGE;
+    }
+
     isBold(): boolean {
-        return this.type === ElementType.TEXT ? (this.object as fabric.IText).fontWeight === Constants.BOLD : null;
+        return this.isText() ? (this.object as fabric.IText).fontWeight === Constants.BOLD : null;
     }
 
     toggleBold() {
@@ -268,7 +268,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
     }
 
     setTextDecoration(value: TextDecoration) {
-        if (this.type === ElementType.TEXT) {
+        if (this.isText()) {
             switch (value) {
                 case TextDecoration.LINETHROUGH:
                     (this.object as fabric.IText).linethrough = true;
@@ -332,7 +332,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         return this.getTextDecoration() == TextDecoration.LINETHROUGH;
     }
 
-    getTextDecoration(): string {
+    getTextDecoration() {
         if (this.type != ElementType.TEXT) {
             return null;
         }
@@ -349,7 +349,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
     }
 
     setTextAlignment(value: TextAlignment) {
-        if (this.type === ElementType.TEXT) {
+        if (this.isText()) {
             (this.object as fabric.IText).textAlign = value;
             this.side.canvas.renderAll();
             this.side.saveState();
@@ -357,7 +357,32 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
     }
 
     getTextAlignment(): string {
-        return this.type === ElementType.TEXT ? (this.object as fabric.IText).textAlign : null;
+        return this.isText() ? (this.object as fabric.IText).textAlign : null;
+    }
+
+    setLineHeight(value: number){
+        if (this.isText()) {
+            (this.object as fabric.IText).lineHeight = value;
+            this.side.canvas.renderAll();
+            Constructor.instance.changed();
+        }
+    }
+
+    getLineHeight(): number {
+        return this.isText() ? (this.object as fabric.IText).lineHeight : null;
+    }
+
+    setLetterSpacing(value: number){
+        if (this.isText()) {
+            (this.object as fabric.IText).charSpacing = value;
+            this.side.canvas.renderAll();
+            //this.side.saveState();
+            Constructor.instance.changed();
+        }
+    }
+
+    getLetterSpacing(): number {
+        return this.isText() ? (this.object as fabric.IText).charSpacing : 0;
     }
 
     addFilter(filter: Filter, callback?: (element: Element2D) => void) {
@@ -507,8 +532,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         Utils.arrayMove(this.side.elements, this.getIndex(), index);
         this.side.deselect();
         this.side.canvas.renderAll();
-        this.changed();
-        
+        this.side.saveState();
     }
 
     isVisible(): boolean {

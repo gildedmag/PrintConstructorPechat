@@ -73,14 +73,14 @@ class Constructor extends View<Constructor> {
             : 300;
 
 
-        this.setState({
-            sides: [{
-                width: width,
-                height: height
-            }],
-            //model: "cup_remastered"
-        }, () => this.zoomToFit());
-        //this.addSide(this.container.clientWidth - 50, this.container.clientHeight - 50);
+        // this.setState({
+        //     sides: [{
+        //         width: width,
+        //         height: height
+        //     }],
+        //     //model: "cup_remastered"
+        // }, () => this.zoomToFit());
+        this.addSide(this.container.clientWidth - 50, this.container.clientHeight - 50);
         this.preview.hide();
         this.background = this.container.style.background;
         this.container.style.background = null;
@@ -225,7 +225,7 @@ class Constructor extends View<Constructor> {
     }
 
     zoomIn() {
-        if (this.getMode() === Mode.Mode3D) {
+        if (this.is3D()) {
             this.preview.controls.dollyIn(1 + Constructor.zoomStep);
             this.preview.controls.update();
         } else {
@@ -234,7 +234,7 @@ class Constructor extends View<Constructor> {
     }
 
     zoomOut() {
-        if (this.getMode() === Mode.Mode3D) {
+        if (this.is3D()) {
             this.preview.controls.dollyOut(1 + Constructor.zoomStep);
             this.preview.controls.update();
         } else {
@@ -243,10 +243,14 @@ class Constructor extends View<Constructor> {
     }
 
     zoomToFit() {
-        if (!this.getActiveSide()) {
-            setTimeout(() => this.zoomToFit(), 10);
+        if (this.is3D()) {
+            //this.preview.zoomToFit();
         } else {
-            this.getActiveSide().zoomToFit();
+            if (!this.getActiveSide()) {
+                setTimeout(() => this.zoomToFit(), 10);
+            } else {
+                this.getActiveSide().zoomToFit();
+            }
         }
     }
 
@@ -266,12 +270,12 @@ class Constructor extends View<Constructor> {
         return (this.preview && this.preview.isVisible()) ? Mode.Mode3D : Mode.Mode2D;
     }
 
-    toggleSnapToGrid(){
+    toggleSnapToGrid() {
         this.snapToGrid = !this.snapToGrid;
         this.changed();
     }
 
-    toggleSnapToObjects(){
+    toggleSnapToObjects() {
         this.snapToObjects = !this.snapToObjects;
         this.changed();
     }
