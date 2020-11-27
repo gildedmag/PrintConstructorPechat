@@ -218,6 +218,24 @@ body {
     background: #999;
 }
 
+.control.popover {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.5);
+    vertical-align: middle;
+    text-align: center;
+}
+
+.control.popover > .control {
+    width: 200px;
+    height: 300px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 25%;
+    background: #aaa !important;
+}
+
 .layer .icon-frame {
     background-color: white;
     background-image: linear-gradient(45deg, #cccccc 25%, transparent 25%), linear-gradient(-45deg, #cccccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #cccccc 75%), linear-gradient(-45deg, transparent 75%, #cccccc 75%);

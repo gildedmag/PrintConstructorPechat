@@ -21,18 +21,15 @@ class SelectControl extends TriggeredUIControl<Constructor> {
         this.container.value = getter();
         this.container.onchange = () => {
             let value = (this.container as HTMLSelectElement).value;
-            console.log("this.container.value", value);
             this.setter(value);
             this.changed();
         }
     }
 
     update() {
-        console.log("InputControl update");
         let selection = this.c.getSelection();
         if (selection) {
             let value = this.getter();
-            console.log("getter value:", value);
             (this.container as HTMLSelectElement).value = value;
         } else {
         }

@@ -77,8 +77,8 @@ class BottomBar extends ToolBar {
             ),
 
             new Button(
-                () => ConstructorUI.instance.order.addToCart(),
-                Icon.SHOPPING_CART
+                () => ConstructorUI.instance.orderPopover.show(),
+                Icon.CART_PLUS
             )
         );
     }

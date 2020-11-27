@@ -4197,7 +4197,11 @@ var ConstructorUI = (function (_super) {
         _this.sideBar = new SideBar();
         _this.topBar = new TopBar();
         _this.bottomBar = new BottomBar();
-        _this.append(_this.constructorControl, _this.toolBar, _this.sidePanel, _this.sideBar, _this.topBar, _this.bottomBar);
+        _this.orderPopover = new Popover(new LabelControl("Quantity"), new SelectControl(function (v) { return _this.order.setQuantity(v); }, function () { return _this.order.getQuantity(); }, 1, 1000, 1), new Row(new LabelControl("Price"), new TriggeredLabelControl(_this.order, function () { return _this.order.getPrice(); })), new Button(function () {
+            _this.order.addToCart();
+            _this.orderPopover.hide();
+        }, null, "Add to Cart"));
+        _this.append(_this.constructorControl, _this.toolBar, _this.sidePanel, _this.sideBar, _this.topBar, _this.bottomBar, _this.orderPopover);
         host.appendChild(_this.container);
         _this.bindDelKey();
         return _this;
@@ -4267,25 +4271,23 @@ var ConstructorUI = (function (_super) {
     ConstructorUI.test = ConstructorUI.init();
     return ConstructorUI;
 }(UIControl));
-var Container = (function (_super) {
-    __extends(Container, _super);
-    function Container() {
+var Popover = (function (_super) {
+    __extends(Popover, _super);
+    function Popover() {
         var controls = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             controls[_i] = arguments[_i];
         }
         var _this = _super.call(this) || this;
-        _this.append.apply(_this, controls);
+        var frame = new Container().addClass("vertical");
+        frame.append.apply(frame, controls);
+        _this.append(frame);
         return _this;
     }
-    Container.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this);
+    Popover.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " popover";
     };
-    Container.prototype.setValue = function (value) {
-        console.log(value);
-        this.container.innerText = value;
-    };
-    return Container;
+    return Popover;
 }(UIControl));
 var Divider = (function (_super) {
     __extends(Divider, _super);
@@ -4712,7 +4714,6 @@ var SelectControl = (function (_super) {
         _this.container.value = getter();
         _this.container.onchange = function () {
             var value = _this.container.value;
-            console.log("this.container.value", value);
             _this.setter(value);
             _this.changed();
         };
@@ -4722,11 +4723,9 @@ var SelectControl = (function (_super) {
         return _super.prototype.getClassName.call(this) + " select";
     };
     SelectControl.prototype.update = function () {
-        console.log("InputControl update");
         var selection = this.c.getSelection();
         if (selection) {
             var value = this.getter();
-            console.log("getter value:", value);
             this.container.value = value;
         }
         else {
@@ -5349,7 +5348,7 @@ var BottomBar = (function (_super) {
                 }
             }
             _this.c.toggleMode();
-        }, function () { return _this.c.getMode() == Mode.Mode3D; }, Icon.DICE_D6), new Spacer(), new TriggeredLabelControl(ConstructorUI.instance.order, function () { return ConstructorUI.instance.order.getPrice(); }), new Button(function () { return ConstructorUI.instance.order.addToCart(); }, Icon.SHOPPING_CART));
+        }, function () { return _this.c.getMode() == Mode.Mode3D; }, Icon.DICE_D6), new Spacer(), new TriggeredLabelControl(ConstructorUI.instance.order, function () { return ConstructorUI.instance.order.getPrice(); }), new Button(function () { return ConstructorUI.instance.orderPopover.show(); }, Icon.CART_PLUS));
     };
     return BottomBar;
 }(ToolBar));
@@ -5549,6 +5548,9 @@ var Order = (function (_super) {
         this.quantity = value;
         this.changed();
     };
+    Order.prototype.getQuantity = function () {
+        return this.quantity;
+    };
     Order.prototype.setSelectedOptions = function (value) {
         this.selectedOptions = value;
         this.changed();
@@ -5613,4 +5615,24 @@ var Order = (function (_super) {
     };
     return Order;
 }(Trigger));
+var Container = (function (_super) {
+    __extends(Container, _super);
+    function Container() {
+        var controls = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            controls[_i] = arguments[_i];
+        }
+        var _this = _super.call(this) || this;
+        _this.append.apply(_this, controls);
+        return _this;
+    }
+    Container.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this);
+    };
+    Container.prototype.setValue = function (value) {
+        console.log(value);
+        this.container.innerText = value;
+    };
+    return Container;
+}(UIControl));
 //# sourceMappingURL=constructor.js.map

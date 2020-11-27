@@ -27,6 +27,9 @@ class Order extends Trigger<Order> {
         this.changed();
     }
 
+    getQuantity(){
+        return this.quantity;
+    }
 
     setSelectedOptions(value: pechat.ConstructorModelOption[]) {
         this.selectedOptions = value;

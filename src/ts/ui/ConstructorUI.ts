@@ -14,6 +14,7 @@ class ConstructorUI extends UIControl {
     toolBar: ToolBar;
     topBar: TopBar;
     bottomBar: BottomBar;
+    orderPopover: Popover;
 
     options: pechat.Options;
 
@@ -42,6 +43,31 @@ class ConstructorUI extends UIControl {
         this.sideBar = new SideBar();
         this.topBar = new TopBar();
         this.bottomBar = new BottomBar();
+        this.orderPopover = new Popover(
+            new LabelControl("Quantity"),
+            new SelectControl(
+                v => this.order.setQuantity(v),
+                () => this.order.getQuantity(),
+                1,
+                1000,
+                1
+            ),
+            new Row(
+                new LabelControl("Price"),
+                new TriggeredLabelControl(
+                    this.order,
+                    () => this.order.getPrice()
+                ),
+            ),
+            new Button(
+                () => {
+                    this.order.addToCart();
+                    this.orderPopover.hide();
+                },
+                null,
+                "Add to Cart"
+            )
+        );
 
         this.append(
             this.constructorControl,
@@ -49,7 +75,8 @@ class ConstructorUI extends UIControl {
             this.sidePanel,
             this.sideBar,
             this.topBar,
-            this.bottomBar
+            this.bottomBar,
+            this.orderPopover
         );
 
         host.appendChild(this.container);
