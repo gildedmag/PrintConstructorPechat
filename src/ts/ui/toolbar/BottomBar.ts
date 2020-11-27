@@ -52,8 +52,6 @@ class BottomBar extends ToolBar {
                 () => this.c.is2D(),
             ),
 
-            new Spacer(),
-
             new ToggleButton(
                 () => {
                     if (this.c.is2D()){
@@ -66,10 +64,21 @@ class BottomBar extends ToolBar {
                         }
                     }
                     this.c.toggleMode();
-                    //this.update();
                 },
                 () => this.c.getMode() == Mode.Mode3D,
                 Icon.DICE_D6
+            ),
+
+            new Spacer(),
+
+            new TriggeredLabelControl(
+                ConstructorUI.instance.order,
+                () => ConstructorUI.instance.order.getPrice()
+            ),
+
+            new Button(
+                () => ConstructorUI.instance.order.addToCart(),
+                Icon.SHOPPING_CART
             )
         );
     }

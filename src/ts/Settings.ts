@@ -57,6 +57,7 @@ class Settings {
         keyPrefix: "CONSTRUCTOR_STATE_"
     };
     autoSize = false;
+    printWidth = window.constructorConfiguration ? window.constructorConfiguration.printWidth : 800;
     
     constructor() {
     }

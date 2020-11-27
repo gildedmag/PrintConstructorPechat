@@ -20,6 +20,8 @@ class ConstructorUI extends UIControl {
     static instance: ConstructorUI;
     static test = ConstructorUI.init();
 
+    order: Order = new Order();
+
     getClassName(): string {
         return "constructor-ui-container";
     }
@@ -77,13 +79,14 @@ class ConstructorUI extends UIControl {
             // options.constructor_setting.forEach(value => {
             //     console.log('!!!options.constructor_setting', value);
             // })
-            options.options.forEach(option => {
-                option.option_values.forEach(value => {
-                    //value
-                    //console.log("option.value = ", value);
-                });
-            });
+            // options.options.forEach(option => {
+            //     option.option_values.forEach(value => {
+            //         //value
+            //         //console.log("option.value = ", value);
+            //     });
+            // });
             options.constructor_models.forEach(model => {
+
 
                 // if (model.file_main == Constructor.instance.preview.modelName) {
                 // }
@@ -136,6 +139,8 @@ class ConstructorUI extends UIControl {
             );
             Constructor.instance.zoomToFit();
         });
+
+        this.order.setModel(model);
 
         model.constructor_model_option.forEach(option => {
             if (option.namegroup != group) {
