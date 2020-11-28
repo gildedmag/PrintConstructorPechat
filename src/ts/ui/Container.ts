@@ -1,17 +1,17 @@
 /// <reference path="UIControl.ts" />
-class Popover extends UIControl {
-
-    //check: () => boolean;
+class Container extends UIControl {
 
     getClassName(): string {
-        return super.getClassName() + " popover";
+        return super.getClassName();
     }
 
     constructor(...controls: UIControl[]) {
         super();
-        let frame = new Container().addClass("vertical");
-        frame.append(...controls);
-        this.append(frame);
+        this.append(...controls);
+    }
+
+    setValue(value: string){
+        this.container.innerText = value;
     }
 
 }

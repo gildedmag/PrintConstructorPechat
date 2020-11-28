@@ -44,28 +44,44 @@ class ConstructorUI extends UIControl {
         this.topBar = new TopBar();
         this.bottomBar = new BottomBar();
         this.orderPopover = new Popover(
-            new LabelControl("Quantity"),
-            new SelectControl(
-                v => this.order.setQuantity(v),
-                () => this.order.getQuantity(),
-                1,
-                1000,
-                1
+            new Row(
+                new Spacer(),
+                new LabelControl("Place an Order").addClass("title"),
+                new Spacer(),
+            ),
+            new Row(
+                new LabelControl("Quantity"),
+                new Spacer(),
+                new NumberInputControl(
+                    v => this.order.setQuantity(v),
+                    () => this.order.getQuantity(),
+                ),
             ),
             new Row(
                 new LabelControl("Price"),
+                new Spacer(),
                 new TriggeredLabelControl(
                     this.order,
                     () => this.order.getPrice()
                 ),
             ),
-            new Button(
-                () => {
-                    this.order.addToCart();
-                    this.orderPopover.hide();
-                },
-                null,
-                "Add to Cart"
+            new Row(),
+            //new Divider(true),
+            new Row(
+                new Button(
+                    () => this.orderPopover.hide(),
+                    null,
+                    "Cancel"
+                ),
+                new Spacer(),
+                new Button(
+                    () => {
+                        this.order.addToCart();
+                        this.orderPopover.hide();
+                    },
+                    null,
+                    "Add to Cart"
+                ),
             )
         );
 
@@ -82,7 +98,21 @@ class ConstructorUI extends UIControl {
         host.appendChild(this.container);
         this.bindDelKey();
 
-
+        window.addEventListener("load", function () {
+            setTimeout(function () {
+                window.scrollTo(0, 0);
+            }, 0);
+        });
+        window.addEventListener("orientationchange", function () {
+            setTimeout(function () {
+                window.scrollTo(0, 0);
+            }, 0);
+        });
+        window.addEventListener("touchstart", function () {
+            setTimeout(function () {
+                window.scrollTo(0, 0);
+            }, 0);
+        });
 
         // setTimeout(() => {
         //     //alert("set");
@@ -151,7 +181,7 @@ class ConstructorUI extends UIControl {
         })
     }
 
-    loadModelOptions(model: ConstructorModel){
+    loadModelOptions(model: ConstructorModel) {
         console.log(model);
         let group = "";
         this.sidePanel.optionsPanel.clear();
@@ -185,11 +215,14 @@ class ConstructorUI extends UIControl {
             }
             let array = option.zalivka.split(',').map(s => parseInt(s));
             this.sidePanel.optionsPanel.append(
-                Button.of(
+                ToggleButton.of(
+                    this.order,
                     () => {
+                        this.order.setSelectedOptions([option])
                         Constructor.instance.preview.clearFills();
                         Constructor.instance.preview.setFills(option.constructor_value, ...array);
                     },
+                    () => this.order.hasOption(option),
                     new IconControl(Icon.SQUARE)
                         .setColor(option.constructor_value),
                     new LabelControl(option.name),

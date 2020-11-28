@@ -1,5 +1,5 @@
 * {
-    touch-action: manipulation;
+    touch-action: none;
     user-select: none;
 }
 
@@ -26,6 +26,12 @@ body {
     padding: 0;
     margin: 0;
     vertical-align: middle;
+}
+
+.title {
+    font-size: 20px;
+    font-weight: bold;
+    padding: 16px;
 }
 
 .h-divider {
@@ -142,6 +148,7 @@ body {
     grid-area: sidepanel;
     overflow-y: auto;
     overflow-x: hidden;
+    touch-action: manipulation;
 }
 
 .control.sidepanel * {
@@ -219,21 +226,47 @@ body {
 }
 
 .control.popover {
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    max-width: 100vw !important;
+    min-width: 100vw !important;
+    height: 100vh;
     position: absolute;
     background-color: rgba(0, 0, 0, 0.5);
     vertical-align: middle;
     text-align: center;
+    transition: .5s;
+    transition-property: opacity;
+    transition-timing-function: ease-in-out;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: hidden;
 }
 
 .control.popover > .control {
-    width: 200px;
-    height: 300px;
+    width: 300px;
+    height: fit-content;
     margin-left: auto;
     margin-right: auto;
     margin-top: 25%;
-    background: #aaa !important;
+    background: #555 !important;
+    border-radius: 2px;
+    padding: 16px;
+    transition: .5s;
+    transition-property: bottom;
+    transition-timing-function: ease-out;
+}
+
+.control.popover .button {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.control.button .label {
+    color: #00b0e8 !important;
+}
+
+.control.popover > .control > .control.row {
+    margin: 4px;
 }
 
 .layer .icon-frame {
@@ -328,6 +361,23 @@ body {
 
 .sidepanel > .control {
     display: block;
+}
+
+.sidepanel .options-panel .control.button.toggle.active {
+    background: #222;
+    border-radius: 2px;
+}
+
+.sidepanel .options-panel .control.button.toggle.active .fa {
+    color: unset;
+}
+
+.sidepanel .options-panel .control.button.toggle.active .label {
+    color: #fff;
+}
+
+.sidepanel .options-panel .control.button.toggle.active .icon {
+        
 }
 
 .models-panel {
@@ -508,6 +558,23 @@ input[type="color"] {
 
     .mobile, .mobile-portrait {
         display: inherit;
+    }
+
+    .control.popover .label {
+        font-size: 18px;
+    }
+
+    .control.popover .row .control {
+        margin: 16px;
+    }
+
+    .control.popover > .control {
+        position: absolute;
+        width: 100vw;
+        bottom: 0;
+        margin-bottom: 0;
+        border-radius: 16px 16px 0 0;
+        padding: 0 0 32px 0;
     }
 
     /*.control.button {*/

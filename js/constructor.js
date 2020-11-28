@@ -183,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "27.11.2020 20:04";
+    Version.version = "28.11.2020 14:28";
     return Version;
 }());
 var Trigger = (function () {
@@ -296,6 +296,10 @@ var View = (function (_super) {
     };
     View.prototype.setBackgroundColor = function (value) {
         this.container.style.backgroundColor = value;
+        return this;
+    };
+    View.prototype.setAttribute = function (attributeName, value) {
+        this.container.setAttribute(attributeName, value);
         return this;
     };
     return View;
@@ -4197,13 +4201,28 @@ var ConstructorUI = (function (_super) {
         _this.sideBar = new SideBar();
         _this.topBar = new TopBar();
         _this.bottomBar = new BottomBar();
-        _this.orderPopover = new Popover(new LabelControl("Quantity"), new SelectControl(function (v) { return _this.order.setQuantity(v); }, function () { return _this.order.getQuantity(); }, 1, 1000, 1), new Row(new LabelControl("Price"), new TriggeredLabelControl(_this.order, function () { return _this.order.getPrice(); })), new Button(function () {
+        _this.orderPopover = new Popover(new Row(new Spacer(), new LabelControl("Place an Order").addClass("title"), new Spacer()), new Row(new LabelControl("Quantity"), new Spacer(), new NumberInputControl(function (v) { return _this.order.setQuantity(v); }, function () { return _this.order.getQuantity(); })), new Row(new LabelControl("Price"), new Spacer(), new TriggeredLabelControl(_this.order, function () { return _this.order.getPrice(); })), new Row(), new Row(new Button(function () { return _this.orderPopover.hide(); }, null, "Cancel"), new Spacer(), new Button(function () {
             _this.order.addToCart();
             _this.orderPopover.hide();
-        }, null, "Add to Cart"));
+        }, null, "Add to Cart")));
         _this.append(_this.constructorControl, _this.toolBar, _this.sidePanel, _this.sideBar, _this.topBar, _this.bottomBar, _this.orderPopover);
         host.appendChild(_this.container);
         _this.bindDelKey();
+        window.addEventListener("load", function () {
+            setTimeout(function () {
+                window.scrollTo(0, 0);
+            }, 0);
+        });
+        window.addEventListener("orientationchange", function () {
+            setTimeout(function () {
+                window.scrollTo(0, 0);
+            }, 0);
+        });
+        window.addEventListener("touchstart", function () {
+            setTimeout(function () {
+                window.scrollTo(0, 0);
+            }, 0);
+        });
         return _this;
     }
     ConstructorUI.prototype.getClassName = function () {
@@ -4250,11 +4269,12 @@ var ConstructorUI = (function (_super) {
                 _this.sidePanel.optionsPanel.append(new Row(new Spacer()), new Row(new Spacer(), new LabelControl(group).addClass("bold"), new Spacer()));
             }
             var array = option.zalivka.split(',').map(function (s) { return parseInt(s); });
-            _this.sidePanel.optionsPanel.append(Button.of(function () {
+            _this.sidePanel.optionsPanel.append(ToggleButton.of(_this.order, function () {
                 var _a;
+                _this.order.setSelectedOptions([option]);
                 Constructor.instance.preview.clearFills();
                 (_a = Constructor.instance.preview).setFills.apply(_a, __spreadArrays([option.constructor_value], array));
-            }, new IconControl(Icon.SQUARE)
+            }, function () { return _this.order.hasOption(option); }, new IconControl(Icon.SQUARE)
                 .setColor(option.constructor_value), new LabelControl(option.name), new Spacer(), new LabelControl(option.priceText)));
         });
     };
@@ -4271,30 +4291,31 @@ var ConstructorUI = (function (_super) {
     ConstructorUI.test = ConstructorUI.init();
     return ConstructorUI;
 }(UIControl));
-var Popover = (function (_super) {
-    __extends(Popover, _super);
-    function Popover() {
+var Container = (function (_super) {
+    __extends(Container, _super);
+    function Container() {
         var controls = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             controls[_i] = arguments[_i];
         }
         var _this = _super.call(this) || this;
-        var frame = new Container().addClass("vertical");
-        frame.append.apply(frame, controls);
-        _this.append(frame);
+        _this.append.apply(_this, controls);
         return _this;
     }
-    Popover.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " popover";
+    Container.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this);
     };
-    return Popover;
+    Container.prototype.setValue = function (value) {
+        this.container.innerText = value;
+    };
+    return Container;
 }(UIControl));
 var Divider = (function (_super) {
     __extends(Divider, _super);
     function Divider(vertical) {
         var _this = _super.call(this) || this;
         if (vertical) {
-            _this.append(new Row(new Spacer(), new Spacer().addClass("v-divider")));
+            _this.append(new Row(new Spacer().addClass("v-divider")));
             _this.addClass("vertical");
         }
         else {
@@ -4503,8 +4524,8 @@ var FontFamilyButton = (function (_super) {
 }(TriggeredUIControl));
 var ToggleButton = (function (_super) {
     __extends(ToggleButton, _super);
-    function ToggleButton(action, check, iconOn, iconOff, enabledCheck, label) {
-        var _this = _super.call(this, Constructor.instance) || this;
+    function ToggleButton(action, check, iconOn, iconOff, enabledCheck, label, trigger) {
+        var _this = _super.call(this, trigger || Constructor.instance) || this;
         _this.action = action;
         _this.check = check;
         _this.enabledCheck = enabledCheck;
@@ -4529,6 +4550,15 @@ var ToggleButton = (function (_super) {
     }
     ToggleButton.prototype.getClassName = function () {
         return _super.prototype.getClassName.call(this) + " button toggle";
+    };
+    ToggleButton.of = function (trigger, action, check) {
+        var controls = [];
+        for (var _i = 3; _i < arguments.length; _i++) {
+            controls[_i - 3] = arguments[_i];
+        }
+        var button = new ToggleButton(action, check, null, null, null, null, trigger);
+        button.append.apply(button, controls);
+        return button;
     };
     ToggleButton.prototype.updateEnabled = function () {
         if (this.enabledCheck) {
@@ -5555,6 +5585,9 @@ var Order = (function (_super) {
         this.selectedOptions = value;
         this.changed();
     };
+    Order.prototype.hasOption = function (option) {
+        return this.selectedOptions.indexOf(option) != -1;
+    };
     Order.prototype.checkPrice = function () {
     };
     Order.prototype.addToCart = function () {
@@ -5615,24 +5648,52 @@ var Order = (function (_super) {
     };
     return Order;
 }(Trigger));
-var Container = (function (_super) {
-    __extends(Container, _super);
-    function Container() {
+var Popover = (function (_super) {
+    __extends(Popover, _super);
+    function Popover() {
         var controls = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             controls[_i] = arguments[_i];
         }
         var _this = _super.call(this) || this;
-        _this.append.apply(_this, controls);
+        var frame = new Container().addClass("vertical");
+        frame.append.apply(frame, controls);
+        _this.frame = frame;
+        _this.hide();
+        _this.append(frame);
         return _this;
     }
-    Container.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this);
+    Popover.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " popover";
     };
-    Container.prototype.setValue = function (value) {
-        console.log(value);
-        this.container.innerText = value;
+    Popover.prototype.show = function () {
+        var _this = this;
+        this.container.style.display = null;
+        setTimeout(function () {
+            _this.container.style.opacity = "1";
+            _this.frame.container.style.bottom = "0";
+        });
     };
-    return Container;
+    Popover.prototype.hide = function () {
+        var _this = this;
+        setTimeout(function () {
+            _this.container.style.display = Constants.NONE;
+        }, 500);
+        this.container.style.opacity = "0";
+        this.frame.container.style.bottom = "-100vh";
+    };
+    return Popover;
 }(UIControl));
+var NumberInputControl = (function (_super) {
+    __extends(NumberInputControl, _super);
+    function NumberInputControl(setter, getter) {
+        var _this = _super.call(this, 'text', setter, getter, 1, 999, 1) || this;
+        _this.setAttribute('pattern', '[0-9]*');
+        return _this;
+    }
+    NumberInputControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " number-input";
+    };
+    return NumberInputControl;
+}(InputControl));
 //# sourceMappingURL=constructor.js.map

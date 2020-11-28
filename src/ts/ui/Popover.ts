@@ -1,18 +1,35 @@
 /// <reference path="UIControl.ts" />
-class Container extends UIControl {
+class Popover extends UIControl {
+
+    frame: UIControl;
 
     getClassName(): string {
-        return super.getClassName();
+        return super.getClassName() + " popover";
     }
 
     constructor(...controls: UIControl[]) {
         super();
-        this.append(...controls);
+        let frame = new Container().addClass("vertical");
+        frame.append(...controls);
+        this.frame = frame;
+        this.hide();
+        this.append(frame);
     }
 
-    setValue(value: string){
-        console.log(value);
-        this.container.innerText = value;
+    show() {
+        this.container.style.display = null;
+        setTimeout(() => {
+            this.container.style.opacity = "1";
+            this.frame.container.style.bottom = "0";
+        });
+    }
+
+    hide() {
+        setTimeout(() => {
+            this.container.style.display = Constants.NONE;
+        }, 500);
+        this.container.style.opacity = "0";
+        this.frame.container.style.bottom = "-100vh";
     }
 
 }

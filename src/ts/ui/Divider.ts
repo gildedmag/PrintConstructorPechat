@@ -9,7 +9,6 @@ class Divider extends UIControl {
         if (vertical){
             this.append(
                 new Row(
-                    new Spacer(),
                     new Spacer().addClass("v-divider")
                 )
             );

@@ -1,3 +1,5 @@
+import ConstructorModelOption = pechat.ConstructorModelOption;
+
 class Order extends Trigger<Order> {
 
     private model: pechat.ConstructorModel;
@@ -36,6 +38,10 @@ class Order extends Trigger<Order> {
         this.changed();
     }
 
+    hasOption(option: ConstructorModelOption) {
+        return this.selectedOptions.indexOf(option) != -1;
+    }
+
     checkPrice() {
         // let body = {
         //     json: main_json,
@@ -58,6 +64,7 @@ class Order extends Trigger<Order> {
     }
 
     addToCart() { //this legacy code comes partially from original php page
+
         let c = Constructor.instance;
         let ui = ConstructorUI.instance;
 

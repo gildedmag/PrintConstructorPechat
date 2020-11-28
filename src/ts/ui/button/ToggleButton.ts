@@ -1,5 +1,5 @@
 /// <reference path="TriggeredButton.ts" />
-class ToggleButton extends TriggeredUIControl<Constructor> {
+class ToggleButton extends TriggeredUIControl<any> {
 
     action: () => void;
     check: () => boolean;
@@ -20,9 +20,10 @@ class ToggleButton extends TriggeredUIControl<Constructor> {
         iconOn: Icon | string,
         iconOff?: Icon | string,
         enabledCheck?: () => boolean,
-        label?: string
+        label?: string,
+        trigger?: Trigger<any>
     ) {
-        super(Constructor.instance);
+        super(trigger || Constructor.instance);
         this.action = action;
         this.check = check;
         this.enabledCheck = enabledCheck;
@@ -46,7 +47,16 @@ class ToggleButton extends TriggeredUIControl<Constructor> {
         this.container.onclick = () => action();
     }
 
-    updateEnabled(){
+    static of(trigger: Trigger<any>,
+              action: () => any,
+              check: () => boolean,
+              ...controls: UIControl[]) {
+        let button = new ToggleButton(action, check, null, null, null, null, trigger);
+        button.append(...controls);
+        return button;
+    }
+
+    updateEnabled() {
         if (this.enabledCheck) {
             if (this.enabledCheck()) {
                 this.removeClass("disabled")
@@ -58,7 +68,7 @@ class ToggleButton extends TriggeredUIControl<Constructor> {
 
     update() {
         this.updateEnabled();
-        
+
         let isOn = false;
         try {
             isOn = this.check();
@@ -74,7 +84,7 @@ class ToggleButton extends TriggeredUIControl<Constructor> {
             }
         } else {
             if (this.icon && this.iconOn != this.iconOff) {
-                 this.icon.setValue(this.iconOff);
+                this.icon.setValue(this.iconOff);
             } else if (this.iconOn == this.iconOff) {
                 this.removeClass("active");
             }

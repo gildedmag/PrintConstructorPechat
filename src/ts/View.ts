@@ -95,4 +95,9 @@ abstract class View<T> extends Trigger<T> {
         return this;
     }
 
+    setAttribute(attributeName: string, value: string){
+        this.container.setAttribute(attributeName, value);
+        return this;
+    }
+
 }
