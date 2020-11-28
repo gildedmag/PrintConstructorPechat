@@ -50,7 +50,7 @@ class FontFamilyButton extends TriggeredUIControl<Constructor> {
         if (this.c.hasTextSelection() && this.c.getSelection().getFontFamily() == this.fontFamily){
             this.icon.setValue(Icon.CHECK_CIRCLE);
             this.addClass("selected");
-            this.container.scrollIntoView();
+            //this.container.scrollIntoView();
         } else if (!this.isEmpty()) {
             this.icon.setValue(Icon.CIRCLE);
             this.removeClass("selected");

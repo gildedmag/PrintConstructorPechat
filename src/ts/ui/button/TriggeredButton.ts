@@ -1,12 +1,12 @@
 /// <reference path="../UIControl.ts" />
-class TriggeredButton extends TriggeredUIControl<Constructor> {
+class TriggeredButton<T extends Trigger<any>> extends TriggeredUIControl<T> {
 
     getClassName(): string {
         return super.getClassName() + " button";
     }
 
-    constructor(action: () => void, icon: Icon | string, label?: string) {
-        super(Constructor.instance);
+    constructor(action: () => void, icon: Icon | string, label?: string, trigger?: T) {
+        super(trigger || Constructor.instance);
         if (icon) {
             this.append(
                 new IconControl(icon)

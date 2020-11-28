@@ -1,5 +1,5 @@
 /// <reference path="../TriggeredUIControl.ts" />
-class InputControl extends TriggeredUIControl<Constructor> {
+class InputControl<T extends Trigger<any>> extends TriggeredUIControl<T> {
 
     getter: () => any;
     setter: (any) => any;
@@ -8,8 +8,8 @@ class InputControl extends TriggeredUIControl<Constructor> {
         return super.getClassName() + " input";
     }
 
-    constructor(type: string, setter: (any) => any, getter: () => any, min?: number, max?: number, step?: number,) {
-        super(Constructor.instance, "input");
+    constructor(type: string, setter: (any) => any, getter: () => any, min?: number, max?: number, step?: number, trigger?: T) {
+        super((trigger || Constructor.instance), "input");
         this.getter = getter;
         this.setter = setter;
         let element = this.container as HTMLInputElement;
@@ -25,6 +25,7 @@ class InputControl extends TriggeredUIControl<Constructor> {
             this.changed();
         }
         element.oninput = e => {
+            console.log("Trigger.preventUpdate = true;");
             Trigger.preventUpdate = true;
             let value = this.container.value;
             this.setter(value);
@@ -37,15 +38,13 @@ class InputControl extends TriggeredUIControl<Constructor> {
     }
 
     update() {
-        if (this.preventUpdate){
-            return;
+        if ((this.trigger === this.c && this.c.hasSelection()) || this.trigger != this.c) {
+            this.updateValue();
         }
-        let selection = this.c.getSelection();
-        if (selection) {
-            let value = this.getter();
-            (this.container as HTMLInputElement).value = value;
-        } else {
-        }
+    }
+
+    updateValue(){
+        this.container.value = this.getter();
     }
 
 }

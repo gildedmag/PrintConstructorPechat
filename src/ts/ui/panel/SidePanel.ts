@@ -36,6 +36,12 @@ class SidePanel extends ToolBar {
             this.filtersPanel,
             this.sharePanel,
         );
+
+        this.container.onclick = e => {
+            if (e.target === this.container){
+                Constructor.instance.getActiveSide().deselect();
+            }
+        }
     }
 
 }

@@ -2,6 +2,8 @@ import ConstructorModelOption = pechat.ConstructorModelOption;
 
 class Order extends Trigger<Order> {
 
+    static max = 999;
+
     private model: pechat.ConstructorModel;
     private selectedOptions: pechat.ConstructorModelOption[] = [];
     private quantity: number = 1;
@@ -29,7 +31,19 @@ class Order extends Trigger<Order> {
         this.changed();
     }
 
-    getQuantity(){
+    incrementQuantity() {
+        if (this.quantity < Order.max) {
+            this.quantity++;
+            this.changed();
+        }
+    }
+
+    decrementQuantity() {
+        this.quantity--;
+        this.changed();
+    }
+
+    getQuantity() {
         return this.quantity;
     }
 
@@ -59,8 +73,6 @@ class Order extends Trigger<Order> {
         //     option: option_temporary_var,
         //     quantity: this.quantity
         // };
-
-
     }
 
     addToCart() { //this legacy code comes partially from original php page
@@ -68,7 +80,7 @@ class Order extends Trigger<Order> {
         let c = Constructor.instance;
         let ui = ConstructorUI.instance;
 
-        let main_json = c.getState();
+        let stateJson = c.getState();
         let constructor_model_id = this.model.constructor_model_id;
         let main_price = this.getPrice();
         let preview = "";
@@ -84,50 +96,123 @@ class Order extends Trigger<Order> {
         let holst_4 = c.getActiveSide().exportImage(Constructor.settings.printWidth);
 
 
-        let option_temporary_var = "";
+        let optionsEncoded = "";
         this.selectedOptions.forEach(option => {
-            option_temporary_var += "+++++" + option.name;
+            optionsEncoded += "+++++" + option.id;
         })
+        console.log(optionsEncoded);
+        let quantity = this.quantity;
 
-        let body = new FormData();
-        body.append('json', main_json);
-        body.append('animation', main_json);
-        body.append('price', this.getPrice().toString());
-        body.append('priceOriginal', "0");
-        body.append('category', this.model.category_id);
-        body.append('constructor_model_id', constructor_model_id);
-        body.append('text_type', this.model.name);
-        body.append('holst_1', holst_1);
-        body.append('holst_2', holst_2);
-        body.append('holst_3', holst_3);
-        body.append('holst_4', holst_4);
-        body.append('preview', preview);
-        body.append('option', option_temporary_var);
-        body.append('quantity', this.quantity.toString());
+        let body = Utils.toUrlParameters({
+            json: stateJson,
+            animation: stateJson,
+            price: this.getPrice(),
+            priceOriginal: "0",
+            category: this.model.category_id,
+            constructor_model_id: constructor_model_id,
+            text_type: this.model.name,
+            holst_1: holst_1,
+            holst_2: holst_2,
+            holst_3: holst_3,
+            holst_4: holst_4,
+            preview: preview,
+            option: optionsEncoded,
+            quantity: quantity
+        });
+
+        this.getPriceDiscount();
+
+        let headers = new Headers({'content-type': 'application/x-www-form-urlencoded'});
+        let post = 'POST';
 
         fetch('https://pechat.photo/index.php?route=constructor/constructor/add_product_by_constructor', {
-            method: 'POST',
+            method: post,
+            headers: headers,
             body: body,
         }).then(response => {
             response.json().then(productId => {
                 console.log("productId", productId);
 
-                body = new FormData();
-                body.append('product_id', productId)
-                body.append('quantity', this.quantity.toString())
-
                 fetch('https://pechat.photo/index.php?route=constructor/constructor/rendering', {
-                    method: 'POST',
-                    body: body
+                    method: post,
+                    headers: headers,
+                    body: Utils.toUrlParameters({
+                        product_id: productId
+                    })
                 });
 
                 fetch('https://pechat.photo/index.php?route=checkout/cart/add', {
-                    method: 'POST',
-                    body: body
+                    method: post,
+                    headers: headers,
+                    body: Utils.toUrlParameters({
+                        product_id: productId,
+                        quantity: quantity
+                    })
                 });
             });
         });
 
+
+    }
+
+    shareLink() {
+        let headers = new Headers({'content-type': 'application/x-www-form-urlencoded'});
+        let post = 'POST';
+        fetch('https://pechat.photo/index.php?route=constructor/constructor/get_url_post', {
+            method: post,
+            headers: headers,
+            body: Utils.toUrlParameters({
+                data_u: btoa(encodeURIComponent(Constructor.instance.getState())),
+                category: this.model.category_id,
+                text_type: this.model.name,
+                quantity: this.quantity
+            })
+        }).then(response => {
+            response.json().then(link => {
+                console.log(link);
+                ConstructorUI.instance.sharePopover.setValue(link);
+                ConstructorUI.instance.sharePopover.show();
+            });
+        });
+    }
+
+    getPriceDiscount() {
+        let priceWithOption = this.getPrice()
+        let priceOption = 0;
+        let priceSide = 0;
+
+        let body = Utils.toUrlParameters({
+            constructor_model_id: this.model.constructor_model_id,
+            quantity: this.quantity,
+            priceWithOption: priceWithOption,
+            priceOption: priceOption,
+            priceSide: priceSide,
+        });
+
+        fetch('https://pechat.photo/index.php?route=constructor/constructor/calcPriceAjax', {
+            method: 'POST',
+            headers: new Headers({'content-type': 'application/x-www-form-urlencoded'}),
+            body: body
+        }).then(response => {
+            response.text().then(discount => console.log("discout", discount));
+        })
+
+        // $.ajax({
+        //     type: 'POST',
+        //     dataType: 'text',
+        //     async: false,
+        //     url: "/index.php?route=constructor/constructor/calcPriceAjax",
+        //     data: {
+        //         constructor_model_id: $('#priceTotal').attr('data-constructor-model-id'),
+        //         quantity: quantity,
+        //         priceWithOption: priceWithOption,
+        //         priceOption: priceOption,
+        //         priceSide: priceSide
+        //     },
+        //     success: function (data) {
+        //         priceDiscount = data;
+        //     }
+        // });
 
     }
 

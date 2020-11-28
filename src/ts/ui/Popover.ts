@@ -11,6 +11,11 @@ class Popover extends UIControl {
         super();
         let frame = new Container().addClass("vertical");
         frame.append(...controls);
+        this.container.onclick = e => {
+            if (e.target === this.container){
+                this.hide();
+            }
+        }
         this.frame = frame;
         this.hide();
         this.append(frame);

@@ -27,6 +27,7 @@ class Pager extends TriggeredUIControl<Constructor> {
                         () => Constructor.instance.getActiveSide().getIndex() == side.getIndex(),
                         null,
                         null,
+                        null,
                         side.getName()
                     ).addClass("desktop")
 

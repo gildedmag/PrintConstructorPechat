@@ -2,7 +2,7 @@
 /// <reference path="./Trigger.ts" />
 abstract class View<T> extends Trigger<T> {
 
-    container: HTMLElement;
+    container: HTMLElement | HTMLInputElement;
 
     abstract getElement(): HTMLElement;
 
@@ -34,6 +34,11 @@ abstract class View<T> extends Trigger<T> {
     clear() {
         this.getElement().innerHTML = "";
         this.changed();
+    }
+
+    allowUserSelect(){
+        this.container.style.userSelect = 'all';
+        return this;
     }
 
     isVisible(): boolean {

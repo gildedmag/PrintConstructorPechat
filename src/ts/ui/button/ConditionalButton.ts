@@ -1,5 +1,5 @@
 /// <reference path="TriggeredButton.ts" />
-class ConditionalButton extends TriggeredButton {
+class ConditionalButton<T extends Trigger<any>> extends TriggeredButton<T> {
 
     check: () => boolean;
 
@@ -11,13 +11,19 @@ class ConditionalButton extends TriggeredButton {
         action: () => any,
         check: () => boolean,
         icon: Icon | string,
-        label?: string
+        label?: string,
+        trigger?: T
     ) {
-        super(() => {
+        super(
+            () => {
             if (!this.hasClass("disabled")){
                 action();
             }
-        }, icon, label);
+        },
+            icon,
+            label,
+            trigger
+        );
         this.check = check;
         this.update();
     }

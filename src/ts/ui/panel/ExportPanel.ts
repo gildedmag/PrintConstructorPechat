@@ -32,7 +32,7 @@ class ExportPanel extends UIControl {
             ),
             new Row(
                 new Button(
-                    () => Constructor.instance.getActiveSide().exportImage(800, ImageType.SVG),
+                    () => ConstructorUI.instance.order.shareLink(),
                     null,//Icon.SHARE,
                     "Share link"
                 )

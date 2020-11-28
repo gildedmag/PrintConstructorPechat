@@ -10,7 +10,11 @@ class ConstructorController extends UIControl {
         super();
         this.c = new Constructor(this.container);
 
-        //this.c.addImage('examples/images/bug.png')
+        this.container.onclick = e => {
+            if (e.target === this.container) {
+                Constructor.instance.getActiveSide().deselect();
+            }
+        }
     }
 
 }

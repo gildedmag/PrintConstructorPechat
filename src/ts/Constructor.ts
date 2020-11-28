@@ -55,7 +55,7 @@ class Constructor extends View<Constructor> {
      * var printConstructor = new Constructor(parent);
      * ```
      */
-    constructor(container: HTMLElement | string) {
+    constructor(container: HTMLElement | string, state?: string) {
         super(container instanceof HTMLElement ? container : document.getElementById(container));
         this.container.style.overflow = Constants.AUTO;
         fabric.textureSize = 4096;
@@ -72,28 +72,30 @@ class Constructor extends View<Constructor> {
             ? this.container.parentElement.clientHeight * .8
             : 300;
 
-
-        // this.setState({
-        //     sides: [{
-        //         width: width,
-        //         height: height
-        //     }],
-        //     //model: "cup_remastered"
-        // }, () => this.zoomToFit());
-        this.addSide(this.container.clientWidth - 50, this.container.clientHeight - 50);
+        if (state){
+            try {
+                console.log(state);
+                this.setState(state);
+            } catch (e) {
+                console.error(e);
+                //this.addSide(this.container.clientWidth - 50, this.container.clientHeight - 50);
+            }
+        } else {
+            this.addSide(this.container.clientWidth - 50, this.container.clientHeight - 50);
+        }
         this.preview.hide();
-        this.background = this.container.style.background;
-        this.container.style.background = null;
-        console.log("Constructor.version: ", Constructor.version);
-        console.log("fabric.js.version: ", fabric.version);
-        window.addEventListener("resize", function () {
-            Constructor.instance.preview.autoSize();
-            Constructor.instance.spinner.update();
-            let div = container as HTMLDivElement;
-            Constructor.instance.zoomToFit();
-            //if (div.scrollWidth > div.clientWidth || div.scrollHeight > div.clientHeight) {
-            //}
-        })
+        // this.background = this.container.style.background;
+        // this.container.style.background = null;
+        // console.log("Constructor.version: ", Constructor.version);
+        // console.log("fabric.js.version: ", fabric.version);
+        // window.addEventListener("resize", function () {
+        //     Constructor.instance.preview.autoSize();
+        //     Constructor.instance.spinner.update();
+        //     let div = container as HTMLDivElement;
+        //     Constructor.instance.zoomToFit();
+        //     //if (div.scrollWidth > div.clientWidth || div.scrollHeight > div.clientHeight) {
+        //     //}
+        // })
     }
 
     /**
@@ -515,7 +517,7 @@ class Constructor extends View<Constructor> {
                 side.canvas.renderAll();
             });
         }
-        this.sides.forEach(side => side.saveState());
+        //this.sides.forEach(side => side.saveState());
         if (state.model && this.preview.modelName != state.model) {
             this.loadModel(state.model, () => {
                 if (state.fills) {

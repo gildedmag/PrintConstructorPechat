@@ -178,7 +178,6 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
             let element = this;
             font.load(FontFamilyButton.charset)
                 .then(function () {
-                    console.log(fontFamily);
                     element.object.set("fontFamily", fontFamily);
                     element.side.canvas.requestRenderAll();
                     element.changed();

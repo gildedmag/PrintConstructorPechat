@@ -128,4 +128,12 @@ class Utils {
             || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
     }
 
+    static toUrlParameters(data: object){
+        let url = Object.keys(data).map(function (k) {
+            return encodeURIComponent(k) + '=' + encodeURIComponent(data[k])
+        }).join('&');
+        console.log(url);
+        return url;
+    }
+
 }

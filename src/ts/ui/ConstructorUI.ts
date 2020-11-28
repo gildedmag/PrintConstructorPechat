@@ -15,6 +15,7 @@ class ConstructorUI extends UIControl {
     topBar: TopBar;
     bottomBar: BottomBar;
     orderPopover: Popover;
+    sharePopover: SharePopover;
 
     options: pechat.Options;
 
@@ -46,15 +47,27 @@ class ConstructorUI extends UIControl {
         this.orderPopover = new Popover(
             new Row(
                 new Spacer(),
-                new LabelControl("Place an Order").addClass("title"),
+                new LabelControl("Add to Cart").addClass("title"),
                 new Spacer(),
             ),
             new Row(
                 new LabelControl("Quantity"),
                 new Spacer(),
+                new ConditionalButton(
+                    () => this.order.decrementQuantity(),
+                    () => this.order.getQuantity() > 1,
+                    Icon.MINUS_CIRCLE,
+                    null,
+                    this.order
+                ),
+                new Button(
+                    () => this.order.incrementQuantity(),
+                    Icon.PLUS_CIRCLE,
+                ),
                 new NumberInputControl(
                     v => this.order.setQuantity(v),
                     () => this.order.getQuantity(),
+                    this.order
                 ),
             ),
             new Row(
@@ -68,11 +81,13 @@ class ConstructorUI extends UIControl {
             new Row(),
             //new Divider(true),
             new Row(
+                new Spacer(),
                 new Button(
                     () => this.orderPopover.hide(),
                     null,
                     "Cancel"
                 ),
+                new Spacer(),
                 new Spacer(),
                 new Button(
                     () => {
@@ -80,10 +95,13 @@ class ConstructorUI extends UIControl {
                         this.orderPopover.hide();
                     },
                     null,
-                    "Add to Cart"
+                    "OK"
                 ),
+                new Spacer(),
             )
         );
+
+        this.sharePopover = new SharePopover();
 
         this.append(
             this.constructorControl,
@@ -92,7 +110,8 @@ class ConstructorUI extends UIControl {
             this.sideBar,
             this.topBar,
             this.bottomBar,
-            this.orderPopover
+            this.orderPopover,
+            this.sharePopover,
         );
 
         host.appendChild(this.container);
@@ -113,13 +132,6 @@ class ConstructorUI extends UIControl {
                 window.scrollTo(0, 0);
             }, 0);
         });
-
-        // setTimeout(() => {
-        //     //alert("set");
-        //     const viewportmeta = document.querySelector('meta[name=viewport]');
-        //     viewportmeta.setAttribute('content', "initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0");
-        // }, 1000)
-
 
     }
 
@@ -155,7 +167,6 @@ class ConstructorUI extends UIControl {
 
                 let url = model.thumb;
                 let modelUrl = model.file_main
-                console.log("constructor_model_option", model.constructor_model_option);
                 this.sidePanel.modelsPanel.append(
                     Button.of(
                         () => {
@@ -196,6 +207,11 @@ class ConstructorUI extends UIControl {
             );
             Constructor.instance.zoomToFit();
         });
+
+        let state = constructorConfiguration && constructorConfiguration.sharedState;
+        if (state){
+            Constructor.instance.setState(state);
+        }
 
         this.order.setModel(model);
 

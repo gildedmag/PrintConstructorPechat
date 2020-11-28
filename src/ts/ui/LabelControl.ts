@@ -11,7 +11,6 @@ class LabelControl extends UIControl {
     }
 
     setValue(value: string){
-        console.log(value);
         this.container.innerText = value;
     }
 
