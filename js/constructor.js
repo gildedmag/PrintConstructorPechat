@@ -5701,7 +5701,7 @@ var Order = (function (_super) {
     Order.prototype.getOptionsPrice = function () {
         var price = 0;
         this.selectedOptions.forEach(function (option) {
-            price += parseFloat(option.price);
+            price += parseInt(option.price);
         });
         return price;
     };
@@ -5728,7 +5728,7 @@ var Order = (function (_super) {
         }).then(function (response) {
             response.text().then(function (price) {
                 console.log("discount price", price);
-                _this.discountedPrice = parseFloat(price);
+                _this.discountedPrice = parseInt(price);
                 _this.changed();
                 callback && callback(_this.discountedPrice);
             });

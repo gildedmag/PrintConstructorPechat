@@ -210,15 +210,15 @@ class Order extends Trigger<Order> {
         });
     }
 
-    getOptionsPrice() {
-        let price = 0;
+    getOptionsPrice(): number {
+        let price: number = 0;
         this.selectedOptions.forEach(option => {
-            price += parseFloat(option.price);
+            price += parseInt(option.price);
         });
         return price;
     }
 
-    getSidePrice() {
+    getSidePrice():number {
         let price = 0;
         Constructor.instance.sides.forEach(side => {
             price += side.getTotalPrice();
@@ -242,7 +242,7 @@ class Order extends Trigger<Order> {
         }).then(response => {
             response.text().then(price => {
                 console.log("discount price", price);
-                this.discountedPrice = parseFloat(price);
+                this.discountedPrice = parseInt(price);
                 this.changed();
                 callback && callback(this.discountedPrice);
             });
