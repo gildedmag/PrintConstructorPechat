@@ -87,8 +87,15 @@ class ConstructorUI extends UIControl {
                     () => this.order.getPrice()
                 ),
             ),
+            new Row(
+                new LabelControl("Discounted Price"),
+                new Spacer(),
+                new TriggeredLabelControl(
+                    this.order,
+                    () => this.order.discountedPrice
+                ),
+            ),
             new Row(),
-            //new Divider(true),
             new Row(
                 new Spacer(),
                 new Button(
@@ -202,7 +209,8 @@ class ConstructorUI extends UIControl {
                     area.width,
                     area.height,
                     parseInt(area.roundCorners),
-                    area.name
+                    area.name,
+                    area.price
                 );
                 Constructor.instance.zoomToFit();
             });
@@ -215,7 +223,6 @@ class ConstructorUI extends UIControl {
         options.options.forEach(optionGroup => {
             let groupPanel = new OptionGroupPanel(optionGroup);
             groupPanels.push(groupPanel);
-            this.sidePanel.optionsPanel.append(groupPanel);
         });
 
         model.constructor_model_option.forEach(option => {
@@ -224,6 +231,12 @@ class ConstructorUI extends UIControl {
                     groupPanel.addOption(option);
                 }
             })
+        })
+
+        groupPanels.forEach(groupPanel => {
+            if (groupPanel.values.length > 0){
+                this.sidePanel.optionsPanel.append(groupPanel);
+            }
         })
     }
 

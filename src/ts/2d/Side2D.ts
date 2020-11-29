@@ -10,7 +10,8 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     selection: Element2D;
     canvasElement: HTMLCanvasElement;
 
-    private name: string;
+    name: string;
+    price: number = 0;
 
     /** width in centimeters */
     width: number;
@@ -29,8 +30,8 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
 
     history: HistoryList<Side2DStateObjects>;
 
-    private needsHistoryUpdate;
-    private id: number
+    needsHistoryUpdate;
+    id: number
 
     /**
      *
@@ -40,13 +41,14 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
      * @param {number} roundCorners round corners in percents
      * @param name
      */
-    constructor(htmlElement: HTMLElement, width: number, height: number, roundCorners?: number, name?: string) {
+    constructor(htmlElement: HTMLElement, width: number, height: number, roundCorners?: number, name?: string, price?: number) {
         super(htmlElement);
         this.id = Math.random() * 1e18;
         this.history = new HistoryList(new Side2DState(this));
         this.width = width;
         this.height = height;
         this.name = name;
+        this.price = price;
         this.canvasElement = document.createElement(Constants.CANVAS);
         this.container.appendChild(this.canvasElement);
         this.canvas = new fabric.Canvas(this.canvasElement, null);
@@ -420,6 +422,10 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
             } as any);
         }
         return this.canvas.toDataURL({format: Constants.PNG, multiplier: multiplier});
+    }
+
+    public getTotalPrice(): number {
+        return this.isEmpty() ? 0 : this.price;
     }
 
     public getState(): Side2DState {

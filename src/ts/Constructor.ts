@@ -109,9 +109,9 @@ class Constructor extends View<Constructor> {
         this.preview.loadModel(modelName, callback);
     }
 
-    addSide(width: number, height: number, roundCorners?: number, name?: string): Side2D {
+    addSide(width: number, height: number, roundCorners?: number, name?: string, price?: number): Side2D {
         Utils.logMethodName();
-        let side = new Side2D(this.container, width, height, roundCorners, name);
+        let side = new Side2D(this.container, width, height, roundCorners, name, price);
         this.insertSide(side);
         return side;
     }

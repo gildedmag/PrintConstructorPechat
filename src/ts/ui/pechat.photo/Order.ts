@@ -7,6 +7,7 @@ class Order extends Trigger<Order> {
     private model: pechat.ConstructorModel;
     selectedOptions: pechat.ConstructorModelOption[] = [];
     private quantity: number = 1;
+    discountedPrice = 0;
 
     constructor() {
         super();
@@ -14,9 +15,8 @@ class Order extends Trigger<Order> {
 
     getPrice(): number {
         let price = this.model ? this.model.price : 0;
-        this.selectedOptions.forEach(option => {
-            price += parseFloat(option.price);
-        })
+        price += this.getOptionsPrice();
+        price += this.getSidePrice();
         return price * this.quantity;
     }
 
@@ -25,21 +25,23 @@ class Order extends Trigger<Order> {
         this.changed();
     }
 
-
     setQuantity(value: number) {
         this.quantity = value;
+        this.updateDiscount();
         this.changed();
     }
 
     incrementQuantity() {
         if (this.quantity < Order.max) {
             this.quantity++;
+            this.updateDiscount();
             this.changed();
         }
     }
 
     decrementQuantity() {
         this.quantity--;
+        this.updateDiscount();
         this.changed();
     }
 
@@ -57,16 +59,16 @@ class Order extends Trigger<Order> {
         this.changed();
     }
 
-    removeSelectedOption(value: pechat.ConstructorModelOption){
+    removeSelectedOption(value: pechat.ConstructorModelOption) {
         let index = this.selectedOptions.indexOf(value);
-        if (index != -1){
+        if (index != -1) {
             this.selectedOptions.splice(index, 1);
             this.changed();
         }
     }
 
-    removeSelectedOptionId(optionId: string){
-        for ( let i = 0; i < this.selectedOptions.length; i++ ) {
+    removeSelectedOptionId(optionId: string) {
+        for (let i = 0; i < this.selectedOptions.length; i++) {
             if (this.selectedOptions[i].id === optionId) {
                 this.selectedOptions.splice(i, 1);
                 this.changed();
@@ -80,7 +82,7 @@ class Order extends Trigger<Order> {
     }
 
     hasOptionId(optionId: string) {
-        for ( let i = 0; i < this.selectedOptions.length; i++ ) {
+        for (let i = 0; i < this.selectedOptions.length; i++) {
             if (this.selectedOptions[i].id === optionId) {
                 return true;
             }
@@ -152,7 +154,7 @@ class Order extends Trigger<Order> {
             quantity: quantity
         });
 
-        this.getPriceDiscount();
+        this.updateDiscount();
 
         let headers = new Headers({'content-type': 'application/x-www-form-urlencoded'});
         let post = 'POST';
@@ -208,17 +210,29 @@ class Order extends Trigger<Order> {
         });
     }
 
-    getPriceDiscount() {
-        let priceWithOption = this.getPrice()
-        let priceOption = 0;
-        let priceSide = 0;
+    getOptionsPrice() {
+        let price = 0;
+        this.selectedOptions.forEach(option => {
+            price += parseFloat(option.price);
+        });
+        return price;
+    }
 
+    getSidePrice() {
+        let price = 0;
+        Constructor.instance.sides.forEach(side => {
+            price += side.getTotalPrice();
+        });
+        return price;
+    }
+
+    updateDiscount(callback?: (number) => any) {
         let body = Utils.toUrlParameters({
             constructor_model_id: this.model.constructor_model_id,
             quantity: this.quantity,
-            priceWithOption: priceWithOption,
-            priceOption: priceOption,
-            priceSide: priceSide,
+            priceWithOption: -1,
+            priceOption: this.getOptionsPrice(),
+            priceSide: this.getSidePrice(),
         });
 
         fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/calcPriceAjax', {
@@ -226,25 +240,13 @@ class Order extends Trigger<Order> {
             headers: new Headers({'content-type': 'application/x-www-form-urlencoded'}),
             body: body
         }).then(response => {
-            response.text().then(discount => console.log("discout", discount));
-        })
-
-        // $.ajax({
-        //     type: 'POST',
-        //     dataType: 'text',
-        //     async: false,
-        //     url: "/index.php?route=constructor/constructor/calcPriceAjax",
-        //     data: {
-        //         constructor_model_id: $('#priceTotal').attr('data-constructor-model-id'),
-        //         quantity: quantity,
-        //         priceWithOption: priceWithOption,
-        //         priceOption: priceOption,
-        //         priceSide: priceSide
-        //     },
-        //     success: function (data) {
-        //         priceDiscount = data;
-        //     }
-        // });
+            response.text().then(price => {
+                console.log("discount price", price);
+                this.discountedPrice = parseFloat(price);
+                this.changed();
+                callback && callback(this.discountedPrice);
+            });
+        });
 
     }
 

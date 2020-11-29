@@ -8,7 +8,7 @@ class OptionGroupPanel extends UIControl {
     selection: OptionButton;
 
     getClassName(): string {
-        return super.getClassName() + " options-panel vertical";
+        return super.getClassName() + " options-group vertical";
     }
 
     constructor(option: Option) {
@@ -28,17 +28,6 @@ class OptionGroupPanel extends UIControl {
     }
 
     selectOption(optionButton: OptionButton) {
-        // console.log(ConstructorUI.instance.order.selectedOptions);
-        // if (optionButton.value.option_s){
-        //     for ( let i = 0; i < optionButton.value.option_s.length; i++ ) {
-        //         let id = optionButton.value.option_s[i].option_value_relation_id;
-        //         if (ConstructorUI.instance.order.hasOptionId(id)) {
-        //             //ConstructorUI.instance.order.removeSelectedOptionId(id);
-        //             //return;
-        //         }
-        //     }
-        // }
-        
         if (this.selection) {
             ConstructorUI.instance.order.removeSelectedOption(this.selection.value);
             if (this.selection == optionButton){
@@ -48,7 +37,7 @@ class OptionGroupPanel extends UIControl {
         }
         this.selection = optionButton;
         ConstructorUI.instance.order.addSelectedOption(optionButton.value);
-        Constructor.instance.preview.clearFills();
+        //Constructor.instance.preview.clearFills();
         let array = optionButton.value.zalivka.split(',').map(s => parseInt(s));
         Constructor.instance.preview.setFills(optionButton.value.constructor_value, ...array);
     }

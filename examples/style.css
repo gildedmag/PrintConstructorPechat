@@ -66,6 +66,11 @@ body {
     margin: 0;
 }
 
+.control.button.toggle.row {
+    margin: 0;
+    padding: 0;
+}
+
 .vertical {
     flex-flow: column;
     width: 100%;
@@ -361,6 +366,9 @@ body {
     display: block;
 }
 
+.sidepanel .options-panel {
+    padding: 0 8px;
+}
 .sidepanel .options-panel .control.button.toggle.active {
     background: #222;
     border-radius: 2px;
@@ -370,9 +378,9 @@ body {
     color: unset;
 }
 
-.sidepanel .options-panel .control.button.toggle.active .label {
-    color: #fff;
-}
+/*.sidepanel .options-panel .control.button.toggle.active .label {*/
+/*    color: #fff;*/
+/*}*/
 
 .sidepanel .options-panel .control.button.toggle.active .icon {
         
