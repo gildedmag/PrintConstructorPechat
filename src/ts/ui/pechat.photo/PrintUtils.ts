@@ -6,7 +6,7 @@ namespace pechat {
         private static modelUrl = 'https://pechat.photo/catalog/view/javascript/constructor/v2/models/'
 
 
-        static getCategforyOptions(categoryId: number, callback: (options: Options) => any) {
+        static getCategoryOptions(categoryId: number, callback: (options: Options) => any) {
             let url = PrintUtils.url + categoryId;
             let xhr = new XMLHttpRequest();
 

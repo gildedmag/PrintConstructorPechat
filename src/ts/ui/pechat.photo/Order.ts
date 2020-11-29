@@ -5,7 +5,7 @@ class Order extends Trigger<Order> {
     static max = 999;
 
     private model: pechat.ConstructorModel;
-    private selectedOptions: pechat.ConstructorModelOption[] = [];
+    selectedOptions: pechat.ConstructorModelOption[] = [];
     private quantity: number = 1;
 
     constructor() {
@@ -52,8 +52,40 @@ class Order extends Trigger<Order> {
         this.changed();
     }
 
+    addSelectedOption(value: pechat.ConstructorModelOption) {
+        this.selectedOptions.push(value);
+        this.changed();
+    }
+
+    removeSelectedOption(value: pechat.ConstructorModelOption){
+        let index = this.selectedOptions.indexOf(value);
+        if (index != -1){
+            this.selectedOptions.splice(index, 1);
+            this.changed();
+        }
+    }
+
+    removeSelectedOptionId(optionId: string){
+        for ( let i = 0; i < this.selectedOptions.length; i++ ) {
+            if (this.selectedOptions[i].id === optionId) {
+                this.selectedOptions.splice(i, 1);
+                this.changed();
+                return;
+            }
+        }
+    }
+
     hasOption(option: ConstructorModelOption) {
         return this.selectedOptions.indexOf(option) != -1;
+    }
+
+    hasOptionId(optionId: string) {
+        for ( let i = 0; i < this.selectedOptions.length; i++ ) {
+            if (this.selectedOptions[i].id === optionId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     checkPrice() {
@@ -125,7 +157,7 @@ class Order extends Trigger<Order> {
         let headers = new Headers({'content-type': 'application/x-www-form-urlencoded'});
         let post = 'POST';
 
-        fetch('https://pechat.photo/index.php?route=constructor/constructor/add_product_by_constructor', {
+        fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/add_product_by_constructor', {
             method: post,
             headers: headers,
             body: body,
@@ -133,7 +165,7 @@ class Order extends Trigger<Order> {
             response.json().then(productId => {
                 console.log("productId", productId);
 
-                fetch('https://pechat.photo/index.php?route=constructor/constructor/rendering', {
+                fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/rendering', {
                     method: post,
                     headers: headers,
                     body: Utils.toUrlParameters({
@@ -141,7 +173,7 @@ class Order extends Trigger<Order> {
                     })
                 });
 
-                fetch('https://pechat.photo/index.php?route=checkout/cart/add', {
+                fetch(ConstructorUI.instance.domain + 'index.php?route=checkout/cart/add', {
                     method: post,
                     headers: headers,
                     body: Utils.toUrlParameters({
@@ -158,7 +190,7 @@ class Order extends Trigger<Order> {
     shareLink() {
         let headers = new Headers({'content-type': 'application/x-www-form-urlencoded'});
         let post = 'POST';
-        fetch('https://pechat.photo/index.php?route=constructor/constructor/get_url_post', {
+        fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/get_url_post', {
             method: post,
             headers: headers,
             body: Utils.toUrlParameters({
@@ -189,7 +221,7 @@ class Order extends Trigger<Order> {
             priceSide: priceSide,
         });
 
-        fetch('https://pechat.photo/index.php?route=constructor/constructor/calcPriceAjax', {
+        fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/calcPriceAjax', {
             method: 'POST',
             headers: new Headers({'content-type': 'application/x-www-form-urlencoded'}),
             body: body

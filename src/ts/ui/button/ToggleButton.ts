@@ -44,7 +44,11 @@ class ToggleButton extends TriggeredUIControl<any> {
             this.label = new LabelControl(label);
             this.append(this.label);
         }
-        this.container.onclick = () => action();
+        this.container.onclick = () => {
+            if (!this.enabledCheck || this.enabledCheck()){
+                action();
+            }
+        };
     }
 
     static of(trigger: Trigger<any>,

@@ -1,7 +1,6 @@
 /// <reference path="../TriggeredUIControl.ts" />
 /// <reference path="../pechat.photo/PrintUtils.ts" />
 
-import Options = pechat.Options;
 import PechatUtils = pechat.PrintUtils;
 
 class ModelsPanel extends TriggeredUIControl<Constructor> {

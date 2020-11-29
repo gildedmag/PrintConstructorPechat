@@ -1,7 +1,7 @@
 /** Constructor settings */
 class Settings {
 
-    debug = true;
+    debug = false;
     ui = {
         layerIconSize: 38
     };

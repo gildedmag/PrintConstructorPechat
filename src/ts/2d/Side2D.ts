@@ -214,7 +214,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         this.elements.splice(this.elements.indexOf(element), 1);
         this.deselect();
         this.canvas.renderAll();
-        this.changed();
+        this.saveState();
     }
 
     getPointSize(): number {
@@ -377,6 +377,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         let state = new Side2DStateObjects(this);
         this.history.add(state);
         this.saveToLocalStorage(state);
+        this.changed();
         Constructor.instance.changed();
     }
 

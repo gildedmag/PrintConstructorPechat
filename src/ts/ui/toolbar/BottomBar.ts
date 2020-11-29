@@ -66,7 +66,10 @@ class BottomBar extends ToolBar {
                     this.c.toggleMode();
                 },
                 () => this.c.getMode() == Mode.Mode3D,
-                Icon.DICE_D6
+                Icon.DICE_D6,
+                null,
+                null,
+                "3D"
             ),
 
             new Spacer(),

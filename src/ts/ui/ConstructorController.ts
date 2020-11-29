@@ -8,7 +8,13 @@ class ConstructorController extends UIControl {
 
     constructor() {
         super();
-        this.c = new Constructor(this.container);
+
+        let state = constructorConfiguration && constructorConfiguration.sharedState;
+        if (state) {
+            this.c = new Constructor(this.container, state);
+        } else {
+            this.c = new Constructor(this.container);
+        }
 
         this.container.onclick = e => {
             if (e.target === this.container) {

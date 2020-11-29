@@ -180,7 +180,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "28.11.2020 20:32";
+    Version.version = "29.11.2020 16:50";
     return Version;
 }());
 var Trigger = (function () {
@@ -595,7 +595,7 @@ var Preview = (function (_super) {
 }(View));
 var Settings = (function () {
     function Settings() {
-        this.debug = true;
+        this.debug = false;
         this.ui = {
             layerIconSize: 38
         };
@@ -661,9 +661,9 @@ var Constructor = (function (_super) {
         _this.onElementModificationHandler = function () {
         };
         _this.isExplicitlyLoaded = false;
+        Constructor.instance = _this;
         _this.container.style.overflow = Constants.AUTO;
         fabric.textureSize = 4096;
-        Constructor.instance = _this;
         _this.clipboard = null;
         _this.snapToObjects = false;
         _this.setMode(Mode.Mode2D);
@@ -671,10 +671,10 @@ var Constructor = (function (_super) {
         _this.preview = new Preview(_this);
         var width = _this.container.parentElement
             ? _this.container.parentElement.clientWidth * .8
-            : 400;
+            : 320;
         var height = _this.container.parentElement
             ? _this.container.parentElement.clientHeight * .8
-            : 300;
+            : 240;
         if (state) {
             try {
                 console.log(state);
@@ -682,10 +682,12 @@ var Constructor = (function (_super) {
             }
             catch (e) {
                 console.error(e);
+                _this.addSide(width, height);
             }
         }
         else {
-            _this.addSide(_this.container.clientWidth - 50, _this.container.clientHeight - 50);
+            console.log("this.container.clientWidth", _this.container.clientWidth);
+            _this.addSide(width, height);
         }
         _this.preview.hide();
         return _this;
@@ -707,6 +709,8 @@ var Constructor = (function (_super) {
         if (this.sides.length == 1) {
             this.activeSideIndex = 0;
             this.getActiveSide().show();
+            side.canvas.renderAll();
+            side.zoomToFit();
         }
         this.changed();
     };
@@ -2606,6 +2610,9 @@ var Utils = (function () {
         if (Constructor.settings.debug) {
             var obj = { stack: "" };
             var message_1 = "";
+            if (!Error.captureStackTrace) {
+                return;
+            }
             Error.captureStackTrace(obj, this.logMethodName);
             var first_1 = true;
             obj.stack.split("\n").forEach(function (line) {
@@ -2840,7 +2847,7 @@ var Element2D = (function (_super) {
                 element_1.object.set("fontFamily", fontFamily);
                 element_1.side.canvas.requestRenderAll();
                 element_1.changed();
-                Constructor.instance.changed();
+                element_1.side.saveState();
             }).catch(function (e) {
                 console.log(e);
             });
@@ -3765,7 +3772,7 @@ var Side2D = (function (_super) {
         this.elements.splice(this.elements.indexOf(element), 1);
         this.deselect();
         this.canvas.renderAll();
-        this.changed();
+        this.saveState();
     };
     Side2D.prototype.getPointSize = function () {
         return 96 / 72 * this.getZoom();
@@ -3919,6 +3926,7 @@ var Side2D = (function (_super) {
         var state = new Side2DStateObjects(this);
         this.history.add(state);
         this.saveToLocalStorage(state);
+        this.changed();
         Constructor.instance.changed();
     };
     Side2D.prototype.undo = function () {
@@ -4093,7 +4101,13 @@ var ConstructorController = (function (_super) {
     __extends(ConstructorController, _super);
     function ConstructorController() {
         var _this = _super.call(this) || this;
-        _this.c = new Constructor(_this.container);
+        var state = constructorConfiguration && constructorConfiguration.sharedState;
+        if (state) {
+            _this.c = new Constructor(_this.container, state);
+        }
+        else {
+            _this.c = new Constructor(_this.container);
+        }
         _this.container.onclick = function (e) {
             if (e.target === _this.container) {
                 Constructor.instance.getActiveSide().deselect();
@@ -4140,7 +4154,7 @@ var pechat;
     var PrintUtils = (function () {
         function PrintUtils() {
         }
-        PrintUtils.getCategforyOptions = function (categoryId, callback) {
+        PrintUtils.getCategoryOptions = function (categoryId, callback) {
             var url = PrintUtils.url + categoryId;
             var xhr = new XMLHttpRequest();
             xhr.open('GET', url);
@@ -4195,6 +4209,12 @@ var ConstructorUI = (function (_super) {
         var _this = _super.call(this) || this;
         _this.order = new Order();
         ConstructorUI.instance = _this;
+        try {
+            _this.domain = constructorConfiguration.domain;
+        }
+        catch (e) {
+            _this.domain = "";
+        }
         var host = document.getElementById("constructor-ui");
         if (!host) {
             console.log("'#constructor-ui' element not found");
@@ -4241,50 +4261,52 @@ var ConstructorUI = (function (_super) {
     };
     ConstructorUI.prototype.loadCategory = function (categoryId) {
         var _this = this;
-        PechatUtils.getCategforyOptions(categoryId, function (options) {
-            Constructor.instance.preview.modelName = null;
+        var c = Constructor.instance;
+        PechatUtils.getCategoryOptions(categoryId, function (options) {
+            if (!options || !options.constructor_models) {
+                console.error('error loading category options for category #' + categoryId);
+                return;
+            }
+            _this.options = options;
+            c.preview.modelName = null;
             options.constructor_models.forEach(function (model) {
-                if (!Constructor.instance.preview.modelName) {
-                    _this.loadModelOptions(model);
-                    Constructor.instance.loadModel(model.file_main);
+                if (!c.preview.modelName) {
+                    _this.loadModelOptions(model, options);
+                    c.loadModel(model.file_main);
                 }
                 var url = model.thumb;
-                var modelUrl = model.file_main;
                 _this.sidePanel.modelsPanel.append(Button.of(function () {
-                    Constructor.instance.loadModel(model.file_main);
-                    _this.loadModelOptions(model);
+                    c.loadModel(model.file_main);
+                    _this.loadModelOptions(model, options);
                 }, new Row(new Spacer(), new ImageControl(url), new Spacer())), new Row(new Spacer(), new LabelControl(model.name), new Spacer()));
             });
         });
     };
-    ConstructorUI.prototype.loadModelOptions = function (model) {
+    ConstructorUI.prototype.loadModelOptions = function (model, options) {
         var _this = this;
         console.log(model);
         var group = "";
         this.sidePanel.optionsPanel.clear();
-        Constructor.instance.deleteAllSides();
-        model.printareas.forEach(function (area) {
-            Constructor.instance.addSide(area.width, area.height, parseInt(area.roundCorners), area.name);
-            Constructor.instance.zoomToFit();
-        });
-        var state = constructorConfiguration && constructorConfiguration.sharedState;
-        if (state) {
-            Constructor.instance.setState(state);
+        if (!constructorConfiguration || !constructorConfiguration.state) {
+            Constructor.instance.deleteAllSides();
+            model.printareas.forEach(function (area) {
+                Constructor.instance.addSide(area.width, area.height, parseInt(area.roundCorners), area.name);
+                Constructor.instance.zoomToFit();
+            });
         }
         this.order.setModel(model);
+        var groupPanels = [];
+        options.options.forEach(function (optionGroup) {
+            var groupPanel = new OptionGroupPanel(optionGroup);
+            groupPanels.push(groupPanel);
+            _this.sidePanel.optionsPanel.append(groupPanel);
+        });
         model.constructor_model_option.forEach(function (option) {
-            if (option.namegroup != group) {
-                group = option.namegroup;
-                _this.sidePanel.optionsPanel.append(new Row(new Spacer()), new Row(new Spacer(), new LabelControl(group).addClass("bold"), new Spacer()));
-            }
-            var array = option.zalivka.split(',').map(function (s) { return parseInt(s); });
-            _this.sidePanel.optionsPanel.append(ToggleButton.of(_this.order, function () {
-                _this.order.setSelectedOptions([option]);
-                Constructor.instance.preview.clearFills();
-                (_a = Constructor.instance.preview).setFills.apply(_a, [option.constructor_value].concat(array));
-                var _a;
-            }, function () { return _this.order.hasOption(option); }, new IconControl(Icon.SQUARE)
-                .setColor(option.constructor_value), new LabelControl(option.name), new Spacer(), new LabelControl(option.priceText)));
+            groupPanels.forEach(function (groupPanel) {
+                if (option.namegroup == groupPanel.option.name) {
+                    groupPanel.addOption(option);
+                }
+            });
         });
     };
     ConstructorUI.prototype.bindDelKey = function () {
@@ -4638,7 +4660,11 @@ var ToggleButton = (function (_super) {
             _this.label = new LabelControl(label);
             _this.append(_this.label);
         }
-        _this.container.onclick = function () { return action(); };
+        _this.container.onclick = function () {
+            if (!_this.enabledCheck || _this.enabledCheck()) {
+                action();
+            }
+        };
         return _this;
     }
     ToggleButton.prototype.getClassName = function () {
@@ -5347,21 +5373,58 @@ var NewElementPanel = (function (_super) {
     __extends(NewElementPanel, _super);
     function NewElementPanel() {
         var _this = _super.call(this, Constructor.instance) || this;
+        var form = document.createElement("form");
         var input = document.createElement("input");
+        var text = document.createElement("input");
+        text.type = 'text';
+        text.name = 'constructor';
+        text.value = '1';
         input.type = "file";
+        input.name = "file";
+        input.accept = "image/*";
         input.size = 24;
         input.hidden = true;
-        input.onchange = function (evt) {
-            var tgt = evt.target || window.event.srcElement, files = tgt.files;
+        form.append(input);
+        form.append(text);
+        form.style.display = 'none';
+        input.onchange = function (e) {
+            var target = e.target || window.event.srcElement;
+            var files = target.files;
             if (FileReader && files && files.length) {
-                var fr = new FileReader();
-                fr.onload = function () {
-                    Constructor.instance.addImage(fr.result);
+                var reader = new FileReader();
+                reader.onload = function () {
+                    var image = Constructor.instance.addImage(reader.result);
+                    var body = new URLSearchParams(new FormData(form));
+                    var data = new URLSearchParams();
+                    var formData = new FormData(form);
+                    formData.forEach(function (value, key) {
+                        data.append(key, value);
+                    });
+                    fetch(ConstructorUI.instance.domain + 'index.php?route=tool/upload', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            accept: 'application/json, text/javascript, */*; q=0.01'
+                        }
+                    }).then(function (response) {
+                        response.json().then(function (json) {
+                            console.log(json);
+                            console.log(json.files[0].file);
+                            var width = image.object.width;
+                            var height = image.object.height;
+                            image.object.setSrc(json.files[0].file, function () {
+                                image.object.width = width;
+                                image.object.height = height;
+                                image.side.canvas.renderAll();
+                                console.log('image src replaced from local to:', json.files[0].file);
+                            });
+                        });
+                    });
                 };
-                fr.readAsDataURL(files[0]);
+                reader.readAsDataURL(files[0]);
             }
         };
-        _this.container.appendChild(input);
+        _this.container.appendChild(form);
         _this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);
         _this.addButton("Rectangle", ElementType.RECTANGLE, Icon.SQUARE);
         _this.addButton("Triangle", ElementType.TRIANGLE, Icon.CARET_UP);
@@ -5480,6 +5543,69 @@ var SidePanel = (function (_super) {
     };
     return SidePanel;
 }(ToolBar));
+var OptionButton = (function (_super) {
+    __extends(OptionButton, _super);
+    function OptionButton(value, parent) {
+        var _this = _super.call(this) || this;
+        _this.parent = parent;
+        _this.value = value;
+        var order = ConstructorUI.instance.order;
+        var button = ToggleButton.of(order, function () { return _this.parent.selectOption(_this); }, function () { return order.hasOption(value); }, new IconControl(Icon.SQUARE)
+            .setColor(value.constructor_value), new LabelControl(value.name), new Spacer(), new LabelControl(value.priceText));
+        button.enabledCheck = function () {
+            if (_this.isSelected() || !_this.value.option_s || _this.value.option_s.length == 0 || ConstructorUI.instance.order.selectedOptions.length == 0) {
+                return true;
+            }
+            for (var i = 0; i < _this.value.option_s.length; i++) {
+                var id = _this.value.option_s[i].option_value_relation_id;
+                if (ConstructorUI.instance.order.hasOptionId(id)) {
+                    return true;
+                }
+            }
+            return false;
+        };
+        _this.append(button);
+        return _this;
+    }
+    OptionButton.prototype.isSelected = function () {
+        return this.parent.selection === this;
+    };
+    return OptionButton;
+}(UIControl));
+var OptionGroupPanel = (function (_super) {
+    __extends(OptionGroupPanel, _super);
+    function OptionGroupPanel(option) {
+        var _this = _super.call(this) || this;
+        _this.values = [];
+        _this.option = option;
+        _this.append(new Row(new Spacer()), new Row(new Spacer(), new LabelControl(option.name).addClass("bold"), new Spacer()));
+        return _this;
+    }
+    OptionGroupPanel.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " options-panel vertical";
+    };
+    OptionGroupPanel.prototype.selectOption = function (optionButton) {
+        if (this.selection) {
+            ConstructorUI.instance.order.removeSelectedOption(this.selection.value);
+            if (this.selection == optionButton) {
+                this.selection = null;
+                return;
+            }
+        }
+        this.selection = optionButton;
+        ConstructorUI.instance.order.addSelectedOption(optionButton.value);
+        Constructor.instance.preview.clearFills();
+        var array = optionButton.value.zalivka.split(',').map(function (s) { return parseInt(s); });
+        (_a = Constructor.instance.preview).setFills.apply(_a, [optionButton.value.constructor_value].concat(array));
+        var _a;
+    };
+    OptionGroupPanel.prototype.addOption = function (option) {
+        var optionButton = new OptionButton(option, this);
+        this.values.push(optionButton);
+        this.append(optionButton);
+    };
+    return OptionGroupPanel;
+}(UIControl));
 var Order = (function (_super) {
     __extends(Order, _super);
     function Order() {
@@ -5520,8 +5646,36 @@ var Order = (function (_super) {
         this.selectedOptions = value;
         this.changed();
     };
+    Order.prototype.addSelectedOption = function (value) {
+        this.selectedOptions.push(value);
+        this.changed();
+    };
+    Order.prototype.removeSelectedOption = function (value) {
+        var index = this.selectedOptions.indexOf(value);
+        if (index != -1) {
+            this.selectedOptions.splice(index, 1);
+            this.changed();
+        }
+    };
+    Order.prototype.removeSelectedOptionId = function (optionId) {
+        for (var i = 0; i < this.selectedOptions.length; i++) {
+            if (this.selectedOptions[i].id === optionId) {
+                this.selectedOptions.splice(i, 1);
+                this.changed();
+                return;
+            }
+        }
+    };
     Order.prototype.hasOption = function (option) {
         return this.selectedOptions.indexOf(option) != -1;
+    };
+    Order.prototype.hasOptionId = function (optionId) {
+        for (var i = 0; i < this.selectedOptions.length; i++) {
+            if (this.selectedOptions[i].id === optionId) {
+                return true;
+            }
+        }
+        return false;
     };
     Order.prototype.checkPrice = function () {
     };
@@ -5566,21 +5720,21 @@ var Order = (function (_super) {
         this.getPriceDiscount();
         var headers = new Headers({ 'content-type': 'application/x-www-form-urlencoded' });
         var post = 'POST';
-        fetch('https://pechat.photo/index.php?route=constructor/constructor/add_product_by_constructor', {
+        fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/add_product_by_constructor', {
             method: post,
             headers: headers,
             body: body,
         }).then(function (response) {
             response.json().then(function (productId) {
                 console.log("productId", productId);
-                fetch('https://pechat.photo/index.php?route=constructor/constructor/rendering', {
+                fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/rendering', {
                     method: post,
                     headers: headers,
                     body: Utils.toUrlParameters({
                         product_id: productId
                     })
                 });
-                fetch('https://pechat.photo/index.php?route=checkout/cart/add', {
+                fetch(ConstructorUI.instance.domain + 'index.php?route=checkout/cart/add', {
                     method: post,
                     headers: headers,
                     body: Utils.toUrlParameters({
@@ -5594,7 +5748,7 @@ var Order = (function (_super) {
     Order.prototype.shareLink = function () {
         var headers = new Headers({ 'content-type': 'application/x-www-form-urlencoded' });
         var post = 'POST';
-        fetch('https://pechat.photo/index.php?route=constructor/constructor/get_url_post', {
+        fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/get_url_post', {
             method: post,
             headers: headers,
             body: Utils.toUrlParameters({
@@ -5622,7 +5776,7 @@ var Order = (function (_super) {
             priceOption: priceOption,
             priceSide: priceSide,
         });
-        fetch('https://pechat.photo/index.php?route=constructor/constructor/calcPriceAjax', {
+        fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/calcPriceAjax', {
             method: 'POST',
             headers: new Headers({ 'content-type': 'application/x-www-form-urlencoded' }),
             body: body
@@ -5668,7 +5822,7 @@ var BottomBar = (function (_super) {
                 }
             }
             _this.c.toggleMode();
-        }, function () { return _this.c.getMode() == Mode.Mode3D; }, Icon.DICE_D6), new Spacer(), new TriggeredLabelControl(ConstructorUI.instance.order, function () { return ConstructorUI.instance.order.getPrice(); }), new Button(function () { return ConstructorUI.instance.orderPopover.show(); }, Icon.CART_PLUS));
+        }, function () { return _this.c.getMode() == Mode.Mode3D; }, Icon.DICE_D6, null, null, "3D"), new Spacer(), new TriggeredLabelControl(ConstructorUI.instance.order, function () { return ConstructorUI.instance.order.getPrice(); }), new Button(function () { return ConstructorUI.instance.orderPopover.show(); }, Icon.CART_PLUS));
     };
     return BottomBar;
 }(ToolBar));

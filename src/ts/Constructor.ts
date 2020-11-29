@@ -57,9 +57,9 @@ class Constructor extends View<Constructor> {
      */
     constructor(container: HTMLElement | string, state?: string) {
         super(container instanceof HTMLElement ? container : document.getElementById(container));
+        Constructor.instance = this;
         this.container.style.overflow = Constants.AUTO;
         fabric.textureSize = 4096;
-        Constructor.instance = this;
         this.clipboard = null;
         this.snapToObjects = false;
         this.setMode(Mode.Mode2D);
@@ -67,10 +67,10 @@ class Constructor extends View<Constructor> {
         this.preview = new Preview(this);
         let width = this.container.parentElement
             ? this.container.parentElement.clientWidth * .8
-            : 400;
+            : 320;
         let height = this.container.parentElement
             ? this.container.parentElement.clientHeight * .8
-            : 300;
+            : 240;
 
         if (state){
             try {
@@ -78,10 +78,11 @@ class Constructor extends View<Constructor> {
                 this.setState(state);
             } catch (e) {
                 console.error(e);
-                //this.addSide(this.container.clientWidth - 50, this.container.clientHeight - 50);
+                this.addSide(width, height);
             }
         } else {
-            this.addSide(this.container.clientWidth - 50, this.container.clientHeight - 50);
+            console.log("this.container.clientWidth", this.container.clientWidth);
+            this.addSide(width, height);
         }
         this.preview.hide();
         // this.background = this.container.style.background;
@@ -121,6 +122,8 @@ class Constructor extends View<Constructor> {
         if (this.sides.length == 1) {
             this.activeSideIndex = 0;
             this.getActiveSide().show();
+            side.canvas.renderAll();
+            side.zoomToFit();
         }
         this.changed();
     }

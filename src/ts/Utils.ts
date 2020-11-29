@@ -4,6 +4,9 @@ class Utils {
         if (Constructor.settings.debug) {
             let obj = {stack: ""};
             let message = "";
+            if (!Error.captureStackTrace){
+                return;
+            }
             Error.captureStackTrace(obj, this.logMethodName);
             let first = true;
             obj.stack.split("\n").forEach(line => {

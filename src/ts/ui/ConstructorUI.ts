@@ -5,8 +5,11 @@
 /// <reference path="pechat.photo/Options.ts" />
 
 import ConstructorModel = pechat.ConstructorModel;
+import Options = pechat.Options;
 
 class ConstructorUI extends UIControl {
+
+    domain: string;
 
     constructorControl: ConstructorController;
     sideBar: SideBar;
@@ -31,6 +34,12 @@ class ConstructorUI extends UIControl {
     private constructor() {
         super();
         ConstructorUI.instance = this;
+
+        try {
+            this.domain = constructorConfiguration.domain;
+        } catch (e) {
+            this.domain = "";
+        }
 
         let host = document.getElementById("constructor-ui");
         if (!host) {
@@ -143,38 +152,27 @@ class ConstructorUI extends UIControl {
 
     loadCategory(categoryId: number) {
 
-        PechatUtils.getCategforyOptions(categoryId, options => {
-            Constructor.instance.preview.modelName = null;
-            // options.constructor_setting.forEach(value => {
-            //     console.log('!!!options.constructor_setting', value);
-            // })
-            // options.options.forEach(option => {
-            //     option.option_values.forEach(value => {
-            //         //value
-            //         //console.log("option.value = ", value);
-            //     });
-            // });
+        let c = Constructor.instance;
+        PechatUtils.getCategoryOptions(categoryId, options => {
+            if (!options || !options.constructor_models) {
+                console.error('error loading category options for category #' + categoryId)
+                return;
+            }
+            this.options = options;
+            c.preview.modelName = null;
             options.constructor_models.forEach(model => {
 
-
-                // if (model.file_main == Constructor.instance.preview.modelName) {
-                // }
-
-                if (!Constructor.instance.preview.modelName) {
-                    this.loadModelOptions(model);
-                    Constructor.instance.loadModel(model.file_main);
+                if (!c.preview.modelName) {
+                    this.loadModelOptions(model, options);
+                    c.loadModel(model.file_main);
                 }
 
                 let url = model.thumb;
-                let modelUrl = model.file_main
                 this.sidePanel.modelsPanel.append(
                     Button.of(
                         () => {
-                            Constructor.instance.loadModel(model.file_main);
-                            this.loadModelOptions(model);
-                            // PechatUtils.getModel(model.file_main, json => {
-                            //     Constructor.instance.preview.setModel(model.file_main, json);
-                            // })
+                            c.loadModel(model.file_main);
+                            this.loadModelOptions(model, options);
                         },
                         new Row(
                             new Spacer(),
@@ -192,61 +190,40 @@ class ConstructorUI extends UIControl {
         })
     }
 
-    loadModelOptions(model: ConstructorModel) {
+    loadModelOptions(model: ConstructorModel, options: Options) {
         console.log(model);
         let group = "";
         this.sidePanel.optionsPanel.clear();
 
-        Constructor.instance.deleteAllSides();
-        model.printareas.forEach(area => {
-            Constructor.instance.addSide(
-                area.width,
-                area.height,
-                parseInt(area.roundCorners),
-                area.name
-            );
-            Constructor.instance.zoomToFit();
-        });
-
-        let state = constructorConfiguration && constructorConfiguration.sharedState;
-        if (state){
-            Constructor.instance.setState(state);
+        if (!constructorConfiguration || !constructorConfiguration.state){
+            Constructor.instance.deleteAllSides();
+            model.printareas.forEach(area => {
+                Constructor.instance.addSide(
+                    area.width,
+                    area.height,
+                    parseInt(area.roundCorners),
+                    area.name
+                );
+                Constructor.instance.zoomToFit();
+            });
         }
 
         this.order.setModel(model);
 
+        let groupPanels: OptionGroupPanel[] = [];
+
+        options.options.forEach(optionGroup => {
+            let groupPanel = new OptionGroupPanel(optionGroup);
+            groupPanels.push(groupPanel);
+            this.sidePanel.optionsPanel.append(groupPanel);
+        });
+
         model.constructor_model_option.forEach(option => {
-            if (option.namegroup != group) {
-                group = option.namegroup;
-                this.sidePanel.optionsPanel.append(
-                    new Row(
-                        new Spacer()
-                    ),
-                    new Row(
-                        new Spacer(),
-                        new LabelControl(group).addClass("bold"),
-                        new Spacer(),
-                    )
-                );
-            }
-            let array = option.zalivka.split(',').map(s => parseInt(s));
-            this.sidePanel.optionsPanel.append(
-                ToggleButton.of(
-                    this.order,
-                    () => {
-                        this.order.setSelectedOptions([option])
-                        Constructor.instance.preview.clearFills();
-                        Constructor.instance.preview.setFills(option.constructor_value, ...array);
-                    },
-                    () => this.order.hasOption(option),
-                    new IconControl(Icon.SQUARE)
-                        .setColor(option.constructor_value),
-                    new LabelControl(option.name),
-                    new Spacer(),
-                    //new LabelControl(option.price),
-                    new LabelControl(option.priceText),
-                )
-            );
+            groupPanels.forEach(groupPanel => {
+                if (option.namegroup == groupPanel.option.name){
+                    groupPanel.addOption(option);
+                }
+            })
         })
     }
 
