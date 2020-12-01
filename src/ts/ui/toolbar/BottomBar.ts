@@ -76,11 +76,11 @@ class BottomBar extends ToolBar {
 
             new TriggeredLabelControl(
                 ConstructorUI.instance.order,
-                () => ConstructorUI.instance.order.getPrice()
+                () => ConstructorUI.instance.order.getPricePerItem()
             ),
 
             new Button(
-                () => ConstructorUI.instance.orderPopover.show(),
+                () => ConstructorUI.instance.addToCartPopover.show(),
                 Icon.CART_PLUS
             )
         );

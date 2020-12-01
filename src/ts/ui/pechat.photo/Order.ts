@@ -7,17 +7,38 @@ class Order extends Trigger<Order> {
     private model: pechat.ConstructorModel;
     selectedOptions: pechat.ConstructorModelOption[] = [];
     private quantity: number = 1;
-    discountedPrice = 0;
+    discountPricePerItem = 0;
 
     constructor() {
         super();
+        this.changed();
     }
 
-    getPrice(): number {
+    hasDiscount(): boolean {
+        return this.discountPricePerItem && this.discountPricePerItem < this.getPricePerItem();
+    }
+
+    getPricePerItem(): number {
         let price = this.model ? this.model.price : 0;
         price += this.getOptionsPrice();
         price += this.getSidePrice();
-        return price * this.quantity;
+        return price;
+    }
+
+    getTotalCostWithoutDiscount(): number {
+        return this.getPricePerItem() * this.quantity;
+    }
+
+    getTotalCostWithDiscount(): number {
+        return this.hasDiscount()
+            ? this.discountPricePerItem * this.quantity
+            : this.getTotalCostWithoutDiscount();
+    }
+
+    getTotalDiscount(): number {
+        return this.hasDiscount()
+            ? this.getTotalCostWithoutDiscount() - this.getTotalCostWithDiscount()
+            : 0;
     }
 
     setModel(model: pechat.ConstructorModel) {
@@ -34,8 +55,8 @@ class Order extends Trigger<Order> {
     incrementQuantity() {
         if (this.quantity < Order.max) {
             this.quantity++;
-            this.updateDiscount();
             this.changed();
+            this.updateDiscount();
         }
     }
 
@@ -90,35 +111,12 @@ class Order extends Trigger<Order> {
         return false;
     }
 
-    checkPrice() {
-        // let body = {
-        //     json: main_json,
-        //     animation: main_json,
-        //     price: price,
-        //     priceOriginal: main_price,
-        //     category: category,
-        //     constructor_model_id: constructor_model_id,
-        //     text_type: "test",
-        //     holst_1: holst_1,
-        //     holst_2: holst_2,
-        //     holst_3: holst_3,
-        //     holst_4: holst_4,
-        //     preview: preview,
-        //     option: option_temporary_var,
-        //     quantity: this.quantity
-        // };
-    }
-
     addToCart() { //this legacy code comes partially from original php page
-
         let c = Constructor.instance;
-        let ui = ConstructorUI.instance;
 
         let stateJson = c.getState();
         let constructor_model_id = this.model.constructor_model_id;
-        let main_price = this.getPrice();
         let preview = "";
-        let price = this.getPrice();
 
         c.setActiveSide(0);
         let holst_1 = c.getActiveSide().exportImage(Constructor.settings.printWidth);
@@ -133,14 +131,13 @@ class Order extends Trigger<Order> {
         let optionsEncoded = "";
         this.selectedOptions.forEach(option => {
             optionsEncoded += "+++++" + option.id;
-        })
-        console.log(optionsEncoded);
-        let quantity = this.quantity;
+        });
+        this.changed();
 
         let body = Utils.toUrlParameters({
             json: stateJson,
             animation: stateJson,
-            price: this.getPrice(),
+            price: this.getPricePerItem(),
             priceOriginal: "0",
             category: this.model.category_id,
             constructor_model_id: constructor_model_id,
@@ -151,8 +148,9 @@ class Order extends Trigger<Order> {
             holst_4: holst_4,
             preview: preview,
             option: optionsEncoded,
-            quantity: quantity
+            quantity: this.quantity
         });
+
 
         this.updateDiscount();
 
@@ -180,13 +178,11 @@ class Order extends Trigger<Order> {
                     headers: headers,
                     body: Utils.toUrlParameters({
                         product_id: productId,
-                        quantity: quantity
+                        quantity: this.quantity
                     })
                 });
             });
         });
-
-
     }
 
     shareLink() {
@@ -226,15 +222,12 @@ class Order extends Trigger<Order> {
         return price;
     }
 
-    getDiscountPrice(): number {
-        return (this.discountedPrice * this.quantity) || this.getPrice() ;
-    }
 
     updateDiscount(callback?: (number) => any) {
         let body = Utils.toUrlParameters({
             constructor_model_id: this.model.constructor_model_id,
             quantity: this.quantity,
-            priceWithOption: -1,
+            priceWithOption: -1, //unused parameter
             priceOption: this.getOptionsPrice(),
             priceSide: this.getSidePrice(),
         });
@@ -244,11 +237,13 @@ class Order extends Trigger<Order> {
             headers: new Headers({'content-type': 'application/x-www-form-urlencoded'}),
             body: body
         }).then(response => {
-            response.text().then(price => {
-                console.log("discount price", price);
-                this.discountedPrice = parseInt(price);
-                this.changed();
-                callback && callback(this.discountedPrice);
+            response.text().then(text => {
+                let discount = parseInt(text);
+                if (this.discountPricePerItem != discount) {
+                    this.discountPricePerItem = discount;
+                    this.changed();
+                }
+                callback && callback(this.discountPricePerItem);
             });
         });
 

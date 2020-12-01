@@ -10,6 +10,7 @@ class TriggeredLabelControl<T extends Trigger<any>> extends TriggeredUIControl<T
     constructor(trigger: T, getter: () => any) {
         super(trigger);
         this.getter = getter;
+        setTimeout(this.update, 100);
         this.update();
     }
 
@@ -24,7 +25,7 @@ class TriggeredLabelControl<T extends Trigger<any>> extends TriggeredUIControl<T
         } catch (e){}
 
         if (value != null){
-            this.setValue(value.toLocaleString());
+            this.setValue(value.toString());
         }
     }
 

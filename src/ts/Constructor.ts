@@ -44,6 +44,11 @@ class Constructor extends View<Constructor> {
     static instance: Constructor;
     private static zoomStep: number = 0.05;
 
+    static onReadyHandler = () => true;
+    static onReady(handler: () => any){
+        Constructor.onReadyHandler = handler();
+    }
+
     /**
      * Create new {@link Constructor} instance for an {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement|HTMLElement}
      * ```
@@ -85,6 +90,7 @@ class Constructor extends View<Constructor> {
             this.addSide(width, height);
         }
         this.preview.hide();
+        Constructor.onReadyHandler && Constructor.onReadyHandler();
         // this.background = this.container.style.background;
         // this.container.style.background = null;
         // console.log("Constructor.version: ", Constructor.version);

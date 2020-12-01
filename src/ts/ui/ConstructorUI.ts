@@ -17,18 +17,23 @@ class ConstructorUI extends UIControl {
     toolBar: ToolBar;
     topBar: TopBar;
     bottomBar: BottomBar;
-    orderPopover: Popover;
+    addToCartPopover: AddToCartPopover;
     sharePopover: SharePopover;
 
     options: pechat.Options;
+    order: Order;
 
     static instance: ConstructorUI;
     static test = ConstructorUI.init();
 
-    order: Order = new Order();
 
     getClassName(): string {
         return "constructor-ui-container";
+    }
+
+    static onReadyHandler = () => true;
+    static onReady(handler: () => any){
+        Constructor.onReadyHandler = handler();
     }
 
     private constructor() {
@@ -47,77 +52,16 @@ class ConstructorUI extends UIControl {
             return;
         }
 
+        this.order = new Order();
+
         this.constructorControl = new ConstructorController();
         this.toolBar = new ToolBar();
         this.sidePanel = new SidePanel();
         this.sideBar = new SideBar();
         this.topBar = new TopBar();
         this.bottomBar = new BottomBar();
-        this.orderPopover = new Popover(
-            new Row(
-                new Spacer(),
-                new LabelControl("Add to Cart").addClass("title"),
-                new Spacer(),
-            ),
-            new Row(
-                new LabelControl("Quantity"),
-                new Spacer(),
-                new ConditionalButton(
-                    () => this.order.decrementQuantity(),
-                    () => this.order.getQuantity() > 1,
-                    Icon.MINUS_CIRCLE,
-                    null,
-                    this.order
-                ),
-                new Button(
-                    () => this.order.incrementQuantity(),
-                    Icon.PLUS_CIRCLE,
-                ),
-                new NumberInputControl(
-                    v => this.order.setQuantity(v),
-                    () => this.order.getQuantity(),
-                    this.order
-                ),
-            ),
-            new Row(
-                new LabelControl("Price"),
-                new Spacer(),
-                new TriggeredLabelControl(
-                    this.order,
-                    () => this.order.getPrice()
-                ),
-            ),
-            new Row(
-                new LabelControl("Discounted Price"),
-                new Spacer(),
-                new TriggeredLabelControl(
-                    this.order,
-                    () => this.order.getDiscountPrice()
-                ).addClass('discount'),
-            ).showWhen(this.order, () => this.order.getDiscountPrice() != this.order.getPrice()),
-            new Row(),
-            new Row(
-                new Spacer(),
-                new Button(
-                    () => this.orderPopover.hide(),
-                    null,
-                    "Cancel"
-                ),
-                new Spacer(),
-                new Spacer(),
-                new Button(
-                    () => {
-                        this.order.addToCart();
-                        this.orderPopover.hide();
-                    },
-                    null,
-                    "OK"
-                ),
-                new Spacer(),
-            )
-        );
-
         this.sharePopover = new SharePopover();
+        this.addToCartPopover = new AddToCartPopover();
 
         this.append(
             this.constructorControl,
@@ -126,8 +70,8 @@ class ConstructorUI extends UIControl {
             this.sideBar,
             this.topBar,
             this.bottomBar,
-            this.orderPopover,
             this.sharePopover,
+            this.addToCartPopover,
         );
 
         host.appendChild(this.container);
@@ -148,6 +92,8 @@ class ConstructorUI extends UIControl {
                 window.scrollTo(0, 0);
             }, 0);
         });
+
+        Constructor.onReadyHandler && Constructor.onReadyHandler();
 
     }
 
