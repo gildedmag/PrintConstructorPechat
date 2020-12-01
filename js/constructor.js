@@ -183,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "29.11.2020 22:50";
+    Version.version = "30.11.2020 17:37";
     return Version;
 }());
 var Trigger = (function () {
@@ -3628,7 +3628,7 @@ var Side2D = (function (_super) {
         _this.width = width;
         _this.height = height;
         _this.name = name;
-        _this.price = price;
+        _this.price = parseInt(price) || 0;
         _this.canvasElement = document.createElement(Constants.CANVAS);
         _this.container.appendChild(_this.canvasElement);
         _this.canvas = new fabric.Canvas(_this.canvasElement, null);
@@ -4041,7 +4041,19 @@ var UIControl = (function (_super) {
     UIControl.prototype.getId = function () {
         return this.id;
     };
+    UIControl.prototype.showWhen = function (trigger, condition) {
+        var _this = this;
+        trigger.onChange(function () { return _this.update(); }, this);
+        this.showCondition = condition;
+        return this;
+    };
     UIControl.prototype.update = function () {
+        if (this.showCondition && this.showCondition()) {
+            this.show();
+        }
+        else if (this.showCondition && !this.showCondition()) {
+            this.hide();
+        }
     };
     UIControl.prototype.getElement = function () {
         return this.container;
@@ -4234,7 +4246,7 @@ var ConstructorUI = (function (_super) {
         _this.sideBar = new SideBar();
         _this.topBar = new TopBar();
         _this.bottomBar = new BottomBar();
-        _this.orderPopover = new Popover(new Row(new Spacer(), new LabelControl("Add to Cart").addClass("title"), new Spacer()), new Row(new LabelControl("Quantity"), new Spacer(), new ConditionalButton(function () { return _this.order.decrementQuantity(); }, function () { return _this.order.getQuantity() > 1; }, Icon.MINUS_CIRCLE, null, _this.order), new Button(function () { return _this.order.incrementQuantity(); }, Icon.PLUS_CIRCLE), new NumberInputControl(function (v) { return _this.order.setQuantity(v); }, function () { return _this.order.getQuantity(); }, _this.order)), new Row(new LabelControl("Price"), new Spacer(), new TriggeredLabelControl(_this.order, function () { return _this.order.getPrice(); })), new Row(new LabelControl("Discounted Price"), new Spacer(), new TriggeredLabelControl(_this.order, function () { return _this.order.discountedPrice; })), new Row(), new Row(new Spacer(), new Button(function () { return _this.orderPopover.hide(); }, null, "Cancel"), new Spacer(), new Spacer(), new Button(function () {
+        _this.orderPopover = new Popover(new Row(new Spacer(), new LabelControl("Add to Cart").addClass("title"), new Spacer()), new Row(new LabelControl("Quantity"), new Spacer(), new ConditionalButton(function () { return _this.order.decrementQuantity(); }, function () { return _this.order.getQuantity() > 1; }, Icon.MINUS_CIRCLE, null, _this.order), new Button(function () { return _this.order.incrementQuantity(); }, Icon.PLUS_CIRCLE), new NumberInputControl(function (v) { return _this.order.setQuantity(v); }, function () { return _this.order.getQuantity(); }, _this.order)), new Row(new LabelControl("Price"), new Spacer(), new TriggeredLabelControl(_this.order, function () { return _this.order.getPrice(); })), new Row(new LabelControl("Discounted Price"), new Spacer(), new TriggeredLabelControl(_this.order, function () { return _this.order.getDiscountPrice(); }).addClass('discount')).showWhen(_this.order, function () { return _this.order.getDiscountPrice() != _this.order.getPrice(); }), new Row(), new Row(new Spacer(), new Button(function () { return _this.orderPopover.hide(); }, null, "Cancel"), new Spacer(), new Spacer(), new Button(function () {
             _this.order.addToCart();
             _this.orderPopover.hide();
         }, null, "OK"), new Spacer()));
@@ -4482,6 +4494,25 @@ var Row = (function (_super) {
     };
     return Row;
 }(UIControl));
+var SharePopover = (function (_super) {
+    __extends(SharePopover, _super);
+    function SharePopover() {
+        return _super.call(this) || this;
+    }
+    SharePopover.prototype.update = function () {
+        var _this = this;
+        this.frame.clear();
+        this.frame.append(new Row(new Spacer(), new LabelControl("Share as Link").addClass("title"), new Spacer()), new Row(new LabelControl("https://pechat.photo/create_constructor?url=" + this.link)
+            .allowUserSelect()), new Row(new Spacer(), new Button(function () {
+            _this.hide();
+        }, null, "OK"), new Spacer()));
+    };
+    SharePopover.prototype.setValue = function (link) {
+        this.link = link;
+        this.update();
+    };
+    return SharePopover;
+}(Popover));
 var Spacer = (function (_super) {
     __extends(Spacer, _super);
     function Spacer() {
@@ -5536,6 +5567,96 @@ var SidePanel = (function (_super) {
     };
     return SidePanel;
 }(ToolBar));
+var OptionButton = (function (_super) {
+    __extends(OptionButton, _super);
+    function OptionButton(value, parent) {
+        var _this = _super.call(this, function () { return parent.selectOption(_this); }, function () { return ConstructorUI.instance.order.hasOption(value); }, null, null, null, null, ConstructorUI.instance.order) || this;
+        _this.parent = parent;
+        _this.value = value;
+        _this.append(new IconControl(Icon.SQUARE)
+            .setColor(value.constructor_value), new LabelControl(value.name), new Spacer(), new LabelControl(value.priceText));
+        _this.addClass("row");
+        _this.enabledCheck = function () {
+            if (_this.isSelected() || !_this.value.option_s || _this.value.option_s.length == 0 || ConstructorUI.instance.order.selectedOptions.length == 0) {
+                return true;
+            }
+            if (ConstructorUI.instance.order.selectedOptions.length == 1 && ConstructorUI.instance.order.selectedOptions[0].option_id == _this.value.option_id) {
+                return true;
+            }
+            var compatibleOptionIds = {};
+            for (var i = 0; i < _this.value.option_s.length; i++) {
+                var compatibleOptionId = _this.value.option_s[i].option_value_relation_id;
+                compatibleOptionIds[compatibleOptionId] = true;
+            }
+            for (var j = 0; j < ConstructorUI.instance.order.selectedOptions.length; j++) {
+                var selectedOption = ConstructorUI.instance.order.selectedOptions[j];
+                if (selectedOption.option_id != _this.value.option_id) {
+                    if (!compatibleOptionIds[selectedOption.id]) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        };
+        return _this;
+    }
+    OptionButton.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " ";
+    };
+    OptionButton.prototype.isSelected = function () {
+        return this.parent.selection === this;
+    };
+    return OptionButton;
+}(ToggleButton));
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
+var OptionGroupPanel = (function (_super) {
+    __extends(OptionGroupPanel, _super);
+    function OptionGroupPanel(option) {
+        var _this = _super.call(this) || this;
+        _this.values = [];
+        _this.option = option;
+        _this.append(new Row(new Spacer()), new Row(new Spacer(), new LabelControl(option.name).addClass("bold"), new Spacer()));
+        return _this;
+    }
+    OptionGroupPanel.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " options-group vertical";
+    };
+    OptionGroupPanel.prototype.selectOption = function (optionButton) {
+        var _a, _b;
+        var fillsArray;
+        if (optionButton.value.zalivka) {
+            fillsArray = optionButton.value.zalivka.split(',').map(function (s) { return parseInt(s); });
+            (_a = Constructor.instance.preview).setFills.apply(_a, __spreadArrays([null], fillsArray));
+        }
+        if (this.selection) {
+            ConstructorUI.instance.order.removeSelectedOption(this.selection.value);
+            if (this.selection == optionButton) {
+                this.selection = null;
+                if (optionButton.value.zalivka) {
+                    Constructor.instance.preview.clearFills();
+                }
+                return;
+            }
+        }
+        this.selection = optionButton;
+        ConstructorUI.instance.order.addSelectedOption(optionButton.value);
+        if (optionButton.value.zalivka) {
+            (_b = Constructor.instance.preview).setFills.apply(_b, __spreadArrays([optionButton.value.constructor_value], fillsArray));
+        }
+    };
+    OptionGroupPanel.prototype.addOption = function (option) {
+        var optionButton = new OptionButton(option, this);
+        this.values.push(optionButton);
+        this.append(optionButton);
+    };
+    return OptionGroupPanel;
+}(UIControl));
 var Order = (function (_super) {
     __extends(Order, _super);
     function Order() {
@@ -5701,7 +5822,7 @@ var Order = (function (_super) {
     Order.prototype.getOptionsPrice = function () {
         var price = 0;
         this.selectedOptions.forEach(function (option) {
-            price += parseInt(option.price);
+            price += parseInt(option.price) || 0;
         });
         return price;
     };
@@ -5711,6 +5832,9 @@ var Order = (function (_super) {
             price += side.getTotalPrice();
         });
         return price;
+    };
+    Order.prototype.getDiscountPrice = function () {
+        return (this.discountedPrice * this.quantity) || this.getPrice();
     };
     Order.prototype.updateDiscount = function (callback) {
         var _this = this;
@@ -5910,104 +6034,4 @@ var TopBar = (function (_super) {
     };
     return TopBar;
 }(TriggeredToolBar));
-var SharePopover = (function (_super) {
-    __extends(SharePopover, _super);
-    function SharePopover() {
-        return _super.call(this) || this;
-    }
-    SharePopover.prototype.update = function () {
-        var _this = this;
-        this.frame.clear();
-        this.frame.append(new Row(new Spacer(), new LabelControl("Share as Link").addClass("title"), new Spacer()), new Row(new LabelControl("https://pechat.photo/create_constructor?url=" + this.link)
-            .allowUserSelect()), new Row(new Spacer(), new Button(function () {
-            _this.hide();
-        }, null, "OK"), new Spacer()));
-    };
-    SharePopover.prototype.setValue = function (link) {
-        this.link = link;
-        this.update();
-    };
-    return SharePopover;
-}(Popover));
-var OptionButton = (function (_super) {
-    __extends(OptionButton, _super);
-    function OptionButton(value, parent) {
-        var _this = _super.call(this, function () { return parent.selectOption(_this); }, function () { return ConstructorUI.instance.order.hasOption(value); }, null, null, null, null, ConstructorUI.instance.order) || this;
-        _this.parent = parent;
-        _this.value = value;
-        _this.append(new IconControl(Icon.SQUARE)
-            .setColor(value.constructor_value), new LabelControl(value.name), new Spacer(), new LabelControl(value.priceText));
-        _this.addClass("row");
-        _this.enabledCheck = function () {
-            if (_this.isSelected() || !_this.value.option_s || _this.value.option_s.length == 0 || ConstructorUI.instance.order.selectedOptions.length == 0) {
-                return true;
-            }
-            if (ConstructorUI.instance.order.selectedOptions.length == 1 && ConstructorUI.instance.order.selectedOptions[0].option_id == _this.value.option_id) {
-                return true;
-            }
-            var compatibleOptionIds = {};
-            for (var i = 0; i < _this.value.option_s.length; i++) {
-                var compatibleOptionId = _this.value.option_s[i].option_value_relation_id;
-                compatibleOptionIds[compatibleOptionId] = true;
-            }
-            for (var j = 0; j < ConstructorUI.instance.order.selectedOptions.length; j++) {
-                var selectedOption = ConstructorUI.instance.order.selectedOptions[j];
-                if (selectedOption.option_id != _this.value.option_id) {
-                    if (!compatibleOptionIds[selectedOption.id]) {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        };
-        return _this;
-    }
-    OptionButton.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " ";
-    };
-    OptionButton.prototype.isSelected = function () {
-        return this.parent.selection === this;
-    };
-    return OptionButton;
-}(ToggleButton));
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
-};
-var OptionGroupPanel = (function (_super) {
-    __extends(OptionGroupPanel, _super);
-    function OptionGroupPanel(option) {
-        var _this = _super.call(this) || this;
-        _this.values = [];
-        _this.option = option;
-        _this.append(new Row(new Spacer()), new Row(new Spacer(), new LabelControl(option.name).addClass("bold"), new Spacer()));
-        return _this;
-    }
-    OptionGroupPanel.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " options-group vertical";
-    };
-    OptionGroupPanel.prototype.selectOption = function (optionButton) {
-        var _a;
-        if (this.selection) {
-            ConstructorUI.instance.order.removeSelectedOption(this.selection.value);
-            if (this.selection == optionButton) {
-                this.selection = null;
-                return;
-            }
-        }
-        this.selection = optionButton;
-        ConstructorUI.instance.order.addSelectedOption(optionButton.value);
-        var array = optionButton.value.zalivka.split(',').map(function (s) { return parseInt(s); });
-        (_a = Constructor.instance.preview).setFills.apply(_a, __spreadArrays([optionButton.value.constructor_value], array));
-    };
-    OptionGroupPanel.prototype.addOption = function (option) {
-        var optionButton = new OptionButton(option, this);
-        this.values.push(optionButton);
-        this.append(optionButton);
-    };
-    return OptionGroupPanel;
-}(UIControl));
 //# sourceMappingURL=constructor.js.map

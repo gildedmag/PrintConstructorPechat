@@ -40,6 +40,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
      * @param {number} height side height in centimeters
      * @param {number} roundCorners round corners in percents
      * @param name
+     * @param price
      */
     constructor(htmlElement: HTMLElement, width: number, height: number, roundCorners?: number, name?: string, price?: number) {
         super(htmlElement);
@@ -48,7 +49,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         this.width = width;
         this.height = height;
         this.name = name;
-        this.price = price;
+        this.price = parseInt(price) || 0;
         this.canvasElement = document.createElement(Constants.CANVAS);
         this.container.appendChild(this.canvasElement);
         this.canvas = new fabric.Canvas(this.canvasElement, null);

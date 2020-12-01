@@ -107,6 +107,10 @@ body {
             "sidebar sidepanel bottombar";
 }
 
+.control.discount {
+    color: red;
+}
+
 .constructor-ui-container.collapsed {
     grid-template-columns: auto 0 1fr;
     grid-template-areas:

@@ -6,6 +6,7 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
 
     c: Constructor;
     children: UIControl[] = [];
+    showCondition: () => boolean;
     readonly id: number;
 
     static nextId = 0;
@@ -18,7 +19,18 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
         return this.id;
     }
 
+    showWhen(trigger: Trigger<any>, condition: () => boolean) {
+        trigger.onChange(() => this.update(), this);
+        this.showCondition = condition;
+        return this;
+    }
+
     update() {
+        if (this.showCondition && this.showCondition()){
+            this.show();
+        } else if (this.showCondition && !this.showCondition()){
+            this.hide();
+        }
     }
 
     getElement(): HTMLElement {

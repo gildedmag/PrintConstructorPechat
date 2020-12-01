@@ -213,17 +213,21 @@ class Order extends Trigger<Order> {
     getOptionsPrice(): number {
         let price: number = 0;
         this.selectedOptions.forEach(option => {
-            price += parseInt(option.price);
+            price += parseInt(option.price) || 0;
         });
         return price;
     }
 
-    getSidePrice():number {
-        let price = 0;
+    getSidePrice(): number {
+        let price: number = 0;
         Constructor.instance.sides.forEach(side => {
             price += side.getTotalPrice();
         });
         return price;
+    }
+
+    getDiscountPrice(): number {
+        return (this.discountedPrice * this.quantity) || this.getPrice() ;
     }
 
     updateDiscount(callback?: (number) => any) {

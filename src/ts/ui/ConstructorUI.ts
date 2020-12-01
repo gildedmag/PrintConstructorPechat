@@ -92,9 +92,9 @@ class ConstructorUI extends UIControl {
                 new Spacer(),
                 new TriggeredLabelControl(
                     this.order,
-                    () => this.order.discountedPrice
-                ),
-            ),
+                    () => this.order.getDiscountPrice()
+                ).addClass('discount'),
+            ).showWhen(this.order, () => this.order.getDiscountPrice() != this.order.getPrice()),
             new Row(),
             new Row(
                 new Spacer(),

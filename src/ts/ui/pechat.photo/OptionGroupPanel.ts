@@ -28,18 +28,27 @@ class OptionGroupPanel extends UIControl {
     }
 
     selectOption(optionButton: OptionButton) {
+        let fillsArray: number[];
+        if (optionButton.value.zalivka) {
+            fillsArray = optionButton.value.zalivka.split(',').map(s => parseInt(s));
+            Constructor.instance.preview.setFills(null, ...fillsArray);
+        }
         if (this.selection) {
             ConstructorUI.instance.order.removeSelectedOption(this.selection.value);
-            if (this.selection == optionButton){
+            if (this.selection == optionButton) {
                 this.selection = null;
+                if (optionButton.value.zalivka) {
+                    Constructor.instance.preview.clearFills();
+                }
                 return;
             }
         }
         this.selection = optionButton;
         ConstructorUI.instance.order.addSelectedOption(optionButton.value);
-        //Constructor.instance.preview.clearFills();
-        let array = optionButton.value.zalivka.split(',').map(s => parseInt(s));
-        Constructor.instance.preview.setFills(optionButton.value.constructor_value, ...array);
+
+        if (optionButton.value.zalivka) {
+            Constructor.instance.preview.setFills(optionButton.value.constructor_value, ...fillsArray);
+        }
     }
 
     addOption(option: ConstructorModelOption) {
