@@ -117,7 +117,11 @@ class ConstructorUI extends UIControl {
 
                 if (!c.preview.modelName) {
                     this.loadModelOptions(model, options);
-                    c.loadModel(model.file_main);
+                    try {
+                        c.loadModel(model.file_main, null, error => alert(error));
+                    } catch (e) {
+                        alert(e.message);
+                    }
                 }
 
                 let url = model.thumb;
@@ -184,6 +188,8 @@ class ConstructorUI extends UIControl {
                 this.sidePanel.optionsPanel.append(groupPanel);
             }
         })
+
+        ConstructorUI.instance.order.changed();
     }
 
     bindDelKey() {

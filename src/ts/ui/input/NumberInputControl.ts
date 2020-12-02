@@ -17,7 +17,7 @@ class NumberInputControl<T extends Trigger<any>> extends InputControl<T> {
                     this.container.value = this.container.value.substring(0, this.container.value.length - inputEvent.data.length)
                 }
             }
-            if (!this.container.value || this.container.value === '0'){
+            if (this.container.value === '0'){
                 this.container.value = 1;
             }
             if (parseInt(this.container.value) > NumberInputControl.max){

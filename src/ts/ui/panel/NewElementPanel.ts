@@ -61,14 +61,6 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                         });
                     });
 
-
-                    // fetch(ConstructorUI.instance.domain + 'index.php?route=tool/upload', {
-                    //     method: 'POST',
-                    //     //headers: new Headers({'content-type': 'multipart/form-data'}),
-                    //     body: body
-                    // }).then(response => {
-                    //     response.text().then(res => console.log(res));
-                    // })
                 }
                 reader.readAsDataURL(files[0]);
             }

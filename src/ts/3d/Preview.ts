@@ -108,10 +108,13 @@ class Preview extends View<Preview> {
 
     }
 
-    loadModel(modelName: string, callback?: () => void) {
+    loadModel(modelName: string, callback?: () => void, error?: (string) => void) {
         Constructor.instance.spinner.show();
         this.modelName = modelName;
-        Preview.objectLoader.manager.onError = () => Constructor.instance.spinner.hide();
+        Preview.objectLoader.manager.onError = () => {
+            Constructor.instance.spinner.hide();
+            error && error("Failed to load model: " + modelName);
+        };
         Preview.objectLoader.load(Constructor.settings.urls.models + this.modelName + Constructor.settings.fileExtensions.model, object => {
             this.setScene(object as THREE.Scene);
             Constructor.instance.spinner.hide();

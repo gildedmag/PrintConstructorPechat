@@ -112,6 +112,11 @@ body {
     font-weight: bold;
 }
 
+.control.price-without-discount {
+    color: #aaa;
+    text-decoration: line-through;
+}
+
 .constructor-ui-container.collapsed {
     grid-template-columns: auto 0 1fr;
     grid-template-areas:

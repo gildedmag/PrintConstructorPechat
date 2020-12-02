@@ -54,6 +54,8 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
         if (scroll){
             this.container.parentElement.parentElement.scrollTop = scroll;
         }
+
+        ConstructorUI.instance.order.changed();
     }
 
     // fixOrder() {

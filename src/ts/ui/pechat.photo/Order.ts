@@ -111,7 +111,7 @@ class Order extends Trigger<Order> {
         return false;
     }
 
-    addToCart() { //this legacy code comes partially from original php page
+    addToCart() {
         let c = Constructor.instance;
 
         let stateJson = c.getState();
@@ -223,7 +223,7 @@ class Order extends Trigger<Order> {
     }
 
 
-    updateDiscount(callback?: (number) => any) {
+    updateDiscount() {
         let body = Utils.toUrlParameters({
             constructor_model_id: this.model.constructor_model_id,
             quantity: this.quantity,
@@ -243,7 +243,6 @@ class Order extends Trigger<Order> {
                     this.discountPricePerItem = discount;
                     this.changed();
                 }
-                callback && callback(this.discountPricePerItem);
             });
         });
 

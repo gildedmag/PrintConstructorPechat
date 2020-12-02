@@ -91,28 +91,29 @@ class Constructor extends View<Constructor> {
         }
         this.preview.hide();
         Constructor.onReadyHandler && Constructor.onReadyHandler();
-        // this.background = this.container.style.background;
-        // this.container.style.background = null;
-        // console.log("Constructor.version: ", Constructor.version);
-        // console.log("fabric.js.version: ", fabric.version);
-        // window.addEventListener("resize", function () {
-        //     Constructor.instance.preview.autoSize();
-        //     Constructor.instance.spinner.update();
-        //     let div = container as HTMLDivElement;
-        //     Constructor.instance.zoomToFit();
-        //     //if (div.scrollWidth > div.clientWidth || div.scrollHeight > div.clientHeight) {
-        //     //}
-        // })
+        this.background = this.container.style.background;
+        this.container.style.background = null;
+        console.log("Constructor.version: ", Constructor.version);
+        console.log("fabric.js.version: ", fabric.version);
+        window.addEventListener("resize", function () {
+            Constructor.instance.preview.autoSize();
+            Constructor.instance.spinner.update();
+            let div = container as HTMLDivElement;
+            Constructor.instance.zoomToFit();
+            //if (div.scrollWidth > div.clientWidth || div.scrollHeight > div.clientHeight) {
+            //}
+        })
     }
 
     /**
      * Load 3D model with print areas and fill area from default models path, {@link Settings}
      * @param {string} modelName
      * @param {function} callback
+     * @param error
      */
-    loadModel(modelName: string, callback?: () => void) {
+    loadModel(modelName: string, callback?: () => void, error?: (string) => void) {
         Utils.logMethodName();
-        this.preview.loadModel(modelName, callback);
+        this.preview.loadModel(modelName, callback, error);
     }
 
     addSide(width: number, height: number, roundCorners?: number, name?: string, price?: number): Side2D {
