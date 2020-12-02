@@ -183,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "02.12.2020 10:32";
+    Version.version = "02.12.2020 18:11";
     return Version;
 }());
 var Trigger = (function () {
@@ -5818,7 +5818,6 @@ var Order = (function (_super) {
         this.selectedOptions.forEach(function (option) {
             optionsEncoded += "+++++" + option.id;
         });
-        this.changed();
         var body = Utils.toUrlParameters({
             json: stateJson,
             animation: stateJson,
@@ -5912,9 +5911,9 @@ var Order = (function (_super) {
             body: body
         }).then(function (response) {
             response.text().then(function (text) {
-                var discount = parseInt(text);
-                if (_this.discountPricePerItem != discount) {
-                    _this.discountPricePerItem = discount;
+                var discountPrice = parseInt(text);
+                if (_this.discountPricePerItem != discountPrice) {
+                    _this.discountPricePerItem = discountPrice;
                     _this.changed();
                 }
             });
