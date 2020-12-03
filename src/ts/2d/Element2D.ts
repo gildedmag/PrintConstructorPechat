@@ -359,7 +359,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         return this.isText() ? (this.object as fabric.IText).textAlign : null;
     }
 
-    setLineHeight(value: number){
+    setLineHeight(value: number) {
         if (this.isText()) {
             (this.object as fabric.IText).lineHeight = value;
             this.side.canvas.renderAll();
@@ -371,7 +371,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         return this.isText() ? (this.object as fabric.IText).lineHeight : null;
     }
 
-    setLetterSpacing(value: number){
+    setLetterSpacing(value: number) {
         if (this.isText()) {
             (this.object as fabric.IText).charSpacing = value;
             this.side.canvas.renderAll();

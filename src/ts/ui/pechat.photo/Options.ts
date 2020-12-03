@@ -27,6 +27,7 @@ declare module pechat {
         category_id: string;
         constructor_model_id: string;
         constructor_model_option: ConstructorModelOption[];
+        constructor_model_require: {}
         constructor_setting: any[];
         date_added: string;
         description: string;

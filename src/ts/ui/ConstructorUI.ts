@@ -18,7 +18,6 @@ class ConstructorUI extends UIControl {
     topBar: TopBar;
     bottomBar: BottomBar;
     addToCartPopover: AddToCartPopover;
-    sharePopover: SharePopover;
 
     options: pechat.Options;
     order: Order;
@@ -32,7 +31,8 @@ class ConstructorUI extends UIControl {
     }
 
     static onReadyHandler = () => true;
-    static onReady(handler: () => any){
+
+    static onReady(handler: () => any) {
         Constructor.onReadyHandler = handler();
     }
 
@@ -60,7 +60,6 @@ class ConstructorUI extends UIControl {
         this.sideBar = new SideBar();
         this.topBar = new TopBar();
         this.bottomBar = new BottomBar();
-        this.sharePopover = new SharePopover();
         this.addToCartPopover = new AddToCartPopover();
 
         this.append(
@@ -70,7 +69,6 @@ class ConstructorUI extends UIControl {
             this.sideBar,
             this.topBar,
             this.bottomBar,
-            this.sharePopover,
             this.addToCartPopover,
         );
 
@@ -118,7 +116,15 @@ class ConstructorUI extends UIControl {
                 if (!c.preview.modelName) {
                     this.loadModelOptions(model, options);
                     try {
-                        c.loadModel(model.file_main, null, error => alert(error));
+                        c.loadModel(
+                            model.file_main,
+                            () => {
+                                if (constructorConfiguration && constructorConfiguration.sharedState) {
+                                    c.setMode(Mode.Mode3D);
+                                }
+                            },
+                            error => alert(error)
+                        );
                     } catch (e) {
                         alert(e.message);
                     }
@@ -128,7 +134,11 @@ class ConstructorUI extends UIControl {
                 this.sidePanel.modelsPanel.append(
                     Button.of(
                         () => {
-                            c.loadModel(model.file_main);
+                            c.loadModel(model.file_main, () => {
+                                if (constructorConfiguration && constructorConfiguration.sharedState) {
+                                    c.setMode(Mode.Mode3D);
+                                }
+                            });
                             this.loadModelOptions(model, options);
                         },
                         new Row(
@@ -147,23 +157,39 @@ class ConstructorUI extends UIControl {
         })
     }
 
+    createSides(printareas: pechat.Printarea[]) {
+        Constructor.instance.deleteAllSides();
+        printareas.forEach(area => {
+            Constructor.instance.addSide(
+                area.width,
+                area.height,
+                parseInt(area.roundCorners),
+                area.name,
+                area.price
+            );
+            Constructor.instance.zoomToFit();
+        });
+    }
+
     loadModelOptions(model: ConstructorModel, options: Options) {
         console.log(model);
-        let group = "";
         this.sidePanel.optionsPanel.clear();
 
-        if (!constructorConfiguration || !constructorConfiguration.state){
-            Constructor.instance.deleteAllSides();
-            model.printareas.forEach(area => {
-                Constructor.instance.addSide(
-                    area.width,
-                    area.height,
-                    parseInt(area.roundCorners),
-                    area.name,
-                    area.price
-                );
-                Constructor.instance.zoomToFit();
-            });
+        if (!constructorConfiguration || !constructorConfiguration.sharedState) {
+            if (Constructor.instance.sides.length != model.printareas.length) {
+                this.createSides(model.printareas);
+            }
+            for (var i = 0; i < Constructor.instance.sides.length; i++) {
+                let side = Constructor.instance.sides[i];
+                let area = model.printareas[i];
+                if (side.width != area.width || side.height != area.height) {
+                    this.createSides(model.printareas);
+                    break;
+                }
+                side.price = parseInt(area.price) || 0;
+                side.name = area.name;
+            }
+
         }
 
         this.order.setModel(model);
@@ -177,14 +203,14 @@ class ConstructorUI extends UIControl {
 
         model.constructor_model_option.forEach(option => {
             groupPanels.forEach(groupPanel => {
-                if (option.namegroup == groupPanel.option.name){
+                if (option.namegroup == groupPanel.option.name) {
                     groupPanel.addOption(option);
                 }
             })
         })
 
         groupPanels.forEach(groupPanel => {
-            if (groupPanel.values.length > 0){
+            if (groupPanel.values.length > 0) {
                 this.sidePanel.optionsPanel.append(groupPanel);
             }
         })
@@ -194,11 +220,13 @@ class ConstructorUI extends UIControl {
 
     bindDelKey() {
         document.addEventListener("keydown", e => {
-            if (e.keyCode == 46) {
+            if (e.keyCode == 46 && (!Popover.instance || !Popover.instance.isVisible())) {
                 let selection = Constructor.instance.getSelection();
                 if (selection && !selection.isEditing()) {
                     selection.remove();
                 }
+            } else if (e.keyCode == 27) {
+                Popover.instance.hide();
             }
         }, false);
     }

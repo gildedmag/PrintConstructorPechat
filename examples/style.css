@@ -274,8 +274,8 @@ body {
     font-size: 18px;
 }
 
-.control.button .label {
-    color: #00b0e8 !important;
+.control.popover .control.button .label {
+    color: #00b0e8;
 }
 
 .control.popover > .control > .control.row {
@@ -441,7 +441,7 @@ body {
     background: #444;
 }
 
-.control.button .label {
+.control.button .label, .control.button .icon {
     margin-left: 8px;
 }
 
@@ -475,7 +475,7 @@ input[type="color"] {
     color: #aaa;
 }
 
-.toolbar.top .toggle.active, .toolbar.bottom .toggle.active, .control.button.toggle.active .label {
+.toolbar.top .toggle.active, .toolbar.bottom .toggle.active {
     color: #000;
 }
 

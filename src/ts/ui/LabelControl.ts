@@ -7,11 +7,11 @@ class LabelControl extends UIControl {
 
     constructor(value?: string) {
         super();
-        this.container.innerText = (value || "");
+        this.container.innerHTML = (value || "");
     }
 
     setValue(value: string){
-        this.container.innerText = value;
+        this.container.innerHTML = value;
     }
 
 }

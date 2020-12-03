@@ -38,7 +38,7 @@ class SidePanel extends ToolBar {
         );
 
         this.container.onclick = e => {
-            if (e.target === this.container){
+            if (Constructor.instance && e.target === this.container){
                 Constructor.instance.getActiveSide().deselect();
             }
         }

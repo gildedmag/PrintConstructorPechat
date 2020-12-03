@@ -9,9 +9,11 @@ class ConstructorController extends UIControl {
     constructor() {
         super();
 
-        let state = constructorConfiguration && constructorConfiguration.sharedState;
-        if (state) {
-            this.c = new Constructor(this.container, state);
+        let sharedState = constructorConfiguration && constructorConfiguration.sharedState;
+        let categoryId = constructorConfiguration.categoryId;
+
+        if (sharedState) {
+            this.c = new Constructor(this.container, sharedState);
         } else {
             this.c = new Constructor(this.container);
         }

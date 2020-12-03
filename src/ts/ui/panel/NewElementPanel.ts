@@ -85,9 +85,9 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
             new Row(
                 new ConditionalButton(
                     () => this.c.getActiveSide().clear(),
-                    () => !this.c.getActiveSide().isEmpty(),
+                    () => !this.c.getActiveSide() || !this.c.getActiveSide().isEmpty(),
                     null,
-                    "Clear All"
+                    "Clear Side"
                 )
             )
         );

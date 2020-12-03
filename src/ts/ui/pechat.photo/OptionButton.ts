@@ -34,11 +34,11 @@ class OptionButton extends ToggleButton {
         this.addClass("row");
 
         this.enabledCheck = () => {
-            if (this.isSelected() || !this.value.option_s || this.value.option_s.length == 0 || ConstructorUI.instance.order.selectedOptions.length == 0) {
+            if (this.isSelected() || ConstructorUI.instance.order.selectedOptions.length == 0) {
                 return true;
             }
 
-            if (ConstructorUI.instance.order.selectedOptions.length == 1 && ConstructorUI.instance.order.selectedOptions[0].option_id == this.value.option_id) {
+            if (ConstructorUI.instance.order.selectedOptions[0].option_id == this.value.option_id) {
                 return true;
             }
 

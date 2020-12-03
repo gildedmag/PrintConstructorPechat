@@ -2,13 +2,14 @@
 class Settings {
 
     debug = false;
+    createDefaultSide = (window.constructorConfiguration && window.constructorConfiguration.createDefaultSide) || false;
     ui = {
         layerIconSize: 38
     };
     urls = {
         textures: "textures/",
         maps: "textures/maps/",
-        models: window.constructorConfiguration && window.constructorConfiguration.modelsUrl || "models/",
+        models: (window.constructorConfiguration && window.constructorConfiguration.modelsUrl) || "models/",
         presets: "presets/"
     };
     fileExtensions = {
@@ -32,7 +33,7 @@ class Settings {
         },
         "i-text": {
             text: "Text",
-            fontSize: 25,
+            fontSize: 100,
             fontFamily: "Helvetica"
         }
     };

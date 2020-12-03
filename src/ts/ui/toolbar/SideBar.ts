@@ -54,7 +54,7 @@ class SideBar extends VerticalToolBarUIControl {
 
         );
         this.append(new Spacer());
-        this.hideOthers(this.c.getActiveSide().isEmpty() ? panel.newElementPanel : panel.layersPanel);
+        this.hideOthers(!this.c.getActiveSide() || this.c.getActiveSide().isEmpty() ? panel.newElementPanel : panel.layersPanel);
 
     }
 

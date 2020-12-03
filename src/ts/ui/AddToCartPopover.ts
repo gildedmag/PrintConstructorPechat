@@ -4,6 +4,8 @@ class AddToCartPopover extends Popover {
 
     constructor() {
         super(
+            null,
+            null,
             new Row(
                 new Spacer(),
                 new LabelControl("Add to Cart").addClass("title"),
@@ -84,6 +86,10 @@ class AddToCartPopover extends Popover {
 
     show() {
         ConstructorUI.instance.order.updateDiscount();
-        super.show();
+        if (ConstructorUI.instance.order.isValid()){
+            super.show();
+        } else {
+            this.hide();
+        }
     }
 }

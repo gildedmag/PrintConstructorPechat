@@ -102,6 +102,15 @@ class Order extends Trigger<Order> {
         return this.selectedOptions.indexOf(option) != -1;
     }
 
+    hasColorOption() {
+        for (let i = 0; i < this.selectedOptions.length; i++) {
+            if (this.selectedOptions[i].type == 'color') {
+                return true;
+            }
+        }
+        return false;
+    }
+
     hasOptionId(optionId: string) {
         for (let i = 0; i < this.selectedOptions.length; i++) {
             if (this.selectedOptions[i].id === optionId) {
@@ -109,6 +118,44 @@ class Order extends Trigger<Order> {
             }
         }
         return false;
+    }
+
+    hasGroupId(groupId: string) {
+        for (let i = 0; i < this.selectedOptions.length; i++) {
+            if (this.selectedOptions[i].option_id === groupId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    isValid(): boolean {
+        if (this.model.constructor_model_require) {
+            let keys = Object.keys(this.model.constructor_model_require);
+            main: for (let k = 0; k < keys.length; k++) {
+                let key = keys[k];
+
+                let color = false;
+                for (let i = 0; i < ConstructorUI.instance.options.options.length; i++) {
+                    let option = ConstructorUI.instance.options.options[i];
+                    if (option.option_id == key) {
+                        if (option.type == 'color' && this.hasColorOption()){
+                            color = true;
+                            continue main;
+                        }
+                    }
+                }
+
+                let value = this.model.constructor_model_require[key];
+
+                if (parseInt(value) != 0 && !this.hasGroupId(key)) {
+                    new Popover('Option required', 'Please select required options!');
+                    ConstructorUI.instance.sidePanel.optionsPanel.show();
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     addToCart() {
@@ -157,6 +204,7 @@ class Order extends Trigger<Order> {
         let headers = new Headers({'content-type': 'application/x-www-form-urlencoded'});
         let post = 'POST';
 
+        Constructor.instance.spinner.show();
         fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/add_product_by_constructor', {
             method: post,
             headers: headers,
@@ -180,12 +228,34 @@ class Order extends Trigger<Order> {
                         product_id: productId,
                         quantity: this.quantity
                     })
+                }).then(response => {
+                    response.json().then(result => {
+                        Constructor.instance.spinner.hide();
+                        console.log(result);
+                        fetch(window.location).then(
+                            response => response.text().then(html => {
+                                let dom = document.createElement('div');
+                                dom.innerHTML = html;
+                                let modals = dom.getElementsByClassName('modal');
+                                for (let i = 0; i < modals.length; i++) {
+                                    let modal = modals[i];
+                                    if (modal.id == 'cartModal') {
+                                        let cartModal = document.getElementById('cartModal');
+                                        cartModal.innerHTML = modal.innerHTML;
+                                    }
+                                }
+                            })
+                        );
+                        new Popover('Product added to cart', result.success);
+                    });
                 });
+
             });
         });
     }
 
     shareLink() {
+        Constructor.instance.spinner.show();
         let headers = new Headers({'content-type': 'application/x-www-form-urlencoded'});
         let post = 'POST';
         fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/get_url_post', {
@@ -198,10 +268,11 @@ class Order extends Trigger<Order> {
                 quantity: this.quantity
             })
         }).then(response => {
+            Constructor.instance.spinner.hide();
             response.json().then(link => {
                 console.log(link);
-                ConstructorUI.instance.sharePopover.setValue(link);
-                ConstructorUI.instance.sharePopover.show();
+                let url = ConstructorUI.instance.domain + '/create_constructor?url=' + link;
+                new Popover('Share as Link', url);
             });
         });
     }
@@ -209,7 +280,7 @@ class Order extends Trigger<Order> {
     getOptionsPrice(): number {
         let price: number = 0;
         this.selectedOptions.forEach(option => {
-            price += parseInt(option.price) || 0;
+            price += (parseInt(option.price) || 0);
         });
         return price;
     }

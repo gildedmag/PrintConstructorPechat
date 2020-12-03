@@ -85,7 +85,7 @@ class Constructor extends View<Constructor> {
                 console.error(e);
                 this.addSide(width, height);
             }
-        } else {
+        } else if(Constructor.settings.createDefaultSide) {
             console.log("this.container.clientWidth", this.container.clientWidth);
             this.addSide(width, height);
         }
@@ -220,7 +220,12 @@ class Constructor extends View<Constructor> {
         }
     }
 
+    private dummyElement = document.createElement('empty');
+
     getActiveSide(): Side2D {
+        if (!this.sides || this.sides.length == 0){
+            return new Side2D(this.dummyElement, 0, 0);
+        }
         return this.sides[this.activeSideIndex];
     }
 
@@ -345,6 +350,9 @@ class Constructor extends View<Constructor> {
     }
 
     getSelection(): Element2D {
+        if (this.sides.length == 0){
+            return null;
+        }
         return this.getActiveSide().selection;
     }
 
