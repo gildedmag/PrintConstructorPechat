@@ -180,7 +180,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "03.12.2020 19:01";
+    Version.version = "03.12.2020 19:04";
     return Version;
 }());
 var Trigger = (function () {
@@ -5899,7 +5899,6 @@ var Order = (function (_super) {
         this.selectedOptions.forEach(function (option) {
             optionsEncoded += "+++++" + option.id;
         });
-        this.changed();
         var body = Utils.toUrlParameters({
             json: stateJson,
             animation: stateJson,
@@ -6014,9 +6013,9 @@ var Order = (function (_super) {
             body: body
         }).then(function (response) {
             response.text().then(function (text) {
-                var discount = parseInt(text);
-                if (_this.discountPricePerItem != discount) {
-                    _this.discountPricePerItem = discount;
+                var discountPrice = parseInt(text);
+                if (_this.discountPricePerItem != discountPrice) {
+                    _this.discountPricePerItem = discountPrice;
                     _this.changed();
                 }
             });
