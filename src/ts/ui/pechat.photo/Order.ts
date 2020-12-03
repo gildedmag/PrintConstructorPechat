@@ -179,7 +179,6 @@ class Order extends Trigger<Order> {
         this.selectedOptions.forEach(option => {
             optionsEncoded += "+++++" + option.id;
         });
-        this.changed();
 
         let body = Utils.toUrlParameters({
             json: stateJson,
@@ -197,7 +196,6 @@ class Order extends Trigger<Order> {
             option: optionsEncoded,
             quantity: this.quantity
         });
-
 
         this.updateDiscount();
 
@@ -309,9 +307,9 @@ class Order extends Trigger<Order> {
             body: body
         }).then(response => {
             response.text().then(text => {
-                let discount = parseInt(text);
-                if (this.discountPricePerItem != discount) {
-                    this.discountPricePerItem = discount;
+                let discountPrice = parseInt(text);
+                if (this.discountPricePerItem != discountPrice) {
+                    this.discountPricePerItem = discountPrice;
                     this.changed();
                 }
             });
