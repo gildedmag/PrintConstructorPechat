@@ -4,10 +4,11 @@ class Order extends Trigger<Order> {
 
     static max = 999;
 
-    private model: pechat.ConstructorModel;
+    model: pechat.ConstructorModel;
     selectedOptions: pechat.ConstructorModelOption[] = [];
-    private quantity: number = 1;
+    quantity: number = 1;
     discountPricePerItem = 0;
+    samplesHtml: string = '';
 
     constructor() {
         super();
@@ -16,6 +17,10 @@ class Order extends Trigger<Order> {
 
     hasDiscount(): boolean {
         return this.discountPricePerItem && this.discountPricePerItem < this.getPricePerItem();
+    }
+
+    getDiscountPricePerItem() {
+        return this.discountPricePerItem;
     }
 
     getPricePerItem(): number {
@@ -43,6 +48,7 @@ class Order extends Trigger<Order> {
 
     setModel(model: pechat.ConstructorModel) {
         this.model = model;
+        this.updateSamples();
         this.changed();
     }
 
@@ -76,16 +82,30 @@ class Order extends Trigger<Order> {
     }
 
     addSelectedOption(value: pechat.ConstructorModelOption) {
+        for (let i = 0; i < this.selectedOptions.length; i++) {
+            let selectedOption = this.selectedOptions[i];
+            if (selectedOption.id == value.id){
+                return;
+            }
+            if (selectedOption.option_id == value.option_id){
+                this.removeSelectedOption(selectedOption);
+            }
+        }
         this.selectedOptions.push(value);
         this.changed();
     }
 
-    removeSelectedOption(value: pechat.ConstructorModelOption) {
-        let index = this.selectedOptions.indexOf(value);
-        if (index != -1) {
-            this.selectedOptions.splice(index, 1);
-            this.changed();
+    addSelectedOptionById(id: string | number) {
+        for (let i = 0; i < this.model.constructor_model_option.length; i++) {
+            let option = this.model.constructor_model_option[i];
+            if (option.id == id) {
+                this.addSelectedOption(option);
+            }
         }
+    }
+
+    removeSelectedOption(option: pechat.ConstructorModelOption) {
+        this.removeSelectedOptionId(option.id);
     }
 
     removeSelectedOptionId(optionId: string) {
@@ -98,10 +118,6 @@ class Order extends Trigger<Order> {
         }
     }
 
-    hasOption(option: ConstructorModelOption) {
-        return this.selectedOptions.indexOf(option) != -1;
-    }
-
     hasColorOption() {
         for (let i = 0; i < this.selectedOptions.length; i++) {
             if (this.selectedOptions[i].type == 'color') {
@@ -109,6 +125,10 @@ class Order extends Trigger<Order> {
             }
         }
         return false;
+    }
+
+    hasOption(option: ConstructorModelOption) {
+        return this.hasOptionId(option.id);
     }
 
     hasOptionId(optionId: string) {
@@ -139,7 +159,7 @@ class Order extends Trigger<Order> {
                 for (let i = 0; i < ConstructorUI.instance.options.options.length; i++) {
                     let option = ConstructorUI.instance.options.options[i];
                     if (option.option_id == key) {
-                        if (option.type == 'color' && this.hasColorOption()){
+                        if (option.type == 'color' && this.hasColorOption()) {
                             color = true;
                             continue main;
                         }
@@ -149,13 +169,30 @@ class Order extends Trigger<Order> {
                 let value = this.model.constructor_model_require[key];
 
                 if (parseInt(value) != 0 && !this.hasGroupId(key)) {
-                    new Popover('Option required', 'Please select required options!');
+                    new Popover('Option Required', 'Please select required options!');
                     ConstructorUI.instance.sidePanel.optionsPanel.show();
                     return false;
                 }
             }
         }
         return true;
+    }
+
+    updateSamples() {
+        fetch(ConstructorUI.instance.domain + '/index.php?route=constructor/constructor/get_add_img', {
+            method: 'POST',
+            headers: new Headers({'content-type': 'application/x-www-form-urlencoded'}),
+            body: Utils.toUrlParameters({
+                constructor_model_id: this.model.constructor_model_id
+            })
+        }).then(response => {
+            console.log(response);
+            response.text().then(html => {
+                console.log(html);
+                this.samplesHtml = html;
+                this.changed();
+            });
+        });
     }
 
     addToCart() {
@@ -183,7 +220,7 @@ class Order extends Trigger<Order> {
         let body = Utils.toUrlParameters({
             json: stateJson,
             animation: stateJson,
-            price: this.getPricePerItem(),
+            price: this.getDiscountPricePerItem(),
             priceOriginal: "0",
             category: this.model.category_id,
             constructor_model_id: constructor_model_id,

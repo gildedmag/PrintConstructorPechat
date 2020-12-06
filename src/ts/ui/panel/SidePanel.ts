@@ -6,6 +6,7 @@ class SidePanel extends ToolBar {
     selectionPanel: SelectionPanel;
     fontFamilyPanel: FontFamilyPanel;
     modelsPanel: ModelsPanel;
+    samplesPanel: SamplesPanel;
     optionsPanel: OptionsPanel;
     filtersPanel: FiltersPanel;
     sharePanel: ExportPanel;
@@ -22,6 +23,7 @@ class SidePanel extends ToolBar {
         this.newElementPanel = new NewElementPanel();
         this.fontFamilyPanel = new FontFamilyPanel();
         this.modelsPanel = new ModelsPanel();
+        this.samplesPanel = new SamplesPanel();
         this.optionsPanel = new OptionsPanel();
         this.filtersPanel = new FiltersPanel();
         this.sharePanel = new ExportPanel();
@@ -32,6 +34,7 @@ class SidePanel extends ToolBar {
             this.selectionPanel,
             this.fontFamilyPanel,
             this.modelsPanel,
+            this.samplesPanel,
             this.optionsPanel,
             this.filtersPanel,
             this.sharePanel,

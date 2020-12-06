@@ -538,24 +538,23 @@ class Constructor extends View<Constructor> {
         //this.sides.forEach(side => side.saveState());
         if (state.model && this.preview.modelName != state.model) {
             this.loadModel(state.model, () => {
-                if (state.fills) {
-                    for (let i = 0; i < state.fills.length; i++) {
-                        if (this.preview.fills[i]) {
-                            this.preview.fills[i].color = new THREE.Color(state.fills[i]);
-                        }
-                    }
-                }
+                this.setFills(state);
                 if (callback) callback();
             });
         } else {
-            if (state.fills) {
-                for (let i = 0; i < state.fills.length; i++) {
-                    if (this.preview.fills[i]) {
-                        this.preview.fills[i].color = new THREE.Color(state.fills[i]);
-                    }
+            this.setFills(state);
+            if (callback) callback();
+        }
+    }
+
+    setFills(state: ConstructorState){
+        if (state.fills) {
+            for (let i = 0; i < state.fills.length; i++) {
+                if (this.preview.fills[i]) {
+                    this.preview.fills[i].color = new THREE.Color(state.fills[i]);
                 }
             }
-            if (callback) callback();
+            this.preview.render();
         }
     }
 

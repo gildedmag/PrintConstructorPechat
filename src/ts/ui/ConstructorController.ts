@@ -23,6 +23,7 @@ class ConstructorController extends UIControl {
                 Constructor.instance.getActiveSide().deselect();
             }
         }
+
     }
 
 }

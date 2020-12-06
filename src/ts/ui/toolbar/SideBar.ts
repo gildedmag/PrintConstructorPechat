@@ -12,7 +12,7 @@ class SideBar extends VerticalToolBarUIControl {
         let panel = ConstructorUI.instance.sidePanel;
         this.appendSwitch(
             panel.newElementPanel,
-            Icon.SHAPES,
+            Icon.FILE,
             () => Constructor.instance.is2D()
         );
         this.appendSwitch(
@@ -36,10 +36,12 @@ class SideBar extends VerticalToolBarUIControl {
             () => Constructor.instance.hasImageSelection()
         );
         this.appendSwitch(
+            panel.samplesPanel,
+            Icon.INFO_CIRCLE,
+        );
+        this.appendSwitch(
             panel.modelsPanel,
             Icon.MUG_HOT,
-            //Icon.SHOPPING_BAG,
-
         );
         this.appendSwitch(
             panel.optionsPanel,

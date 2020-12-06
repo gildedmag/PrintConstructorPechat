@@ -110,10 +110,13 @@ class ConstructorUI extends UIControl {
                 return;
             }
             this.options = options;
-            c.preview.modelName = null;
+            let modelLoaded = false;
+            this.sidePanel.modelsPanel.append(
+                new LabelControl("Product Types").addClass('title'),
+            );
             options.constructor_models.forEach(model => {
 
-                if (!c.preview.modelName) {
+                if (!modelLoaded) {
                     this.loadModelOptions(model, options);
                     try {
                         c.loadModel(
@@ -121,10 +124,12 @@ class ConstructorUI extends UIControl {
                             () => {
                                 if (constructorConfiguration && constructorConfiguration.sharedState) {
                                     c.setMode(Mode.Mode3D);
+                                    ConstructorUI.instance.sidePanel.optionsPanel.show();
                                 }
                             },
                             error => alert(error)
                         );
+                        modelLoaded = true;
                     } catch (e) {
                         alert(e.message);
                     }
@@ -193,6 +198,15 @@ class ConstructorUI extends UIControl {
         }
 
         this.order.setModel(model);
+        this.order.selectedOptions = [];
+
+        let selectedOptions = [];
+        if (constructorConfiguration && constructorConfiguration.selectedOptions && constructorConfiguration.selectedOptions.length) {
+            for (let i = 0; i < constructorConfiguration.selectedOptions.length; i++) {
+                let selectedOption = constructorConfiguration.selectedOptions[i];
+                selectedOptions.push(selectedOption);
+            }
+        }
 
         let groupPanels: OptionGroupPanel[] = [];
 
@@ -204,16 +218,20 @@ class ConstructorUI extends UIControl {
         model.constructor_model_option.forEach(option => {
             groupPanels.forEach(groupPanel => {
                 if (option.namegroup == groupPanel.option.name) {
-                    groupPanel.addOption(option);
+                    let optionButton = groupPanel.addOption(option);
+                    if (selectedOptions.indexOf(option.id) != -1) {
+                        optionButton.select()
+                    }
                 }
             })
-        })
+        });
 
         groupPanels.forEach(groupPanel => {
             if (groupPanel.values.length > 0) {
                 this.sidePanel.optionsPanel.append(groupPanel);
             }
-        })
+        });
+
 
         ConstructorUI.instance.order.changed();
     }

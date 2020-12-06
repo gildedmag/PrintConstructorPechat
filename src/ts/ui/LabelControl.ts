@@ -1,4 +1,5 @@
 /// <reference path="UIControl.ts" />
+
 class LabelControl extends UIControl {
 
     getClassName(): string {
@@ -7,11 +8,11 @@ class LabelControl extends UIControl {
 
     constructor(value?: string) {
         super();
-        this.container.innerHTML = (value || "");
+        this.container.innerHTML = (value ? this.translate(value) : "");
     }
 
     setValue(value: string){
-        this.container.innerHTML = value;
+        this.container.innerHTML = this.translate(value);
     }
 
 }

@@ -158,6 +158,10 @@ body {
     color: #333;
 }
 
+.toolbar.top .button:hover *, .toolbar.bottom .button:hover * {
+    color: #333;
+}
+
 .control.sidepanel {
     background: #444;
     grid-area: sidepanel;
@@ -215,7 +219,8 @@ body {
     padding: 6px;
     /*width: 25%;*/
     /*height: 25%;*/
-    width: 38px;
+    max-width: 38px;
+    max-height: 38px;
     /*height: 38px;*/
     box-sizing: content-box;
 }
@@ -238,6 +243,10 @@ body {
 
 .control.layer.selected {
     background: #999;
+}
+
+.control.number-input {
+    max-width: 60px;
 }
 
 .control.popover {
@@ -449,6 +458,11 @@ body {
     text-align: right !important;
 }
 
+.samples-panel img {
+    max-width: 100%;
+    padding: 4px 8px;
+}
+
 .control.input {
     width: 100px;
 }
@@ -467,12 +481,8 @@ input[type="color"] {
     display: block;
 }
 
-.pager {
-    position: absolute;
-}
-
 .toolbar.top .button:hover *, .toolbar.bottom .button:hover * {
-    color: #aaa;
+    color: #333;
 }
 
 .toolbar.top .toggle.active, .toolbar.bottom .toggle.active {
@@ -502,11 +512,19 @@ input[type="color"] {
     color: #777 !important;
 }
 
+.pager  {
+    
+}
+
+.pager .label {
+    text-align: center;
+}
+
 @media (max-height: 600px) and (orientation: landscape) {
     .constructor-ui-container {
         height: 100vh;
         display: grid;
-        grid-template-columns: auto 250px auto 1fr auto;
+        grid-template-columns: auto 240px auto 1fr auto;
         grid-template-rows: 1fr;
         gap: 0;
         grid-template-areas:
@@ -520,6 +538,10 @@ input[type="color"] {
             "bottombar constructor topbar";
     }
 
+    .mobile-landscape {
+        display: unset;
+    }
+
     .toolbar {
         flex-flow: column;
     }
@@ -530,6 +552,11 @@ input[type="color"] {
 
     .mobile {
         display: block
+    }
+
+    select.pager {
+        position: absolute;
+        right: 0;
     }
 
 }
@@ -568,12 +595,16 @@ input[type="color"] {
         /*border-radius: 4px;*/
     }
 
-    .desktop-only {
+    .desktop {
         display: none;
     }
 
     .mobile, .mobile-portrait {
         display: inherit;
+    }
+
+    .mobile-landscape {
+        display: none;
     }
 
     .control.popover .label {

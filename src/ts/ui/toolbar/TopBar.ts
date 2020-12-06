@@ -9,10 +9,9 @@ class TopBar extends TriggeredToolBar {
     constructor() {
         super();
 
-        let pager = new Pager()
+        //let pager = new Pager()
 
         this.append(
-            pager,
             new Spacer(),
             new ConditionalButton(
                 () => this.c.undo(),

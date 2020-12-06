@@ -180,6 +180,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
             alert("Too many objects on the canvas! Please consider removing some objects before adding new.")
             return null;
         }
+        console.log('ADDED:', element.type);
         Utils.logMethodName();
         element.side = this;
         this.elements.push(element);
@@ -280,8 +281,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         this.canvas.clear();
         this.canvas.add(this.horizontalGuide);
         this.canvas.add(this.verticalGuide);
-        this.changed();
-        Constructor.instance.changed();
+        this.saveState();
     }
 
     removeElements() {
@@ -292,7 +292,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         this.saveState();
     }
 
-    addImageFromObjectOptions(objectOptions: ObjectOptions): void {
+    addImageFromObjectOptions(objectOptions: ObjectOptions, callback?: () => any): void {
         Utils.logMethodName();
         let object = objectOptions.toObject();
         let side = this;
@@ -305,6 +305,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
             element.object = image;
             element.setOptions(element.object);
             side.add(element);
+            callback && callback();
             if (objectOptions.filters) {
                 element.filters = [];
                 for (let filterName of objectOptions.filters) {
@@ -327,24 +328,29 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         Utils.logMethodName();
         this.history.lock();
         this.clear();
-        for (let objectOptions of state.objects) {
-            if (objectOptions.type === 'image') {
-                this.addImageFromObjectOptions(objectOptions);
-            } else {
-                let element = Element2D.prototype.deserialize(objectOptions);
-                this.add(element);
-                element.object.dirty = true;
-                if (element.type === ElementType.TEXT) {
-                    setTimeout(() => element.setFontFamily(element.getFontFamily()), 0);
-                }
-            }
-        }
-        this.saveToLocalStorage(state);
-        this.canvas.requestRenderAll();
-        setTimeout(() => {
+        this.addNextObject(state.objects);
+    }
+
+    addNextObject(objectsBuffer: ObjectOptions[]){
+        if (objectsBuffer.length == 0){
+            this.saveToLocalStorage(this.getState());
+            this.canvas.requestRenderAll();
             this.history.unlock();
             Constructor.instance.changed();
-        }, 50);
+            return;
+        }
+        let objectOptions = objectsBuffer.shift();
+        if (objectOptions.type === 'image') {
+            this.addImageFromObjectOptions(objectOptions, () => this.addNextObject(objectsBuffer));
+        } else {
+            let element = Element2D.prototype.deserialize(objectOptions);
+            this.add(element);
+            element.object.dirty = true;
+            if (element.type === ElementType.TEXT) {
+                setTimeout(() => element.setFontFamily(element.getFontFamily()), 0);
+            }
+            this.addNextObject(objectsBuffer);
+        }
     }
 
     getLocalStorageKey(): string {

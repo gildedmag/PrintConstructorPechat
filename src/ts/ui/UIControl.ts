@@ -1,4 +1,5 @@
 /// <reference path="../Utils.ts"/>
+/// <reference path="locale/ru/LocalizedStrings.ts" />
 
 abstract class UIControl extends View<UIControl> implements Identifiable {
 
@@ -10,6 +11,10 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
     readonly id: number;
 
     static nextId = 0;
+
+    translate(key: string){
+        return LocalizedStrings.translate(key);
+    }
 
     getClassName(): string {
         return "control"

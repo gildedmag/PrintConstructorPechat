@@ -2,8 +2,6 @@
 
 class OptionsPanel extends TriggeredUIControl<Constructor> {
 
-    selectedOption = [];
-
     getClassName(): string {
         return super.getClassName() + " options-panel vertical";
     }

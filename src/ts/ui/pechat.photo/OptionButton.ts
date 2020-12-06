@@ -13,7 +13,7 @@ class OptionButton extends ToggleButton {
 
     constructor(value: ConstructorModelOption, parent: OptionGroupPanel) {
         super(
-            () => parent.selectOption(this),
+            () => this.select(),
             () => ConstructorUI.instance.order.hasOption(value),
             null,
             null,
@@ -61,8 +61,38 @@ class OptionButton extends ToggleButton {
 
     }
 
+    select() {
+        let fillsArray: number[];
+        let order = ConstructorUI.instance.order;
+        if (this.value.zalivka) {
+            fillsArray = this.value.zalivka.split(',').map(s => parseInt(s));
+            Constructor.instance.preview.setFills(null, ...fillsArray);
+        }
+        if (order.hasOption(this.value)) {
+            ConstructorUI.instance.order.removeSelectedOption(this.value);
+            if (this.value.zalivka) {
+                Constructor.instance.preview.clearFills();
+            }
+            return;
+        }
+        ConstructorUI.instance.order.addSelectedOption(this.value);
+
+        if (this.value.zalivka) {
+            this.setFillsAsync(fillsArray)
+        }
+    }
+
+    setFillsAsync(fillsArray: number[]) {
+        if (Constructor.instance.preview.isLoaded) {
+            Constructor.instance.preview.setFills(this.value.constructor_value, ...fillsArray);
+        } else {
+            setTimeout(() => this.setFillsAsync(fillsArray), 100);
+        }
+    }
+
+
     isSelected() {
-        return this.parent.selection === this;
+        return ConstructorUI.instance.order.hasOption(this.value);
     }
 
 

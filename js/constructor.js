@@ -180,7 +180,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "03.12.2020 19:04";
+    Version.version = "06.12.2020 20:34";
     return Version;
 }());
 var Trigger = (function () {
@@ -312,6 +312,7 @@ var Preview = (function (_super) {
         _this.sides = [];
         _this.fills = [];
         _this.originalFillColors = [];
+        _this.isLoaded = false;
         Preview.instance = _this;
         _this.exportRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
         _this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
@@ -383,6 +384,12 @@ var Preview = (function (_super) {
     };
     Preview.prototype.loadModel = function (modelName, callback, error) {
         var _this = this;
+        if (this.modelName == modelName) {
+            if (callback)
+                callback();
+            return;
+        }
+        this.isLoaded = false;
         Constructor.instance.spinner.show();
         this.modelName = modelName;
         Preview.objectLoader.manager.onError = function () {
@@ -392,6 +399,7 @@ var Preview = (function (_super) {
         Preview.objectLoader.load(Constructor.settings.urls.models + this.modelName + Constructor.settings.fileExtensions.model, function (object) {
             _this.setScene(object);
             Constructor.instance.spinner.hide();
+            _this.isLoaded = true;
             if (callback)
                 callback();
         });
@@ -454,6 +462,7 @@ var Preview = (function (_super) {
         for (var _i = 1; _i < arguments.length; _i++) {
             indices[_i - 1] = arguments[_i];
         }
+        console.log("setFills", color, indices);
         if (this.fills && this.fills.length) {
             for (var _a = 0, indices_1 = indices; _a < indices_1.length; _a++) {
                 var index = indices_1[_a];
@@ -1019,27 +1028,25 @@ var Constructor = (function (_super) {
         }
         if (state.model && this.preview.modelName != state.model) {
             this.loadModel(state.model, function () {
-                if (state.fills) {
-                    for (var i = 0; i < state.fills.length; i++) {
-                        if (_this.preview.fills[i]) {
-                            _this.preview.fills[i].color = new THREE.Color(state.fills[i]);
-                        }
-                    }
-                }
+                _this.setFills(state);
                 if (callback)
                     callback();
             });
         }
         else {
-            if (state.fills) {
-                for (var i = 0; i < state.fills.length; i++) {
-                    if (this.preview.fills[i]) {
-                        this.preview.fills[i].color = new THREE.Color(state.fills[i]);
-                    }
-                }
-            }
+            this.setFills(state);
             if (callback)
                 callback();
+        }
+    };
+    Constructor.prototype.setFills = function (state) {
+        if (state.fills) {
+            for (var i = 0; i < state.fills.length; i++) {
+                if (this.preview.fills[i]) {
+                    this.preview.fills[i].color = new THREE.Color(state.fills[i]);
+                }
+            }
+            this.preview.render();
         }
     };
     Constructor.prototype.undo = function () {
@@ -3767,6 +3774,7 @@ var Side2D = (function (_super) {
             alert("Too many objects on the canvas! Please consider removing some objects before adding new.");
             return null;
         }
+        console.log('ADDED:', element.type);
         Utils.logMethodName();
         element.side = this;
         this.elements.push(element);
@@ -3850,8 +3858,7 @@ var Side2D = (function (_super) {
         this.canvas.clear();
         this.canvas.add(this.horizontalGuide);
         this.canvas.add(this.verticalGuide);
-        this.changed();
-        Constructor.instance.changed();
+        this.saveState();
     };
     Side2D.prototype.removeElements = function () {
         Utils.logMethodName();
@@ -3860,7 +3867,7 @@ var Side2D = (function (_super) {
         }
         this.saveState();
     };
-    Side2D.prototype.addImageFromObjectOptions = function (objectOptions) {
+    Side2D.prototype.addImageFromObjectOptions = function (objectOptions, callback) {
         var _this = this;
         Utils.logMethodName();
         var object = objectOptions.toObject();
@@ -3874,6 +3881,7 @@ var Side2D = (function (_super) {
             element.object = image;
             element.setOptions(element.object);
             side.add(element);
+            callback && callback();
             if (objectOptions.filters) {
                 element.filters = [];
                 for (var _i = 0, _a = objectOptions.filters; _i < _a.length; _i++) {
@@ -3894,34 +3902,33 @@ var Side2D = (function (_super) {
         });
     };
     Side2D.prototype.setState = function (state) {
-        var _this = this;
         Utils.logMethodName();
         this.history.lock();
         this.clear();
-        var _loop_2 = function (objectOptions) {
-            if (objectOptions.type === 'image') {
-                this_2.addImageFromObjectOptions(objectOptions);
-            }
-            else {
-                var element_2 = Element2D.prototype.deserialize(objectOptions);
-                this_2.add(element_2);
-                element_2.object.dirty = true;
-                if (element_2.type === ElementType.TEXT) {
-                    setTimeout(function () { return element_2.setFontFamily(element_2.getFontFamily()); }, 0);
-                }
-            }
-        };
-        var this_2 = this;
-        for (var _i = 0, _a = state.objects; _i < _a.length; _i++) {
-            var objectOptions = _a[_i];
-            _loop_2(objectOptions);
-        }
-        this.saveToLocalStorage(state);
-        this.canvas.requestRenderAll();
-        setTimeout(function () {
-            _this.history.unlock();
+        this.addNextObject(state.objects);
+    };
+    Side2D.prototype.addNextObject = function (objectsBuffer) {
+        var _this = this;
+        if (objectsBuffer.length == 0) {
+            this.saveToLocalStorage(this.getState());
+            this.canvas.requestRenderAll();
+            this.history.unlock();
             Constructor.instance.changed();
-        }, 50);
+            return;
+        }
+        var objectOptions = objectsBuffer.shift();
+        if (objectOptions.type === 'image') {
+            this.addImageFromObjectOptions(objectOptions, function () { return _this.addNextObject(objectsBuffer); });
+        }
+        else {
+            var element_2 = Element2D.prototype.deserialize(objectOptions);
+            this.add(element_2);
+            element_2.object.dirty = true;
+            if (element_2.type === ElementType.TEXT) {
+                setTimeout(function () { return element_2.setFontFamily(element_2.getFontFamily()); }, 0);
+            }
+            this.addNextObject(objectsBuffer);
+        }
     };
     Side2D.prototype.getLocalStorageKey = function () {
         return Constructor.settings.localStorage.keyPrefix + this.getIndex();
@@ -4047,6 +4054,56 @@ var VerticalGuide = (function (_super) {
     };
     return VerticalGuide;
 }(Guide));
+var LocalizedStrings = (function () {
+    function LocalizedStrings() {
+    }
+    LocalizedStrings.translate = function (key) {
+        if (this.translation[key]) {
+            return this.translation[key];
+        }
+        return key;
+    };
+    LocalizedStrings.translation = {
+        'Share link': 'Поделиться ссылкой',
+        'Product Types': 'Тип продукта',
+        'Clear Side': 'Очистить холст',
+        'Export JPEG': 'Сохранить в JPEG',
+        'Export PNG': 'Сохранить в PNG',
+        'Export SVG': 'Сохранить в SVG',
+        'Photos': 'Примеры продукции',
+        'Circle': 'Добавить круг',
+        'Rectangle': 'Добавить Квадрат',
+        'Triangle': 'Добавить треугольник',
+        'Text': 'Добавить текст',
+        'Image': 'Загрузить фото',
+        'Alignment': 'Выравнивание',
+        'Font': 'Стиль шрифта',
+        'Font Family': 'Выбор шрифта',
+        'Font Size': 'Размер шрифта',
+        'Color': 'Цвет',
+        'Letter Spacing ': 'Межсимвольный интервал',
+        'Line Height': 'Межстрочный интервал',
+        'Shadow': 'Тень',
+        'Brightness': 'Яркость',
+        'Darknness': 'Затемнение',
+        'Blur': 'Размытие',
+        'Sharpen': 'Резкость',
+        'Invert': 'Инверсия',
+        'Grayscale': 'Перевести в ЧБ',
+        'Reset Filters': 'Сбросить фильтры',
+        'Option Required': 'Выберите опции',
+        'Please select required options!': 'Пожалуйста, выберите необходимые опции',
+        'Add to Cart': 'Добавить в корзину',
+        'Quantity': 'Количество',
+        'Price': 'Цена',
+        'Discount': 'Скидка',
+        'Cancel': 'Отмена',
+        'Product added to cart': 'Продукт добавлен',
+        'Share as Link': 'Поделиться ссылкой',
+        'Choose other product': 'Выбрать другую модель',
+    };
+    return LocalizedStrings;
+}());
 var UIControl = (function (_super) {
     __extends(UIControl, _super);
     function UIControl(tag) {
@@ -4058,6 +4115,9 @@ var UIControl = (function (_super) {
         _this.container.className = _this.getClassName();
         return _this;
     }
+    UIControl.prototype.translate = function (key) {
+        return LocalizedStrings.translate(key);
+    };
     UIControl.prototype.getClassName = function () {
         return "control";
     };
@@ -4338,7 +4398,9 @@ var PechatUtils = pechat.PrintUtils;
 var ModelsPanel = (function (_super) {
     __extends(ModelsPanel, _super);
     function ModelsPanel() {
-        return _super.call(this, Constructor.instance) || this;
+        var _this = _super.call(this, Constructor.instance) || this;
+        _this.append(new Row(new Button(function () { return window.location = ConstructorUI.instance.domain + '3Dconstructor'; }, Icon.BACKWARD, 'Choose other product')));
+        return _this;
     }
     ModelsPanel.prototype.getClassName = function () {
         return _super.prototype.getClassName.call(this) + " models-panel vertical";
@@ -4413,16 +4475,19 @@ var ConstructorUI = (function (_super) {
                 return;
             }
             _this.options = options;
-            c.preview.modelName = null;
+            var modelLoaded = false;
+            _this.sidePanel.modelsPanel.append(new LabelControl("Product Types").addClass('title'));
             options.constructor_models.forEach(function (model) {
-                if (!c.preview.modelName) {
+                if (!modelLoaded) {
                     _this.loadModelOptions(model, options);
                     try {
                         c.loadModel(model.file_main, function () {
                             if (constructorConfiguration && constructorConfiguration.sharedState) {
                                 c.setMode(Mode.Mode3D);
+                                ConstructorUI.instance.sidePanel.optionsPanel.show();
                             }
                         }, function (error) { return alert(error); });
+                        modelLoaded = true;
                     }
                     catch (e) {
                         alert(e.message);
@@ -4467,6 +4532,14 @@ var ConstructorUI = (function (_super) {
             }
         }
         this.order.setModel(model);
+        this.order.selectedOptions = [];
+        var selectedOptions = [];
+        if (constructorConfiguration && constructorConfiguration.selectedOptions && constructorConfiguration.selectedOptions.length) {
+            for (var i_1 = 0; i_1 < constructorConfiguration.selectedOptions.length; i_1++) {
+                var selectedOption = constructorConfiguration.selectedOptions[i_1];
+                selectedOptions.push(selectedOption);
+            }
+        }
         var groupPanels = [];
         options.options.forEach(function (optionGroup) {
             var groupPanel = new OptionGroupPanel(optionGroup);
@@ -4475,7 +4548,10 @@ var ConstructorUI = (function (_super) {
         model.constructor_model_option.forEach(function (option) {
             groupPanels.forEach(function (groupPanel) {
                 if (option.namegroup == groupPanel.option.name) {
-                    groupPanel.addOption(option);
+                    var optionButton = groupPanel.addOption(option);
+                    if (selectedOptions.indexOf(option.id) != -1) {
+                        optionButton.select();
+                    }
                 }
             });
         });
@@ -4583,14 +4659,14 @@ var LabelControl = (function (_super) {
     __extends(LabelControl, _super);
     function LabelControl(value) {
         var _this = _super.call(this) || this;
-        _this.container.innerHTML = (value || "");
+        _this.container.innerHTML = (value ? _this.translate(value) : "");
         return _this;
     }
     LabelControl.prototype.getClassName = function () {
         return _super.prototype.getClassName.call(this) + " label";
     };
     LabelControl.prototype.setValue = function (value) {
-        this.container.innerHTML = value;
+        this.container.innerHTML = this.translate(value);
     };
     return LabelControl;
 }(UIControl));
@@ -4998,13 +5074,19 @@ var RangeControl = (function (_super) {
 }(InputControl));
 var SelectControl = (function (_super) {
     __extends(SelectControl, _super);
-    function SelectControl(setter, getter, min, max, step) {
+    function SelectControl(setter, getter, min, max, step, valuesGetter) {
         var _this = _super.call(this, Constructor.instance, "select") || this;
-        for (var i = (min || 0); i <= (max || 100); i += (step || 10)) {
-            var option = document.createElement("option");
-            option.value = i.toString();
-            option.innerText = i.toString();
-            _this.container.appendChild(option);
+        _this.values = [];
+        if (valuesGetter) {
+            _this.valuesGetter = valuesGetter;
+        }
+        else {
+            for (var i = (min || 0); i <= (max || 100); i += (step || 10)) {
+                var option = document.createElement("option");
+                option.value = i.toString();
+                option.innerText = i.toString();
+                _this.container.appendChild(option);
+            }
         }
         _this.getter = getter;
         _this.setter = setter;
@@ -5020,12 +5102,25 @@ var SelectControl = (function (_super) {
         return _super.prototype.getClassName.call(this) + " select";
     };
     SelectControl.prototype.update = function () {
-        var selection = this.c.getSelection();
-        if (selection) {
-            var value = this.getter();
-            this.container.value = value;
-        }
-        else {
+        if (this.valuesGetter) {
+            var values = this.valuesGetter();
+            if (values.length <= 1) {
+                this.hide();
+                return;
+            }
+            else {
+                this.show();
+            }
+            if (this.values.length < values.length) {
+                this.values = values;
+                this.container.innerHTML = '';
+                for (var i = 0; i < this.values.length; i++) {
+                    var option = document.createElement("option");
+                    option.value = i;
+                    option.innerText = this.values[i];
+                    this.container.appendChild(option);
+                }
+            }
         }
     };
     return SelectControl;
@@ -5548,6 +5643,8 @@ var NewElementPanel = (function (_super) {
             }
         };
         _this.container.appendChild(form);
+        _this.append(new Row(new ConditionalButton(function () { return Constructor.instance.setActiveSide(Constructor.instance.getActiveSide().getIndex() - 1); }, function () { return Constructor.instance.getActiveSide().getIndex() > 0; }, Icon.CHEVRON_CIRCLE_LEFT), new Spacer(), new TriggeredLabelControl(Constructor.instance, function () { return Constructor.instance.getActiveSide().name; }), new Spacer(), new ConditionalButton(function () { return Constructor.instance.setActiveSide(Constructor.instance.getActiveSide().getIndex() + 1); }, function () { return Constructor.instance.getActiveSide().getIndex() < Constructor.instance.sides.length - 1; }, Icon.CHEVRON_CIRCLE_RIGHT)).showWhen(Constructor.instance, function () { return Constructor.instance.sides.length > 1; })
+            .addClass('pager'));
         _this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);
         _this.addButton("Rectangle", ElementType.RECTANGLE, Icon.SQUARE);
         _this.addButton("Triangle", ElementType.TRIANGLE, Icon.CARET_UP);
@@ -5576,9 +5673,7 @@ var NewElementPanel = (function (_super) {
 var OptionsPanel = (function (_super) {
     __extends(OptionsPanel, _super);
     function OptionsPanel() {
-        var _this = _super.call(this, Constructor.instance) || this;
-        _this.selectedOption = [];
-        return _this;
+        return _super.call(this, Constructor.instance) || this;
     }
     OptionsPanel.prototype.getClassName = function () {
         return _super.prototype.getClassName.call(this) + " options-panel vertical";
@@ -5599,6 +5694,39 @@ var OrderPanel = (function (_super) {
         return _super.prototype.getClassName.call(this) + " order vertical";
     };
     return OrderPanel;
+}(TriggeredUIControl));
+var SamplesPanel = (function (_super) {
+    __extends(SamplesPanel, _super);
+    function SamplesPanel() {
+        var _this = _super.call(this, ConstructorUI.instance.order) || this;
+        _this.modelId = null;
+        _this.samples = new LabelControl()
+            .addClass('samples')
+            .addClass('vertical');
+        _this.update();
+        return _this;
+    }
+    SamplesPanel.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " samples-panel vertical";
+    };
+    SamplesPanel.prototype.update = function () {
+        _super.prototype.update.call(this);
+        this.updateSamples();
+        if (!this.trigger.model || this.modelId == this.trigger.model.constructor_model_id) {
+            return;
+        }
+        this.modelId = this.trigger.model.constructor_model_id;
+        var model = this.trigger.model;
+        var options = ConstructorUI.instance.options;
+        this.clear();
+        this.append(new Row(new LabelControl(options.name).addClass('title')), new Row(new LabelControl(options.description)), new Row(new LabelControl(model.name).addClass('title')), new Row(new ImageControl(model.thumb)), new Row(new LabelControl(model.description)), new Row(new Spacer()), new Row(new LabelControl("Real Product Photos").addClass('title')), this.samples);
+    };
+    SamplesPanel.prototype.updateSamples = function () {
+        if (this.samples.container.innerHTML != this.trigger.samplesHtml) {
+            this.samples.setValue(this.trigger.samplesHtml);
+        }
+    };
+    return SamplesPanel;
 }(TriggeredUIControl));
 var SelectionPanel = (function (_super) {
     __extends(SelectionPanel, _super);
@@ -5650,10 +5778,11 @@ var SidePanel = (function (_super) {
         _this.newElementPanel = new NewElementPanel();
         _this.fontFamilyPanel = new FontFamilyPanel();
         _this.modelsPanel = new ModelsPanel();
+        _this.samplesPanel = new SamplesPanel();
         _this.optionsPanel = new OptionsPanel();
         _this.filtersPanel = new FiltersPanel();
         _this.sharePanel = new ExportPanel();
-        _this.append(_this.newElementPanel, _this.layersPanel, _this.selectionPanel, _this.fontFamilyPanel, _this.modelsPanel, _this.optionsPanel, _this.filtersPanel, _this.sharePanel);
+        _this.append(_this.newElementPanel, _this.layersPanel, _this.selectionPanel, _this.fontFamilyPanel, _this.modelsPanel, _this.samplesPanel, _this.optionsPanel, _this.filtersPanel, _this.sharePanel);
         _this.container.onclick = function (e) {
             if (Constructor.instance && e.target === _this.container) {
                 Constructor.instance.getActiveSide().deselect();
@@ -5669,7 +5798,7 @@ var SidePanel = (function (_super) {
 var OptionButton = (function (_super) {
     __extends(OptionButton, _super);
     function OptionButton(value, parent) {
-        var _this = _super.call(this, function () { return parent.selectOption(_this); }, function () { return ConstructorUI.instance.order.hasOption(value); }, null, null, null, null, ConstructorUI.instance.order) || this;
+        var _this = _super.call(this, function () { return _this.select(); }, function () { return ConstructorUI.instance.order.hasOption(value); }, null, null, null, null, ConstructorUI.instance.order) || this;
         _this.parent = parent;
         _this.value = value;
         _this.append(new IconControl(Icon.SQUARE)
@@ -5702,8 +5831,38 @@ var OptionButton = (function (_super) {
     OptionButton.prototype.getClassName = function () {
         return _super.prototype.getClassName.call(this) + " ";
     };
+    OptionButton.prototype.select = function () {
+        var fillsArray;
+        var order = ConstructorUI.instance.order;
+        if (this.value.zalivka) {
+            fillsArray = this.value.zalivka.split(',').map(function (s) { return parseInt(s); });
+            (_a = Constructor.instance.preview).setFills.apply(_a, [null].concat(fillsArray));
+        }
+        if (order.hasOption(this.value)) {
+            ConstructorUI.instance.order.removeSelectedOption(this.value);
+            if (this.value.zalivka) {
+                Constructor.instance.preview.clearFills();
+            }
+            return;
+        }
+        ConstructorUI.instance.order.addSelectedOption(this.value);
+        if (this.value.zalivka) {
+            this.setFillsAsync(fillsArray);
+        }
+        var _a;
+    };
+    OptionButton.prototype.setFillsAsync = function (fillsArray) {
+        var _this = this;
+        if (Constructor.instance.preview.isLoaded) {
+            (_a = Constructor.instance.preview).setFills.apply(_a, [this.value.constructor_value].concat(fillsArray));
+        }
+        else {
+            setTimeout(function () { return _this.setFillsAsync(fillsArray); }, 100);
+        }
+        var _a;
+    };
     OptionButton.prototype.isSelected = function () {
-        return this.parent.selection === this;
+        return ConstructorUI.instance.order.hasOption(this.value);
     };
     return OptionButton;
 }(ToggleButton));
@@ -5719,33 +5878,11 @@ var OptionGroupPanel = (function (_super) {
     OptionGroupPanel.prototype.getClassName = function () {
         return _super.prototype.getClassName.call(this) + " options-group vertical";
     };
-    OptionGroupPanel.prototype.selectOption = function (optionButton) {
-        var fillsArray;
-        if (optionButton.value.zalivka) {
-            fillsArray = optionButton.value.zalivka.split(',').map(function (s) { return parseInt(s); });
-            (_a = Constructor.instance.preview).setFills.apply(_a, [null].concat(fillsArray));
-        }
-        if (this.selection) {
-            ConstructorUI.instance.order.removeSelectedOption(this.selection.value);
-            if (this.selection == optionButton) {
-                this.selection = null;
-                if (optionButton.value.zalivka) {
-                    Constructor.instance.preview.clearFills();
-                }
-                return;
-            }
-        }
-        this.selection = optionButton;
-        ConstructorUI.instance.order.addSelectedOption(optionButton.value);
-        if (optionButton.value.zalivka) {
-            (_b = Constructor.instance.preview).setFills.apply(_b, [optionButton.value.constructor_value].concat(fillsArray));
-        }
-        var _a, _b;
-    };
     OptionGroupPanel.prototype.addOption = function (option) {
         var optionButton = new OptionButton(option, this);
         this.values.push(optionButton);
         this.append(optionButton);
+        return optionButton;
     };
     return OptionGroupPanel;
 }(UIControl));
@@ -5756,11 +5893,15 @@ var Order = (function (_super) {
         _this.selectedOptions = [];
         _this.quantity = 1;
         _this.discountPricePerItem = 0;
+        _this.samplesHtml = '';
         _this.changed();
         return _this;
     }
     Order.prototype.hasDiscount = function () {
         return this.discountPricePerItem && this.discountPricePerItem < this.getPricePerItem();
+    };
+    Order.prototype.getDiscountPricePerItem = function () {
+        return this.discountPricePerItem;
     };
     Order.prototype.getPricePerItem = function () {
         var price = this.model ? this.model.price : 0;
@@ -5783,6 +5924,7 @@ var Order = (function (_super) {
     };
     Order.prototype.setModel = function (model) {
         this.model = model;
+        this.updateSamples();
         this.changed();
     };
     Order.prototype.setQuantity = function (value) {
@@ -5810,15 +5952,28 @@ var Order = (function (_super) {
         this.changed();
     };
     Order.prototype.addSelectedOption = function (value) {
+        for (var i = 0; i < this.selectedOptions.length; i++) {
+            var selectedOption = this.selectedOptions[i];
+            if (selectedOption.id == value.id) {
+                return;
+            }
+            if (selectedOption.option_id == value.option_id) {
+                this.removeSelectedOption(selectedOption);
+            }
+        }
         this.selectedOptions.push(value);
         this.changed();
     };
-    Order.prototype.removeSelectedOption = function (value) {
-        var index = this.selectedOptions.indexOf(value);
-        if (index != -1) {
-            this.selectedOptions.splice(index, 1);
-            this.changed();
+    Order.prototype.addSelectedOptionById = function (id) {
+        for (var i = 0; i < this.model.constructor_model_option.length; i++) {
+            var option = this.model.constructor_model_option[i];
+            if (option.id == id) {
+                this.addSelectedOption(option);
+            }
         }
+    };
+    Order.prototype.removeSelectedOption = function (option) {
+        this.removeSelectedOptionId(option.id);
     };
     Order.prototype.removeSelectedOptionId = function (optionId) {
         for (var i = 0; i < this.selectedOptions.length; i++) {
@@ -5829,9 +5984,6 @@ var Order = (function (_super) {
             }
         }
     };
-    Order.prototype.hasOption = function (option) {
-        return this.selectedOptions.indexOf(option) != -1;
-    };
     Order.prototype.hasColorOption = function () {
         for (var i = 0; i < this.selectedOptions.length; i++) {
             if (this.selectedOptions[i].type == 'color') {
@@ -5839,6 +5991,9 @@ var Order = (function (_super) {
             }
         }
         return false;
+    };
+    Order.prototype.hasOption = function (option) {
+        return this.hasOptionId(option.id);
     };
     Order.prototype.hasOptionId = function (optionId) {
         for (var i = 0; i < this.selectedOptions.length; i++) {
@@ -5873,13 +6028,30 @@ var Order = (function (_super) {
                 }
                 var value = this.model.constructor_model_require[key];
                 if (parseInt(value) != 0 && !this.hasGroupId(key)) {
-                    new Popover('Option required', 'Please select required options!');
+                    new Popover('Option Required', 'Please select required options!');
                     ConstructorUI.instance.sidePanel.optionsPanel.show();
                     return false;
                 }
             }
         }
         return true;
+    };
+    Order.prototype.updateSamples = function () {
+        var _this = this;
+        fetch(ConstructorUI.instance.domain + '/index.php?route=constructor/constructor/get_add_img', {
+            method: 'POST',
+            headers: new Headers({ 'content-type': 'application/x-www-form-urlencoded' }),
+            body: Utils.toUrlParameters({
+                constructor_model_id: this.model.constructor_model_id
+            })
+        }).then(function (response) {
+            console.log(response);
+            response.text().then(function (html) {
+                console.log(html);
+                _this.samplesHtml = html;
+                _this.changed();
+            });
+        });
     };
     Order.prototype.addToCart = function () {
         var _this = this;
@@ -5902,7 +6074,7 @@ var Order = (function (_super) {
         var body = Utils.toUrlParameters({
             json: stateJson,
             animation: stateJson,
-            price: this.getPricePerItem(),
+            price: this.getDiscountPricePerItem(),
             priceOriginal: "0",
             category: this.model.category_id,
             constructor_model_id: constructor_model_id,
@@ -6059,7 +6231,7 @@ var BottomBar = (function (_super) {
                 }
             }
             _this.c.toggleMode();
-        }, function () { return _this.c.getMode() == Mode.Mode3D; }, Icon.DICE_D6, null, null, "3D"), new Spacer(), new TriggeredLabelControl(ConstructorUI.instance.order, function () { return ConstructorUI.instance.order.getPricePerItem(); }), new Button(function () { return ConstructorUI.instance.addToCartPopover.show(); }, Icon.CART_PLUS));
+        }, function () { return _this.c.getMode() == Mode.Mode3D; }, Icon.DICE_D6, null, null, Utils.isCompact() ? null : "3D"), new Spacer(), new TriggeredLabelControl(ConstructorUI.instance.order, function () { return ConstructorUI.instance.order.getPricePerItem(); }).addClass('desktop'), new Button(function () { return ConstructorUI.instance.addToCartPopover.show(); }, Icon.CART_PLUS));
     };
     return BottomBar;
 }(ToolBar));
@@ -6078,16 +6250,16 @@ var Pager = (function (_super) {
         var _this = this;
         this.clear();
         if (Constructor.instance.is2D() && Constructor.instance.sides.length > 1) {
-            var _loop_3 = function (i) {
-                var side = this_3.c.sides[i];
-                this_3.append(new ToggleButton(function () {
+            var _loop_2 = function (i) {
+                var side = this_2.c.sides[i];
+                this_2.append(new ToggleButton(function () {
                     Constructor.instance.setActiveSide(i);
                     _this.index = i;
                 }, function () { return Constructor.instance.getActiveSide().getIndex() == side.getIndex(); }, null, null, null, side.getName()).addClass("desktop"));
             };
-            var this_3 = this;
+            var this_2 = this;
             for (var i = 0; i < this.c.sides.length; i++) {
-                _loop_3(i);
+                _loop_2(i);
             }
         }
     };
@@ -6109,11 +6281,12 @@ var SideBar = (function (_super) {
         var _this = _super.call(this) || this;
         _this.buttons = [];
         var panel = ConstructorUI.instance.sidePanel;
-        _this.appendSwitch(panel.newElementPanel, Icon.SHAPES, function () { return Constructor.instance.is2D(); });
+        _this.appendSwitch(panel.newElementPanel, Icon.FILE, function () { return Constructor.instance.is2D(); });
         _this.appendSwitch(panel.layersPanel, Icon.LAYER_GROUP, function () { return Constructor.instance.is2D(); });
         _this.appendSwitch(panel.selectionPanel, Icon.SLIDERS_H, function () { return Constructor.instance.hasSelection(); });
         _this.appendSwitch(panel.fontFamilyPanel, Icon.FONT, function () { return Constructor.instance.hasTextSelection(); });
         _this.appendSwitch(panel.filtersPanel, Icon.TINT, function () { return Constructor.instance.hasImageSelection(); });
+        _this.appendSwitch(panel.samplesPanel, Icon.INFO_CIRCLE);
         _this.appendSwitch(panel.modelsPanel, Icon.MUG_HOT);
         _this.appendSwitch(panel.optionsPanel, Icon.CLIPBOARD_LIST);
         _this.appendSwitch(panel.sharePanel, Icon.FILE_DOWNLOAD);
@@ -6185,8 +6358,7 @@ var TopBar = (function (_super) {
     __extends(TopBar, _super);
     function TopBar() {
         var _this = _super.call(this) || this;
-        var pager = new Pager();
-        _this.append(pager, new Spacer(), new ConditionalButton(function () { return _this.c.undo(); }, function () { return _this.c.getActiveSide().history.hasPrevious(); }, Icon.UNDO_ALT), new ConditionalButton(function () { return _this.c.redo(); }, function () { return _this.c.getActiveSide().history.hasNext(); }, Icon.REDO_ALT), new ConditionalButton(function () { return _this.c.duplicate(); }, function () { return _this.c.hasSelection(); }, Icon.CLONE), new ConditionalButton(function () { return _this.c.getSelection().remove(); }, function () { return _this.c.hasSelection(); }, Icon.TRASH), new Spacer());
+        _this.append(new Spacer(), new ConditionalButton(function () { return _this.c.undo(); }, function () { return _this.c.getActiveSide().history.hasPrevious(); }, Icon.UNDO_ALT), new ConditionalButton(function () { return _this.c.redo(); }, function () { return _this.c.getActiveSide().history.hasNext(); }, Icon.REDO_ALT), new ConditionalButton(function () { return _this.c.duplicate(); }, function () { return _this.c.hasSelection(); }, Icon.CLONE), new ConditionalButton(function () { return _this.c.getSelection().remove(); }, function () { return _this.c.hasSelection(); }, Icon.TRASH), new Spacer());
         return _this;
     }
     TopBar.prototype.getClassName = function () {

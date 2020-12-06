@@ -90,6 +90,7 @@ class AddToCartPopover extends Popover {
             super.show();
         } else {
             this.hide();
+
         }
     }
 }

@@ -36,7 +36,6 @@ class BottomBar extends ToolBar {
                 Icon.SEARCH
             ),
 
-
             new ToggleButton(
                 () => this.c.toggleSnapToGrid(),
                 () => this.c.snapToGrid,
@@ -54,10 +53,10 @@ class BottomBar extends ToolBar {
 
             new ToggleButton(
                 () => {
-                    if (this.c.is2D()){
+                    if (this.c.is2D()) {
                         ConstructorUI.instance.sidePanel.optionsPanel.show();
                     } else {
-                        if (this.c.getActiveSide().isEmpty()){
+                        if (this.c.getActiveSide().isEmpty()) {
                             ConstructorUI.instance.sidePanel.newElementPanel.show();
                         } else {
                             ConstructorUI.instance.sidePanel.layersPanel.show();
@@ -69,7 +68,7 @@ class BottomBar extends ToolBar {
                 Icon.DICE_D6,
                 null,
                 null,
-                "3D"
+                Utils.isCompact() ? null : "3D"
             ),
 
             new Spacer(),
@@ -77,7 +76,7 @@ class BottomBar extends ToolBar {
             new TriggeredLabelControl(
                 ConstructorUI.instance.order,
                 () => ConstructorUI.instance.order.getPricePerItem()
-            ),
+            ).addClass('desktop'),
 
             new Button(
                 () => ConstructorUI.instance.addToCartPopover.show(),

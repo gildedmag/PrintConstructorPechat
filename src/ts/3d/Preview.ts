@@ -24,6 +24,8 @@ class Preview extends View<Preview> {
     originalFillColors: number[] = [];
     modelName: string;
 
+    isLoaded = false;
+
     /** @hidden */
     constructor(constructor: Constructor) {
         super(constructor.container);
@@ -109,6 +111,11 @@ class Preview extends View<Preview> {
     }
 
     loadModel(modelName: string, callback?: () => void, error?: (string) => void) {
+        if (this.modelName == modelName){
+            if (callback) callback();
+            return;
+        }
+        this.isLoaded = false;
         Constructor.instance.spinner.show();
         this.modelName = modelName;
         Preview.objectLoader.manager.onError = () => {
@@ -118,6 +125,7 @@ class Preview extends View<Preview> {
         Preview.objectLoader.load(Constructor.settings.urls.models + this.modelName + Constructor.settings.fileExtensions.model, object => {
             this.setScene(object as THREE.Scene);
             Constructor.instance.spinner.hide();
+            this.isLoaded = true;
             if (callback) callback();
         });
     }
@@ -180,6 +188,7 @@ class Preview extends View<Preview> {
     }
 
     setFills(color: any, ...indices: number[]) {
+        console.log("setFills", color, indices);
         if (this.fills && this.fills.length) {
             for (let index of indices) {
                 if (this.fills.length > index) {
