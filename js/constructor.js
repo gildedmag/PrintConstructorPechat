@@ -180,7 +180,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "07.12.2020 16:00";
+    Version.version = "07.12.2020 16:12";
     return Version;
 }());
 var Trigger = (function () {
@@ -713,7 +713,6 @@ var Constructor = (function (_super) {
             Constructor.instance.spinner.update();
             var div = container;
             Constructor.instance.zoomToFit();
-            document.body.requestFullscreen();
         });
         return _this;
     }
@@ -4604,6 +4603,7 @@ var ConstructorUI = (function (_super) {
             setTimeout(function () {
                 window.scrollTo(0, 0);
             }, 0);
+            setTimeout(function () { return window.scrollTo(0, 1); }, 1000);
         });
         window.addEventListener("orientationchange", function () {
             setTimeout(function () {

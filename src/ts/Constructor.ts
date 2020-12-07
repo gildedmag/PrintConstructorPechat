@@ -102,8 +102,7 @@ class Constructor extends View<Constructor> {
             Constructor.instance.zoomToFit();
             //if (div.scrollWidth > div.clientWidth || div.scrollHeight > div.clientHeight) {
             //}
-            document.body.requestFullscreen();
-        })
+        });
     }
 
     /**

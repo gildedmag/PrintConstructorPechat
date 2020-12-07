@@ -86,6 +86,7 @@ class ConstructorUI extends UIControl {
             setTimeout(function () {
                 window.scrollTo(0, 0);
             }, 0);
+            setTimeout(() => window.scrollTo(0,1), 1000);
         });
         window.addEventListener("orientationchange", function () {
             setTimeout(function () {
