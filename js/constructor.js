@@ -38,12 +38,9 @@ var Associated = (function () {
     return Associated;
 }());
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -183,7 +180,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "07.12.2020 11:32";
+    Version.version = "07.12.2020 12:40";
     return Version;
 }());
 var Trigger = (function () {
@@ -4057,6 +4054,18 @@ var VerticalGuide = (function (_super) {
     };
     return VerticalGuide;
 }(Guide));
+var ScreenPosition;
+(function (ScreenPosition) {
+    ScreenPosition[ScreenPosition["topLeft"] = 0] = "topLeft";
+    ScreenPosition[ScreenPosition["top"] = 1] = "top";
+    ScreenPosition[ScreenPosition["topRight"] = 2] = "topRight";
+    ScreenPosition[ScreenPosition["right"] = 3] = "right";
+    ScreenPosition[ScreenPosition["bottomRight"] = 4] = "bottomRight";
+    ScreenPosition[ScreenPosition["bottom"] = 5] = "bottom";
+    ScreenPosition[ScreenPosition["bottomLeft"] = 6] = "bottomLeft";
+    ScreenPosition[ScreenPosition["left"] = 7] = "left";
+    ScreenPosition[ScreenPosition["center"] = 8] = "center";
+})(ScreenPosition || (ScreenPosition = {}));
 var LocalizedStrings = (function () {
     function LocalizedStrings() {
     }
@@ -4206,35 +4215,43 @@ var UIControl = (function (_super) {
         tooltip.className = 'tp';
         tooltip.innerHTML = this.translate(value);
         this.container.appendChild(tooltip);
-        var parent = this.container;
+        var parent = this;
         this.container.onmouseover = function (e) {
+            var parentWidth = parent.container.offsetWidth;
+            var halfWidth = tooltip.offsetWidth / 2 - parentWidth / 2;
+            tooltip.innerHTML = ScreenPosition[parent.getPositionOnScreen()];
             var dx = 0;
             var dy = 0;
-            var spaceRight = window.innerWidth - parent.offsetLeft;
-            var spaceLeft = parent.offsetLeft;
-            var spaceTop = parent.offsetTop;
-            var spaceBottom = window.innerHeight - parent.offsetTop;
-            if (spaceRight > tooltip.offsetWidth) {
-                if (spaceLeft > tooltip.offsetWidth * 2 && spaceTop < tooltip.offsetHeight * 2) {
-                    dx = -tooltip.offsetWidth / 2 + parent.offsetWidth / 2;
+            switch (parent.getPositionOnScreen()) {
+                case ScreenPosition.topLeft:
+                case ScreenPosition.center:
+                case ScreenPosition.left:
+                default:
+                    dx = parentWidth;
+                    break;
+                case ScreenPosition.top:
+                    dx = -halfWidth;
                     dy = tooltip.offsetHeight;
-                }
-                else if (spaceBottom < tooltip.offsetHeight * 2) {
-                    dx = -tooltip.offsetWidth / 2 + parent.offsetWidth / 2;
+                    break;
+                case ScreenPosition.bottom:
+                    dx = -halfWidth;
                     dy = -tooltip.offsetHeight;
-                }
-                else {
-                    dx = parent.offsetWidth;
-                }
-            }
-            else if (spaceLeft > tooltip.offsetWidth) {
-                if (spaceBottom < tooltip.offsetHeight * 2) {
+                    break;
+                case ScreenPosition.bottomLeft:
+                    dx = parentWidth;
                     dy = -tooltip.offsetHeight;
-                }
-                dx = -tooltip.offsetWidth + parent.offsetWidth;
-            }
-            else {
-                dy = -parent.offsetHeight;
+                    break;
+                case ScreenPosition.bottomRight:
+                    dx = -tooltip.offsetWidth;
+                    dy = -tooltip.offsetHeight;
+                    break;
+                case ScreenPosition.right:
+                    dx = -tooltip.offsetWidth;
+                    break;
+                case ScreenPosition.topRight:
+                    dx = -tooltip.offsetWidth;
+                    dy = -tooltip.offsetHeight;
+                    break;
             }
             tooltip.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
             tooltip.style.visibility = 'visible';
@@ -4244,6 +4261,39 @@ var UIControl = (function (_super) {
         };
         tooltip.onmousemove;
         return this;
+    };
+    UIControl.prototype.getPositionOnScreen = function () {
+        var width = 100;
+        var height = 100;
+        var spaceRight = window.innerWidth - this.container.offsetLeft;
+        var spaceLeft = this.container.offsetLeft;
+        var spaceTop = this.container.offsetTop;
+        var spaceBottom = window.innerHeight - this.container.offsetTop;
+        if (spaceLeft < width) {
+            if (spaceTop < height) {
+                return ScreenPosition.topLeft;
+            }
+            if (spaceBottom < height) {
+                return ScreenPosition.bottomLeft;
+            }
+            return ScreenPosition.left;
+        }
+        if (spaceRight < width) {
+            if (spaceTop < height) {
+                return ScreenPosition.topRight;
+            }
+            if (spaceBottom < height) {
+                return ScreenPosition.bottomRight;
+            }
+            return ScreenPosition.right;
+        }
+        if (spaceTop < height) {
+            return ScreenPosition.top;
+        }
+        if (spaceBottom < height) {
+            return ScreenPosition.bottom;
+        }
+        return ScreenPosition.center;
     };
     UIControl.map = {};
     UIControl.nextId = 0;
@@ -5194,6 +5244,20 @@ var SelectControl = (function (_super) {
     };
     return SelectControl;
 }(TriggeredUIControl));
+var SelectionColorControl = (function (_super) {
+    __extends(SelectionColorControl, _super);
+    function SelectionColorControl(label, setter, getter, max, step) {
+        var _this = _super.call(this) || this;
+        _this.append(new Row(new LabelControl(label), new Spacer(), new ColorControl(setter, getter)));
+        return _this;
+    }
+    SelectionColorControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " property-control color";
+    };
+    SelectionColorControl.prototype.update = function () {
+    };
+    return SelectionColorControl;
+}(UIControl));
 var SelectPropertyControl = (function (_super) {
     __extends(SelectPropertyControl, _super);
     function SelectPropertyControl(label, setter, getter, min, max, step) {
@@ -5220,20 +5284,6 @@ var SelectRangePropertyControl = (function (_super) {
         return _super.prototype.getClassName.call(this) + " property-control";
     };
     return SelectRangePropertyControl;
-}(UIControl));
-var SelectionColorControl = (function (_super) {
-    __extends(SelectionColorControl, _super);
-    function SelectionColorControl(label, setter, getter, max, step) {
-        var _this = _super.call(this) || this;
-        _this.append(new Row(new LabelControl(label), new Spacer(), new ColorControl(setter, getter)));
-        return _this;
-    }
-    SelectionColorControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " property-control color";
-    };
-    SelectionColorControl.prototype.update = function () {
-    };
-    return SelectionColorControl;
 }(UIControl));
 var TogglePropertyControl = (function (_super) {
     __extends(TogglePropertyControl, _super);
@@ -5369,6 +5419,87 @@ var FontFamilyPanel = (function (_super) {
         return list;
     };
     return FontFamilyPanel;
+}(TriggeredUIControl));
+var LayersPanelUIControl = (function (_super) {
+    __extends(LayersPanelUIControl, _super);
+    function LayersPanelUIControl() {
+        var _this = _super.call(this, Constructor.instance) || this;
+        _this.update();
+        return _this;
+    }
+    LayersPanelUIControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " layers-panel";
+    };
+    LayersPanelUIControl.prototype.update = function () {
+        if (this.children.length != this.c.sides.length) {
+            this.clear();
+            for (var i = 0; i < this.trigger.sides.length; i++) {
+                var side = this.trigger.sides[i];
+                this.append(new LayersUIControl(side));
+            }
+        }
+    };
+    return LayersPanelUIControl;
+}(TriggeredUIControl));
+var LayersUIControl = (function (_super) {
+    __extends(LayersUIControl, _super);
+    function LayersUIControl(side) {
+        var _this = _super.call(this, side) || this;
+        _this.update();
+        return _this;
+    }
+    LayersUIControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " layers vertical";
+    };
+    LayersUIControl.prototype.update = function () {
+        var layerControls = this.getLayerControls();
+        if (this.trigger.getLayers().length != layerControls.length) {
+            this.repopulate();
+            return;
+        }
+        for (var from = 0; from < layerControls.length; from++) {
+            var layer = layerControls[from];
+            var element = this.trigger.getLayers()[from];
+            if (layer.trigger != element) {
+                this.repopulate();
+                return;
+            }
+        }
+        this.updateVisibility();
+    };
+    LayersUIControl.prototype.getLayerControls = function () {
+        var layerControls = [];
+        for (var i = 0; i < this.children.length; i++) {
+            if (this.children[i] instanceof LayerUIControl) {
+                layerControls.push(this.children[i]);
+            }
+        }
+        return layerControls;
+    };
+    LayersUIControl.prototype.repopulate = function () {
+        var _this = this;
+        var scroll;
+        try {
+            scroll = this.container.parentElement.parentElement.scrollTop;
+        }
+        catch (e) {
+        }
+        this.clear();
+        console.log("CLEARED");
+        this.trigger.getLayers().forEach(function (layer) {
+            _this.append(new LayerUIControl(layer, _this));
+        });
+        if (scroll) {
+            this.container.parentElement.parentElement.scrollTop = scroll;
+        }
+        ConstructorUI.instance.order.changed();
+    };
+    LayersUIControl.prototype.updateVisibility = function () {
+        if (this.isVisible() != this.trigger.isVisible()) {
+            this.setVisible(this.trigger.isVisible());
+        }
+    };
+    return LayersUIControl;
 }(TriggeredUIControl));
 var LayerUIControl = (function (_super) {
     __extends(LayerUIControl, _super);
@@ -5574,87 +5705,6 @@ var LayerUIControl = (function (_super) {
     LayerUIControl.dragTo = 0;
     LayerUIControl.touchStart = 0;
     return LayerUIControl;
-}(TriggeredUIControl));
-var LayersPanelUIControl = (function (_super) {
-    __extends(LayersPanelUIControl, _super);
-    function LayersPanelUIControl() {
-        var _this = _super.call(this, Constructor.instance) || this;
-        _this.update();
-        return _this;
-    }
-    LayersPanelUIControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " layers-panel";
-    };
-    LayersPanelUIControl.prototype.update = function () {
-        if (this.children.length != this.c.sides.length) {
-            this.clear();
-            for (var i = 0; i < this.trigger.sides.length; i++) {
-                var side = this.trigger.sides[i];
-                this.append(new LayersUIControl(side));
-            }
-        }
-    };
-    return LayersPanelUIControl;
-}(TriggeredUIControl));
-var LayersUIControl = (function (_super) {
-    __extends(LayersUIControl, _super);
-    function LayersUIControl(side) {
-        var _this = _super.call(this, side) || this;
-        _this.update();
-        return _this;
-    }
-    LayersUIControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " layers vertical";
-    };
-    LayersUIControl.prototype.update = function () {
-        var layerControls = this.getLayerControls();
-        if (this.trigger.getLayers().length != layerControls.length) {
-            this.repopulate();
-            return;
-        }
-        for (var from = 0; from < layerControls.length; from++) {
-            var layer = layerControls[from];
-            var element = this.trigger.getLayers()[from];
-            if (layer.trigger != element) {
-                this.repopulate();
-                return;
-            }
-        }
-        this.updateVisibility();
-    };
-    LayersUIControl.prototype.getLayerControls = function () {
-        var layerControls = [];
-        for (var i = 0; i < this.children.length; i++) {
-            if (this.children[i] instanceof LayerUIControl) {
-                layerControls.push(this.children[i]);
-            }
-        }
-        return layerControls;
-    };
-    LayersUIControl.prototype.repopulate = function () {
-        var _this = this;
-        var scroll;
-        try {
-            scroll = this.container.parentElement.parentElement.scrollTop;
-        }
-        catch (e) {
-        }
-        this.clear();
-        console.log("CLEARED");
-        this.trigger.getLayers().forEach(function (layer) {
-            _this.append(new LayerUIControl(layer, _this));
-        });
-        if (scroll) {
-            this.container.parentElement.parentElement.scrollTop = scroll;
-        }
-        ConstructorUI.instance.order.changed();
-    };
-    LayersUIControl.prototype.updateVisibility = function () {
-        if (this.isVisible() != this.trigger.isVisible()) {
-            this.setVisible(this.trigger.isVisible());
-        }
-    };
-    return LayersUIControl;
 }(TriggeredUIControl));
 var NewElementPanel = (function (_super) {
     __extends(NewElementPanel, _super);
@@ -5868,13 +5918,6 @@ var SidePanel = (function (_super) {
     };
     return SidePanel;
 }(ToolBar));
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
-};
 var OptionButton = (function (_super) {
     __extends(OptionButton, _super);
     function OptionButton(value, parent) {
@@ -5912,12 +5955,11 @@ var OptionButton = (function (_super) {
         return _super.prototype.getClassName.call(this) + " ";
     };
     OptionButton.prototype.select = function () {
-        var _a;
         var fillsArray;
         var order = ConstructorUI.instance.order;
         if (this.value.zalivka) {
             fillsArray = this.value.zalivka.split(',').map(function (s) { return parseInt(s); });
-            (_a = Constructor.instance.preview).setFills.apply(_a, __spreadArrays([null], fillsArray));
+            (_a = Constructor.instance.preview).setFills.apply(_a, [null].concat(fillsArray));
         }
         if (order.hasOption(this.value)) {
             ConstructorUI.instance.order.removeSelectedOption(this.value);
@@ -5930,16 +5972,17 @@ var OptionButton = (function (_super) {
         if (this.value.zalivka) {
             this.setFillsAsync(fillsArray);
         }
+        var _a;
     };
     OptionButton.prototype.setFillsAsync = function (fillsArray) {
-        var _a;
         var _this = this;
         if (Constructor.instance.preview.isLoaded) {
-            (_a = Constructor.instance.preview).setFills.apply(_a, __spreadArrays([this.value.constructor_value], fillsArray));
+            (_a = Constructor.instance.preview).setFills.apply(_a, [this.value.constructor_value].concat(fillsArray));
         }
         else {
             setTimeout(function () { return _this.setFillsAsync(fillsArray); }, 100);
         }
+        var _a;
     };
     OptionButton.prototype.isSelected = function () {
         return ConstructorUI.instance.order.hasOption(this.value);

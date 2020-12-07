@@ -1,4 +1,5 @@
 /// <reference path="../Utils.ts"/>
+/// <reference path="ScreenPosition.ts"/>
 /// <reference path="locale/ru/LocalizedStrings.ts" />
 
 abstract class UIControl extends View<UIControl> implements Identifiable {
@@ -92,33 +93,44 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
         tooltip.className = 'tp';
         tooltip.innerHTML = this.translate(value);
         this.container.appendChild(tooltip);
-        let parent = this.container;
+        let parent = this;
         this.container.onmouseover = e => {
+            let parentWidth = parent.container.offsetWidth;
+            let halfWidth = tooltip.offsetWidth / 2 - parentWidth / 2;
+            tooltip.innerHTML = ScreenPosition[parent.getPositionOnScreen()];
             let dx = 0;
             let dy = 0;
 
-            let spaceRight = window.innerWidth - parent.offsetLeft
-            let spaceLeft = parent.offsetLeft;
-            let spaceTop = parent.offsetTop;
-            let spaceBottom = window.innerHeight - parent.offsetTop;
-
-            if (spaceRight > tooltip.offsetWidth) {
-                if (spaceLeft > tooltip.offsetWidth * 2 &&  spaceTop < tooltip.offsetHeight * 2) {
-                    dx = -tooltip.offsetWidth / 2 + parent.offsetWidth / 2;
+            switch (parent.getPositionOnScreen()){
+                case ScreenPosition.topLeft:
+                case ScreenPosition.center:
+                case ScreenPosition.left:
+                default:
+                    dx = parentWidth;
+                    break;
+                case ScreenPosition.top:
+                    dx = -halfWidth;
                     dy = tooltip.offsetHeight;
-                } else if (spaceBottom < tooltip.offsetHeight * 2) {
-                    dx = -tooltip.offsetWidth / 2 + parent.offsetWidth / 2;
+                    break;
+                case ScreenPosition.bottom:
+                    dx = -halfWidth;
                     dy = -tooltip.offsetHeight;
-                } else {
-                    dx = parent.offsetWidth;
-                }
-            } else if (spaceLeft > tooltip.offsetWidth) {
-                if (spaceBottom < tooltip.offsetHeight * 2) {
+                    break;
+                case ScreenPosition.bottomLeft:
+                    dx = parentWidth;
                     dy = -tooltip.offsetHeight;
-                }
-                dx = -tooltip.offsetWidth + parent.offsetWidth;
-            } else {
-                dy = -parent.offsetHeight;
+                    break;
+                case ScreenPosition.bottomRight:
+                    dx = -tooltip.offsetWidth;
+                    dy = -tooltip.offsetHeight;
+                    break;
+                case ScreenPosition.right:
+                    dx = -tooltip.offsetWidth;
+                    break
+                case ScreenPosition.topRight:
+                    dx = -tooltip.offsetWidth;
+                    dy = -tooltip.offsetHeight;
+                    break
             }
 
             tooltip.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
@@ -129,6 +141,45 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
         };
         tooltip.onmousemove
         return this;
+    }
+
+    getPositionOnScreen(): ScreenPosition {
+        let width = 100;
+        let height = 100;
+        let spaceRight = window.innerWidth - this.container.offsetLeft
+        let spaceLeft = this.container.offsetLeft;
+        let spaceTop = this.container.offsetTop;
+        let spaceBottom = window.innerHeight - this.container.offsetTop;
+
+        if (spaceLeft < width) {
+            if (spaceTop < height){
+                return ScreenPosition.topLeft
+            }
+            if (spaceBottom < height){
+                return ScreenPosition.bottomLeft
+            }
+            return ScreenPosition.left;
+        }
+
+        if (spaceRight < width) {
+            if (spaceTop < height){
+                return ScreenPosition.topRight;
+            }
+            if (spaceBottom < height){
+                return ScreenPosition.bottomRight;
+            }
+            return ScreenPosition.right;
+        }
+
+        if (spaceTop < height){
+            return ScreenPosition.top;
+        }
+
+        if (spaceBottom < height){
+            return ScreenPosition.bottom;
+        }
+
+        return ScreenPosition.center;
     }
 
 }
