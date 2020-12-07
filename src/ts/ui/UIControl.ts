@@ -97,7 +97,6 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
         this.container.onmouseover = e => {
             let parentWidth = parent.container.offsetWidth;
             let halfWidth = tooltip.offsetWidth / 2 - parentWidth / 2;
-            tooltip.innerHTML = ScreenPosition[parent.getPositionOnScreen()];
             let dx = 0;
             let dy = 0;
 

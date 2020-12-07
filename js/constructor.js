@@ -180,7 +180,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "07.12.2020 12:40";
+    Version.version = "07.12.2020 12:46";
     return Version;
 }());
 var Trigger = (function () {
@@ -4219,7 +4219,6 @@ var UIControl = (function (_super) {
         this.container.onmouseover = function (e) {
             var parentWidth = parent.container.offsetWidth;
             var halfWidth = tooltip.offsetWidth / 2 - parentWidth / 2;
-            tooltip.innerHTML = ScreenPosition[parent.getPositionOnScreen()];
             var dx = 0;
             var dy = 0;
             switch (parent.getPositionOnScreen()) {
