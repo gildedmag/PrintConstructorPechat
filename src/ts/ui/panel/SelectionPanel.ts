@@ -38,7 +38,7 @@ class SelectionPanel extends TriggeredUIControl<Constructor> {
                 "Color",
                 value => this.c.getSelection().setColor(value),
                 () => this.c.getSelection().getColor().toHex()
-            ),
+            ).showWhen(Constructor.instance, () => Constructor.instance.hasImageSelection()),
         );
         if (this.c.hasTextSelection()) {
             this.append(

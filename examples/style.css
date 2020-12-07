@@ -520,6 +520,27 @@ input[type="color"] {
     text-align: center;
 }
 
+.control .tp {
+    /*position: relative;*/
+    display: inline-block;
+    color: #fff !important;
+    visibility: hidden;
+    background-color: black;
+    /*color: #fff;*/
+    text-align: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    position: absolute;
+    z-index: 1;
+    font-size: 14px;
+    min-width: 100px;
+    transition: none !important;
+}
+
+/*.control:hover > .tp {*/
+/*    visibility: visible;*/
+/*}*/
+
 @media (max-height: 600px) and (orientation: landscape) {
     .constructor-ui-container {
         height: 100vh;

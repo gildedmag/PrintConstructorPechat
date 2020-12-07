@@ -45,11 +45,15 @@ class SamplesPanel extends TriggeredUIControl<Order> {
             new Row(
                 new Spacer(),
             ),
-            new Row(
-                new LabelControl("Real Product Photos").addClass('title'),
-            ),
-            this.samples,
         );
+        if (!this.samples.isEmpty()){
+            this.append(
+                new Row(
+                    new LabelControl("Real Product Photos").addClass('title'),
+                ),
+                this.samples,
+            );
+        }
 
     }
 

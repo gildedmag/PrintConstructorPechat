@@ -38,9 +38,12 @@ var Associated = (function () {
     return Associated;
 }());
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -180,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "06.12.2020 20:34";
+    Version.version = "07.12.2020 11:32";
     return Version;
 }());
 var Trigger = (function () {
@@ -4085,7 +4088,8 @@ var LocalizedStrings = (function () {
         'Line Height': 'Межстрочный интервал',
         'Shadow': 'Тень',
         'Brightness': 'Яркость',
-        'Darknness': 'Затемнение',
+        'Darkness': 'Затемнение',
+        'Emboss': 'Рельеф',
         'Blur': 'Размытие',
         'Sharpen': 'Резкость',
         'Invert': 'Инверсия',
@@ -4101,6 +4105,27 @@ var LocalizedStrings = (function () {
         'Product added to cart': 'Продукт добавлен',
         'Share as Link': 'Поделиться ссылкой',
         'Choose other product': 'Выбрать другую модель',
+        'Real Product Photos': 'Примеры',
+        'Page': 'Стороны и объекты',
+        'Layers': 'Слои',
+        'Properties': 'Свойства объекта',
+        'Fonts': 'Шрифты',
+        'Filters': 'Фильтры',
+        'Product Info': 'Продукт',
+        'Export & Sharing': 'Экспорт',
+        'Options': 'Опции',
+        'Side': 'Сторона печати',
+        'Toggle Sidebar': 'Компактный вид',
+        'Zoom In': 'Приблизить',
+        'Zoom Out': 'Отдалить',
+        'Zoom to Fit': 'На весь экран',
+        'Snap to Grid': 'Притягивание к сетке',
+        'Snap to Objects': 'Притягивание к объектам',
+        'Toggle 3D Mode': '2D/3D-режим',
+        'Undo': 'Отменить',
+        'Redo': 'Вернуть',
+        'Duplicate': 'Клонировать',
+        'Delete': 'Удалить',
     };
     return LocalizedStrings;
 }());
@@ -4175,6 +4200,50 @@ var UIControl = (function (_super) {
             delete UIControl.map[child.id];
         });
         this.children = [];
+    };
+    UIControl.prototype.tooltip = function (value) {
+        var tooltip = document.createElement('span');
+        tooltip.className = 'tp';
+        tooltip.innerHTML = this.translate(value);
+        this.container.appendChild(tooltip);
+        var parent = this.container;
+        this.container.onmouseover = function (e) {
+            var dx = 0;
+            var dy = 0;
+            var spaceRight = window.innerWidth - parent.offsetLeft;
+            var spaceLeft = parent.offsetLeft;
+            var spaceTop = parent.offsetTop;
+            var spaceBottom = window.innerHeight - parent.offsetTop;
+            if (spaceRight > tooltip.offsetWidth) {
+                if (spaceLeft > tooltip.offsetWidth * 2 && spaceTop < tooltip.offsetHeight * 2) {
+                    dx = -tooltip.offsetWidth / 2 + parent.offsetWidth / 2;
+                    dy = tooltip.offsetHeight;
+                }
+                else if (spaceBottom < tooltip.offsetHeight * 2) {
+                    dx = -tooltip.offsetWidth / 2 + parent.offsetWidth / 2;
+                    dy = -tooltip.offsetHeight;
+                }
+                else {
+                    dx = parent.offsetWidth;
+                }
+            }
+            else if (spaceLeft > tooltip.offsetWidth) {
+                if (spaceBottom < tooltip.offsetHeight * 2) {
+                    dy = -tooltip.offsetHeight;
+                }
+                dx = -tooltip.offsetWidth + parent.offsetWidth;
+            }
+            else {
+                dy = -parent.offsetHeight;
+            }
+            tooltip.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+            tooltip.style.visibility = 'visible';
+        };
+        this.container.onmouseleave = function (e) {
+            tooltip.style.visibility = 'hidden';
+        };
+        tooltip.onmousemove;
+        return this;
     };
     UIControl.map = {};
     UIControl.nextId = 0;
@@ -4757,7 +4826,7 @@ var TriggeredButton = (function (_super) {
     function TriggeredButton(action, icon, label, trigger) {
         var _this = _super.call(this, trigger || Constructor.instance) || this;
         if (icon) {
-            _this.append(new IconControl(icon));
+            _this.append(new IconControl(_this.translate(icon)));
         }
         if (label) {
             _this.append(new LabelControl(label));
@@ -5125,20 +5194,6 @@ var SelectControl = (function (_super) {
     };
     return SelectControl;
 }(TriggeredUIControl));
-var SelectionColorControl = (function (_super) {
-    __extends(SelectionColorControl, _super);
-    function SelectionColorControl(label, setter, getter, max, step) {
-        var _this = _super.call(this) || this;
-        _this.append(new Row(new LabelControl(label), new Spacer(), new ColorControl(setter, getter)));
-        return _this;
-    }
-    SelectionColorControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " property-control color";
-    };
-    SelectionColorControl.prototype.update = function () {
-    };
-    return SelectionColorControl;
-}(UIControl));
 var SelectPropertyControl = (function (_super) {
     __extends(SelectPropertyControl, _super);
     function SelectPropertyControl(label, setter, getter, min, max, step) {
@@ -5165,6 +5220,20 @@ var SelectRangePropertyControl = (function (_super) {
         return _super.prototype.getClassName.call(this) + " property-control";
     };
     return SelectRangePropertyControl;
+}(UIControl));
+var SelectionColorControl = (function (_super) {
+    __extends(SelectionColorControl, _super);
+    function SelectionColorControl(label, setter, getter, max, step) {
+        var _this = _super.call(this) || this;
+        _this.append(new Row(new LabelControl(label), new Spacer(), new ColorControl(setter, getter)));
+        return _this;
+    }
+    SelectionColorControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " property-control color";
+    };
+    SelectionColorControl.prototype.update = function () {
+    };
+    return SelectionColorControl;
 }(UIControl));
 var TogglePropertyControl = (function (_super) {
     __extends(TogglePropertyControl, _super);
@@ -5229,7 +5298,7 @@ var FiltersPanel = (function (_super) {
         _this.addFilterButton(Filter.DARKNESS, "Darkness");
         _this.addFilterButton(Filter.BLUR, "Blur");
         _this.addFilterButton(Filter.SHARPEN, "Sharpen");
-        _this.addFilterButton(Filter.EMBOSS, "Sharpen");
+        _this.addFilterButton(Filter.EMBOSS, "Emboss");
         _this.addFilterButton(Filter.INVERT, "Invert");
         _this.addFilterButton(Filter.GRAYSCALE, "Grayscale");
         _this.append(new Row(new Spacer(), new ConditionalButton(function () { return Constructor.instance.getSelection().resetFilters(); }, function () { return Constructor.instance.getSelection() && Constructor.instance.getSelection().hasFilters(); }, "Reset Filters"), new Spacer()));
@@ -5300,87 +5369,6 @@ var FontFamilyPanel = (function (_super) {
         return list;
     };
     return FontFamilyPanel;
-}(TriggeredUIControl));
-var LayersPanelUIControl = (function (_super) {
-    __extends(LayersPanelUIControl, _super);
-    function LayersPanelUIControl() {
-        var _this = _super.call(this, Constructor.instance) || this;
-        _this.update();
-        return _this;
-    }
-    LayersPanelUIControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " layers-panel";
-    };
-    LayersPanelUIControl.prototype.update = function () {
-        if (this.children.length != this.c.sides.length) {
-            this.clear();
-            for (var i = 0; i < this.trigger.sides.length; i++) {
-                var side = this.trigger.sides[i];
-                this.append(new LayersUIControl(side));
-            }
-        }
-    };
-    return LayersPanelUIControl;
-}(TriggeredUIControl));
-var LayersUIControl = (function (_super) {
-    __extends(LayersUIControl, _super);
-    function LayersUIControl(side) {
-        var _this = _super.call(this, side) || this;
-        _this.update();
-        return _this;
-    }
-    LayersUIControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " layers vertical";
-    };
-    LayersUIControl.prototype.update = function () {
-        var layerControls = this.getLayerControls();
-        if (this.trigger.getLayers().length != layerControls.length) {
-            this.repopulate();
-            return;
-        }
-        for (var from = 0; from < layerControls.length; from++) {
-            var layer = layerControls[from];
-            var element = this.trigger.getLayers()[from];
-            if (layer.trigger != element) {
-                this.repopulate();
-                return;
-            }
-        }
-        this.updateVisibility();
-    };
-    LayersUIControl.prototype.getLayerControls = function () {
-        var layerControls = [];
-        for (var i = 0; i < this.children.length; i++) {
-            if (this.children[i] instanceof LayerUIControl) {
-                layerControls.push(this.children[i]);
-            }
-        }
-        return layerControls;
-    };
-    LayersUIControl.prototype.repopulate = function () {
-        var _this = this;
-        var scroll;
-        try {
-            scroll = this.container.parentElement.parentElement.scrollTop;
-        }
-        catch (e) {
-        }
-        this.clear();
-        console.log("CLEARED");
-        this.trigger.getLayers().forEach(function (layer) {
-            _this.append(new LayerUIControl(layer, _this));
-        });
-        if (scroll) {
-            this.container.parentElement.parentElement.scrollTop = scroll;
-        }
-        ConstructorUI.instance.order.changed();
-    };
-    LayersUIControl.prototype.updateVisibility = function () {
-        if (this.isVisible() != this.trigger.isVisible()) {
-            this.setVisible(this.trigger.isVisible());
-        }
-    };
-    return LayersUIControl;
 }(TriggeredUIControl));
 var LayerUIControl = (function (_super) {
     __extends(LayerUIControl, _super);
@@ -5587,6 +5575,87 @@ var LayerUIControl = (function (_super) {
     LayerUIControl.touchStart = 0;
     return LayerUIControl;
 }(TriggeredUIControl));
+var LayersPanelUIControl = (function (_super) {
+    __extends(LayersPanelUIControl, _super);
+    function LayersPanelUIControl() {
+        var _this = _super.call(this, Constructor.instance) || this;
+        _this.update();
+        return _this;
+    }
+    LayersPanelUIControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " layers-panel";
+    };
+    LayersPanelUIControl.prototype.update = function () {
+        if (this.children.length != this.c.sides.length) {
+            this.clear();
+            for (var i = 0; i < this.trigger.sides.length; i++) {
+                var side = this.trigger.sides[i];
+                this.append(new LayersUIControl(side));
+            }
+        }
+    };
+    return LayersPanelUIControl;
+}(TriggeredUIControl));
+var LayersUIControl = (function (_super) {
+    __extends(LayersUIControl, _super);
+    function LayersUIControl(side) {
+        var _this = _super.call(this, side) || this;
+        _this.update();
+        return _this;
+    }
+    LayersUIControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " layers vertical";
+    };
+    LayersUIControl.prototype.update = function () {
+        var layerControls = this.getLayerControls();
+        if (this.trigger.getLayers().length != layerControls.length) {
+            this.repopulate();
+            return;
+        }
+        for (var from = 0; from < layerControls.length; from++) {
+            var layer = layerControls[from];
+            var element = this.trigger.getLayers()[from];
+            if (layer.trigger != element) {
+                this.repopulate();
+                return;
+            }
+        }
+        this.updateVisibility();
+    };
+    LayersUIControl.prototype.getLayerControls = function () {
+        var layerControls = [];
+        for (var i = 0; i < this.children.length; i++) {
+            if (this.children[i] instanceof LayerUIControl) {
+                layerControls.push(this.children[i]);
+            }
+        }
+        return layerControls;
+    };
+    LayersUIControl.prototype.repopulate = function () {
+        var _this = this;
+        var scroll;
+        try {
+            scroll = this.container.parentElement.parentElement.scrollTop;
+        }
+        catch (e) {
+        }
+        this.clear();
+        console.log("CLEARED");
+        this.trigger.getLayers().forEach(function (layer) {
+            _this.append(new LayerUIControl(layer, _this));
+        });
+        if (scroll) {
+            this.container.parentElement.parentElement.scrollTop = scroll;
+        }
+        ConstructorUI.instance.order.changed();
+    };
+    LayersUIControl.prototype.updateVisibility = function () {
+        if (this.isVisible() != this.trigger.isVisible()) {
+            this.setVisible(this.trigger.isVisible());
+        }
+    };
+    return LayersUIControl;
+}(TriggeredUIControl));
 var NewElementPanel = (function (_super) {
     __extends(NewElementPanel, _super);
     function NewElementPanel() {
@@ -5644,7 +5713,8 @@ var NewElementPanel = (function (_super) {
         };
         _this.container.appendChild(form);
         _this.append(new Row(new ConditionalButton(function () { return Constructor.instance.setActiveSide(Constructor.instance.getActiveSide().getIndex() - 1); }, function () { return Constructor.instance.getActiveSide().getIndex() > 0; }, Icon.CHEVRON_CIRCLE_LEFT), new Spacer(), new TriggeredLabelControl(Constructor.instance, function () { return Constructor.instance.getActiveSide().name; }), new Spacer(), new ConditionalButton(function () { return Constructor.instance.setActiveSide(Constructor.instance.getActiveSide().getIndex() + 1); }, function () { return Constructor.instance.getActiveSide().getIndex() < Constructor.instance.sides.length - 1; }, Icon.CHEVRON_CIRCLE_RIGHT)).showWhen(Constructor.instance, function () { return Constructor.instance.sides.length > 1; })
-            .addClass('pager'));
+            .addClass('pager')
+            .tooltip('Side', 'bottom'));
         _this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);
         _this.addButton("Rectangle", ElementType.RECTANGLE, Icon.SQUARE);
         _this.addButton("Triangle", ElementType.TRIANGLE, Icon.CARET_UP);
@@ -5719,7 +5789,10 @@ var SamplesPanel = (function (_super) {
         var model = this.trigger.model;
         var options = ConstructorUI.instance.options;
         this.clear();
-        this.append(new Row(new LabelControl(options.name).addClass('title')), new Row(new LabelControl(options.description)), new Row(new LabelControl(model.name).addClass('title')), new Row(new ImageControl(model.thumb)), new Row(new LabelControl(model.description)), new Row(new Spacer()), new Row(new LabelControl("Real Product Photos").addClass('title')), this.samples);
+        this.append(new Row(new LabelControl(options.name).addClass('title')), new Row(new LabelControl(options.description)), new Row(new LabelControl(model.name).addClass('title')), new Row(new ImageControl(model.thumb)), new Row(new LabelControl(model.description)), new Row(new Spacer()));
+        if (!this.samples.isEmpty()) {
+            this.append(new Row(new LabelControl("Real Product Photos").addClass('title')), this.samples);
+        }
     };
     SamplesPanel.prototype.updateSamples = function () {
         if (this.samples.container.innerHTML != this.trigger.samplesHtml) {
@@ -5748,7 +5821,7 @@ var SelectionPanel = (function (_super) {
         if (!this.c.getSelection()) {
             return;
         }
-        this.append(new SelectRangePropertyControl("Transparency", function (value) { return _this.c.getSelection().setAlpha(value / 100); }, function () { return _this.c.getSelection().getAlpha() * 100; }, 10, 100, 10), new SelectRangePropertyControl("Shadow", function (value) { return _this.c.getSelection().setShadow(value / 10); }, function () { return _this.c.getSelection().getShadow() * 10; }), new SelectionColorControl("Color", function (value) { return _this.c.getSelection().setColor(value); }, function () { return _this.c.getSelection().getColor().toHex(); }));
+        this.append(new SelectRangePropertyControl("Transparency", function (value) { return _this.c.getSelection().setAlpha(value / 100); }, function () { return _this.c.getSelection().getAlpha() * 100; }, 10, 100, 10), new SelectRangePropertyControl("Shadow", function (value) { return _this.c.getSelection().setShadow(value / 10); }, function () { return _this.c.getSelection().getShadow() * 10; }), new SelectionColorControl("Color", function (value) { return _this.c.getSelection().setColor(value); }, function () { return _this.c.getSelection().getColor().toHex(); }).showWhen(Constructor.instance, function () { return Constructor.instance.hasImageSelection(); }));
         if (this.c.hasTextSelection()) {
             this.append(new SelectRangePropertyControl("Font Size", function (value) { return _this.c.getSelection().setFontSize(value); }, function () { return _this.c.getSelection().getFontSize(); }, 4, 96, 8), new SelectRangePropertyControl("Letter Spacing", function (value) { return _this.c.getSelection().setLetterSpacing(value); }, function () { return _this.c.getSelection().getLetterSpacing(); }, -200, 2000, 50), new SelectRangePropertyControl("Line Height", function (value) { return _this.c.getSelection().setLineHeight(value); }, function () { return _this.c.getSelection().getLineHeight(); }, 0.5, 3, 0.25), new Row(new LabelControl("Font Family"), new Spacer(), new Button(function () { return ConstructorUI.instance.sidePanel.fontFamilyPanel.show(); }, null, this.c.getSelection().getFontFamily())), new Row(new LabelControl("Font"), new Spacer(), this.textPropertyToggleButton("Bold"), this.textPropertyToggleButton("Italic"), this.textPropertyToggleButton("Underline"), this.textPropertyToggleButton("Linethrough")), new Row(new LabelControl("Alignment"), new Spacer(), this.textAlignmentButton(TextAlignment.LEFT, Icon.ALIGN_LEFT), this.textAlignmentButton(TextAlignment.CENTER, Icon.ALIGN_CENTER), this.textAlignmentButton(TextAlignment.RIGHT, Icon.ALIGN_RIGHT), this.textAlignmentButton(TextAlignment.JUSTIFY, Icon.ALIGN_JUSTIFY)));
         }
@@ -5795,6 +5868,13 @@ var SidePanel = (function (_super) {
     };
     return SidePanel;
 }(ToolBar));
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
 var OptionButton = (function (_super) {
     __extends(OptionButton, _super);
     function OptionButton(value, parent) {
@@ -5832,11 +5912,12 @@ var OptionButton = (function (_super) {
         return _super.prototype.getClassName.call(this) + " ";
     };
     OptionButton.prototype.select = function () {
+        var _a;
         var fillsArray;
         var order = ConstructorUI.instance.order;
         if (this.value.zalivka) {
             fillsArray = this.value.zalivka.split(',').map(function (s) { return parseInt(s); });
-            (_a = Constructor.instance.preview).setFills.apply(_a, [null].concat(fillsArray));
+            (_a = Constructor.instance.preview).setFills.apply(_a, __spreadArrays([null], fillsArray));
         }
         if (order.hasOption(this.value)) {
             ConstructorUI.instance.order.removeSelectedOption(this.value);
@@ -5849,17 +5930,16 @@ var OptionButton = (function (_super) {
         if (this.value.zalivka) {
             this.setFillsAsync(fillsArray);
         }
-        var _a;
     };
     OptionButton.prototype.setFillsAsync = function (fillsArray) {
+        var _a;
         var _this = this;
         if (Constructor.instance.preview.isLoaded) {
-            (_a = Constructor.instance.preview).setFills.apply(_a, [this.value.constructor_value].concat(fillsArray));
+            (_a = Constructor.instance.preview).setFills.apply(_a, __spreadArrays([this.value.constructor_value], fillsArray));
         }
         else {
             setTimeout(function () { return _this.setFillsAsync(fillsArray); }, 100);
         }
-        var _a;
     };
     OptionButton.prototype.isSelected = function () {
         return ConstructorUI.instance.order.hasOption(this.value);
@@ -6214,11 +6294,11 @@ var BottomBar = (function (_super) {
             ConstructorUI.instance.sidePanel.toggleVisibility();
             ConstructorUI.instance.sideBar.buttons.forEach(function (button) { return button.toggleVisibility(); });
             window.dispatchEvent(new Event('resize'));
-        }, Icon.BARS), new Spacer(), new Button(function () {
+        }, Icon.BARS).tooltip('Toggle Sidebar'), new Spacer(), new Button(function () {
             _this.c.zoomIn();
-        }, Icon.SEARCH_PLUS), new Button(function () {
+        }, Icon.SEARCH_PLUS).tooltip('Zoom In'), new Button(function () {
             _this.c.zoomOut();
-        }, Icon.SEARCH_MINUS), new ConditionalButton(function () { return _this.c.zoomToFit(); }, function () { return _this.c.is2D(); }, Icon.SEARCH), new ToggleButton(function () { return _this.c.toggleSnapToGrid(); }, function () { return _this.c.snapToGrid; }, Icon.BORDER_ALL, null, function () { return _this.c.is2D(); }), new ToggleButton(function () { return _this.c.toggleSnapToObjects(); }, function () { return _this.c.snapToObjects; }, Icon.VECTOR_SQUARE, null, function () { return _this.c.is2D(); }), new ToggleButton(function () {
+        }, Icon.SEARCH_MINUS).tooltip('Zoom Out'), new ConditionalButton(function () { return _this.c.zoomToFit(); }, function () { return _this.c.is2D(); }, Icon.SEARCH).tooltip('Zoom to Fit'), new ToggleButton(function () { return _this.c.toggleSnapToGrid(); }, function () { return _this.c.snapToGrid; }, Icon.BORDER_ALL, null, function () { return _this.c.is2D(); }).tooltip('Snap to Grid'), new ToggleButton(function () { return _this.c.toggleSnapToObjects(); }, function () { return _this.c.snapToObjects; }, Icon.VECTOR_SQUARE, null, function () { return _this.c.is2D(); }).tooltip('Snap to Objects'), new ToggleButton(function () {
             if (_this.c.is2D()) {
                 ConstructorUI.instance.sidePanel.optionsPanel.show();
             }
@@ -6231,7 +6311,7 @@ var BottomBar = (function (_super) {
                 }
             }
             _this.c.toggleMode();
-        }, function () { return _this.c.getMode() == Mode.Mode3D; }, Icon.DICE_D6, null, null, Utils.isCompact() ? null : "3D"), new Spacer(), new TriggeredLabelControl(ConstructorUI.instance.order, function () { return ConstructorUI.instance.order.getPricePerItem(); }).addClass('desktop'), new Button(function () { return ConstructorUI.instance.addToCartPopover.show(); }, Icon.CART_PLUS));
+        }, function () { return _this.c.getMode() == Mode.Mode3D; }, Icon.DICE_D6, null, null, Utils.isCompact() ? null : "3D").tooltip('Toggle 3D Mode'), new Spacer(), new TriggeredLabelControl(ConstructorUI.instance.order, function () { return ConstructorUI.instance.order.getPricePerItem(); }).addClass('desktop'), new Button(function () { return ConstructorUI.instance.addToCartPopover.show(); }, Icon.CART_PLUS).tooltip('Add to Cart'));
     };
     return BottomBar;
 }(ToolBar));
@@ -6281,23 +6361,14 @@ var SideBar = (function (_super) {
         var _this = _super.call(this) || this;
         _this.buttons = [];
         var panel = ConstructorUI.instance.sidePanel;
-        _this.appendSwitch(panel.newElementPanel, Icon.FILE, function () { return Constructor.instance.is2D(); });
-        _this.appendSwitch(panel.layersPanel, Icon.LAYER_GROUP, function () { return Constructor.instance.is2D(); });
-        _this.appendSwitch(panel.selectionPanel, Icon.SLIDERS_H, function () { return Constructor.instance.hasSelection(); });
-        _this.appendSwitch(panel.fontFamilyPanel, Icon.FONT, function () { return Constructor.instance.hasTextSelection(); });
-        _this.appendSwitch(panel.filtersPanel, Icon.TINT, function () { return Constructor.instance.hasImageSelection(); });
-        _this.appendSwitch(panel.samplesPanel, Icon.INFO_CIRCLE);
-        _this.appendSwitch(panel.modelsPanel, Icon.MUG_HOT);
-        _this.appendSwitch(panel.optionsPanel, Icon.CLIPBOARD_LIST);
-        _this.appendSwitch(panel.sharePanel, Icon.FILE_DOWNLOAD);
-        _this.append(new Spacer());
+        _this.append(_this.createSwitch(panel.newElementPanel, Icon.BOOK_OPEN, function () { return Constructor.instance.is2D(); }).tooltip('Page'), _this.createSwitch(panel.layersPanel, Icon.LAYER_GROUP, function () { return Constructor.instance.is2D(); }).tooltip('Layers'), _this.createSwitch(panel.selectionPanel, Icon.SLIDERS_H, function () { return Constructor.instance.hasSelection(); }).tooltip('Properties'), _this.createSwitch(panel.fontFamilyPanel, Icon.FONT, function () { return Constructor.instance.hasTextSelection(); }).tooltip('Fonts'), _this.createSwitch(panel.filtersPanel, Icon.TINT, function () { return Constructor.instance.hasImageSelection(); }).tooltip('Filters'), _this.createSwitch(panel.samplesPanel, Icon.INFO_CIRCLE).tooltip('Product Info'), _this.createSwitch(panel.modelsPanel, Icon.MUG_HOT).tooltip('Product Types'), _this.createSwitch(panel.optionsPanel, Icon.CLIPBOARD_LIST).tooltip('Options'), _this.createSwitch(panel.sharePanel, Icon.FILE_DOWNLOAD).tooltip('Export & Sharing'), new Spacer());
         _this.hideOthers(!_this.c.getActiveSide() || _this.c.getActiveSide().isEmpty() ? panel.newElementPanel : panel.layersPanel);
         return _this;
     }
     SideBar.prototype.getClassName = function () {
         return _super.prototype.getClassName.call(this) + " sidebar";
     };
-    SideBar.prototype.appendSwitch = function (control, icon, visibility) {
+    SideBar.prototype.createSwitch = function (control, icon, visibility) {
         var _this = this;
         var button = new SwitchButton(control, icon, visibility);
         this.buttons.push(button);
@@ -6307,7 +6378,7 @@ var SideBar = (function (_super) {
                 _this.hideOthers(trigger);
             }
         });
-        this.append(button);
+        return button;
     };
     SideBar.prototype.hideOthers = function (activeTrigger) {
         this.buttons.forEach(function (button) {
@@ -6358,7 +6429,7 @@ var TopBar = (function (_super) {
     __extends(TopBar, _super);
     function TopBar() {
         var _this = _super.call(this) || this;
-        _this.append(new Spacer(), new ConditionalButton(function () { return _this.c.undo(); }, function () { return _this.c.getActiveSide().history.hasPrevious(); }, Icon.UNDO_ALT), new ConditionalButton(function () { return _this.c.redo(); }, function () { return _this.c.getActiveSide().history.hasNext(); }, Icon.REDO_ALT), new ConditionalButton(function () { return _this.c.duplicate(); }, function () { return _this.c.hasSelection(); }, Icon.CLONE), new ConditionalButton(function () { return _this.c.getSelection().remove(); }, function () { return _this.c.hasSelection(); }, Icon.TRASH), new Spacer());
+        _this.append(new Spacer(), new ConditionalButton(function () { return _this.c.undo(); }, function () { return _this.c.getActiveSide().history.hasPrevious(); }, Icon.UNDO_ALT).tooltip('Undo'), new ConditionalButton(function () { return _this.c.redo(); }, function () { return _this.c.getActiveSide().history.hasNext(); }, Icon.REDO_ALT).tooltip('Redo'), new ConditionalButton(function () { return _this.c.duplicate(); }, function () { return _this.c.hasSelection(); }, Icon.CLONE).tooltip('Duplicate'), new ConditionalButton(function () { return _this.c.getSelection().remove(); }, function () { return _this.c.hasSelection(); }, Icon.TRASH).tooltip('Delete'), new Spacer());
         return _this;
     }
     TopBar.prototype.getClassName = function () {

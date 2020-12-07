@@ -9,7 +9,7 @@ class TriggeredButton<T extends Trigger<any>> extends TriggeredUIControl<T> {
         super(trigger || Constructor.instance);
         if (icon) {
             this.append(
-                new IconControl(icon)
+                new IconControl(this.translate(icon))
             );
         }
         if (label) {

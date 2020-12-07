@@ -87,7 +87,9 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                     Icon.CHEVRON_CIRCLE_RIGHT
                 ),
             ).showWhen(Constructor.instance, () => Constructor.instance.sides.length > 1)
-                .addClass('pager'),
+                .addClass('pager')
+                .tooltip('Side', 'bottom')
+
         )
 
         this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);

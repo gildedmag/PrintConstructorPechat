@@ -21,20 +21,20 @@ class BottomBar extends ToolBar {
                     window.dispatchEvent(new Event('resize'));
                 },
                 Icon.BARS
-            ),
+            ).tooltip('Toggle Sidebar'),
             new Spacer(),
 
             new Button(() => {
                 this.c.zoomIn();
-            }, Icon.SEARCH_PLUS),
+            }, Icon.SEARCH_PLUS).tooltip('Zoom In'),
             new Button(() => {
                 this.c.zoomOut();
-            }, Icon.SEARCH_MINUS),
+            }, Icon.SEARCH_MINUS).tooltip('Zoom Out'),
             new ConditionalButton(
                 () => this.c.zoomToFit(),
                 () => this.c.is2D(),
                 Icon.SEARCH
-            ),
+            ).tooltip('Zoom to Fit'),
 
             new ToggleButton(
                 () => this.c.toggleSnapToGrid(),
@@ -42,14 +42,14 @@ class BottomBar extends ToolBar {
                 Icon.BORDER_ALL,
                 null,
                 () => this.c.is2D(),
-            ),
+            ).tooltip('Snap to Grid'),
             new ToggleButton(
                 () => this.c.toggleSnapToObjects(),
                 () => this.c.snapToObjects,
                 Icon.VECTOR_SQUARE,
                 null,
                 () => this.c.is2D(),
-            ),
+            ).tooltip('Snap to Objects'),
 
             new ToggleButton(
                 () => {
@@ -69,7 +69,7 @@ class BottomBar extends ToolBar {
                 null,
                 null,
                 Utils.isCompact() ? null : "3D"
-            ),
+            ).tooltip('Toggle 3D Mode'),
 
             new Spacer(),
 
@@ -81,7 +81,7 @@ class BottomBar extends ToolBar {
             new Button(
                 () => ConstructorUI.instance.addToCartPopover.show(),
                 Icon.CART_PLUS
-            )
+            ).tooltip('Add to Cart'),
         );
     }
 

@@ -12,7 +12,7 @@ class FiltersPanel extends TriggeredUIControl<Constructor> {
         this.addFilterButton(Filter.DARKNESS, "Darkness");
         this.addFilterButton(Filter.BLUR, "Blur");
         this.addFilterButton(Filter.SHARPEN, "Sharpen");
-        this.addFilterButton(Filter.EMBOSS, "Sharpen");
+        this.addFilterButton(Filter.EMBOSS, "Emboss");
         this.addFilterButton(Filter.INVERT, "Invert");
         this.addFilterButton(Filter.GRAYSCALE, "Grayscale");
 

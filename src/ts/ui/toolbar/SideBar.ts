@@ -10,57 +10,54 @@ class SideBar extends VerticalToolBarUIControl {
     constructor() {
         super();
         let panel = ConstructorUI.instance.sidePanel;
-        this.appendSwitch(
-            panel.newElementPanel,
-            Icon.FILE,
-            () => Constructor.instance.is2D()
+        this.append(
+            this.createSwitch(
+                panel.newElementPanel,
+                Icon.BOOK_OPEN,
+                () => Constructor.instance.is2D()
+            ).tooltip('Page'),
+            this.createSwitch(
+                panel.layersPanel,
+                Icon.LAYER_GROUP,
+                () => Constructor.instance.is2D()
+            ).tooltip('Layers'),
+            this.createSwitch(
+                panel.selectionPanel,
+                Icon.SLIDERS_H,
+                () => Constructor.instance.hasSelection()
+            ).tooltip('Properties'),
+            this.createSwitch(
+                panel.fontFamilyPanel,
+                Icon.FONT,
+                () => Constructor.instance.hasTextSelection()
+            ).tooltip('Fonts'),
+            this.createSwitch(
+                panel.filtersPanel,
+                Icon.TINT,
+                () => Constructor.instance.hasImageSelection()
+            ).tooltip('Filters'),
+            this.createSwitch(
+                panel.samplesPanel,
+                Icon.INFO_CIRCLE,
+            ).tooltip('Product Info'),
+            this.createSwitch(
+                panel.modelsPanel,
+                Icon.MUG_HOT,
+            ).tooltip('Product Types'),
+            this.createSwitch(
+                panel.optionsPanel,
+                Icon.CLIPBOARD_LIST,
+            ).tooltip('Options'),
+            this.createSwitch(
+                panel.sharePanel,
+                Icon.FILE_DOWNLOAD,
+            ).tooltip('Export & Sharing'),
+            new Spacer(),
         );
-        this.appendSwitch(
-            panel.layersPanel,
-            Icon.LAYER_GROUP,
-            () => Constructor.instance.is2D()
-        );
-        this.appendSwitch(
-            panel.selectionPanel,
-            Icon.SLIDERS_H,
-            () => Constructor.instance.hasSelection()
-        );
-        this.appendSwitch(
-            panel.fontFamilyPanel,
-            Icon.FONT,
-            () => Constructor.instance.hasTextSelection()
-        );
-        this.appendSwitch(
-            panel.filtersPanel,
-            Icon.TINT,
-            () => Constructor.instance.hasImageSelection()
-        );
-        this.appendSwitch(
-            panel.samplesPanel,
-            Icon.INFO_CIRCLE,
-        );
-        this.appendSwitch(
-            panel.modelsPanel,
-            Icon.MUG_HOT,
-        );
-        this.appendSwitch(
-            panel.optionsPanel,
-            Icon.CLIPBOARD_LIST,
-            //Icon.SHOPPING_BAG,
-
-        );
-        this.appendSwitch(
-            panel.sharePanel,
-            Icon.FILE_DOWNLOAD,
-            //Icon.SHOPPING_BAG,
-
-        );
-        this.append(new Spacer());
         this.hideOthers(!this.c.getActiveSide() || this.c.getActiveSide().isEmpty() ? panel.newElementPanel : panel.layersPanel);
-
     }
 
-    private appendSwitch(control: UIControl, icon: Icon, visibility?: () => boolean) {
+    private createSwitch(control: UIControl, icon: Icon, visibility?: () => boolean) {
         let button = new SwitchButton(control, icon, visibility);
         this.buttons.push(button);
         Constructor.instance.onChange(() => button.update(), button);
@@ -69,7 +66,7 @@ class SideBar extends VerticalToolBarUIControl {
                 this.hideOthers(trigger);
             }
         });
-        this.append(button);
+        return button;
     }
 
     hideOthers(activeTrigger: UIControl) {

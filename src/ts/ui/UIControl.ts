@@ -12,7 +12,7 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
 
     static nextId = 0;
 
-    translate(key: string){
+    translate(key: string) {
         return LocalizedStrings.translate(key);
     }
 
@@ -31,9 +31,9 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
     }
 
     update() {
-        if (this.showCondition && this.showCondition()){
+        if (this.showCondition && this.showCondition()) {
             this.show();
-        } else if (this.showCondition && !this.showCondition()){
+        } else if (this.showCondition && !this.showCondition()) {
             this.hide();
         }
     }
@@ -85,6 +85,50 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
             delete UIControl.map[child.id];
         });
         this.children = [];
+    }
+
+    tooltip(value: string) {
+        let tooltip = document.createElement('span');
+        tooltip.className = 'tp';
+        tooltip.innerHTML = this.translate(value);
+        this.container.appendChild(tooltip);
+        let parent = this.container;
+        this.container.onmouseover = e => {
+            let dx = 0;
+            let dy = 0;
+
+            let spaceRight = window.innerWidth - parent.offsetLeft
+            let spaceLeft = parent.offsetLeft;
+            let spaceTop = parent.offsetTop;
+            let spaceBottom = window.innerHeight - parent.offsetTop;
+
+            if (spaceRight > tooltip.offsetWidth) {
+                if (spaceLeft > tooltip.offsetWidth * 2 &&  spaceTop < tooltip.offsetHeight * 2) {
+                    dx = -tooltip.offsetWidth / 2 + parent.offsetWidth / 2;
+                    dy = tooltip.offsetHeight;
+                } else if (spaceBottom < tooltip.offsetHeight * 2) {
+                    dx = -tooltip.offsetWidth / 2 + parent.offsetWidth / 2;
+                    dy = -tooltip.offsetHeight;
+                } else {
+                    dx = parent.offsetWidth;
+                }
+            } else if (spaceLeft > tooltip.offsetWidth) {
+                if (spaceBottom < tooltip.offsetHeight * 2) {
+                    dy = -tooltip.offsetHeight;
+                }
+                dx = -tooltip.offsetWidth + parent.offsetWidth;
+            } else {
+                dy = -parent.offsetHeight;
+            }
+
+            tooltip.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+            tooltip.style.visibility = 'visible';
+        };
+        this.container.onmouseleave = e => {
+            tooltip.style.visibility = 'hidden';
+        };
+        tooltip.onmousemove
+        return this;
     }
 
 }
