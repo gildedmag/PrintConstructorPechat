@@ -83,13 +83,13 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                 new Spacer(),
                 new ConditionalButton(
                     () => Constructor.instance.setActiveSide(Constructor.instance.getActiveSide().getIndex() + 1),
-                    () => Constructor.instance.getActiveSide().getIndex() <  Constructor.instance.sides.length - 1,
+                    () => Constructor.instance.getActiveSide().getIndex() < Constructor.instance.sides.length - 1,
                     Icon.CHEVRON_CIRCLE_RIGHT
                 ),
             ).showWhen(Constructor.instance, () => Constructor.instance.sides.length > 1)
-                .addClass('pager')
-                .tooltip('Side', 'bottom')
-
+                .addClass('mobile')
+                //.addClass('pager')
+                .tooltip('Side')
         )
 
         this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);

@@ -16,6 +16,7 @@ class ConstructorUI extends UIControl {
     sidePanel: SidePanel;
     toolBar: ToolBar;
     topBar: TopBar;
+    pagerBar: UIControl;
     bottomBar: BottomBar;
     addToCartPopover: AddToCartPopover;
 
@@ -61,6 +62,11 @@ class ConstructorUI extends UIControl {
         this.topBar = new TopBar();
         this.bottomBar = new BottomBar();
         this.addToCartPopover = new AddToCartPopover();
+        this.pagerBar = new Pager()
+            .showWhen(Constructor.instance, () => Constructor.instance.sides.length > 1)
+            .addClass('pager-toolbar')
+            .addClass('desktop')
+            .tooltip('Side');
 
         this.append(
             this.constructorControl,
@@ -70,6 +76,7 @@ class ConstructorUI extends UIControl {
             this.topBar,
             this.bottomBar,
             this.addToCartPopover,
+            this.pagerBar
         );
 
         host.appendChild(this.container);

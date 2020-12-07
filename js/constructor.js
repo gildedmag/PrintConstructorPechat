@@ -180,7 +180,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "07.12.2020 12:46";
+    Version.version = "07.12.2020 13:41";
     return Version;
 }());
 var Trigger = (function () {
@@ -4254,11 +4254,12 @@ var UIControl = (function (_super) {
             }
             tooltip.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
             tooltip.style.visibility = 'visible';
+            setTimeout(function () { return tooltip.style.visibility = 'hidden'; }, 1000);
         };
         this.container.onmouseleave = function (e) {
             tooltip.style.visibility = 'hidden';
         };
-        tooltip.onmousemove;
+        tooltip.onmousemove = function (e) { return tooltip.style.visibility = 'hidden'; };
         return this;
     };
     UIControl.prototype.getPositionOnScreen = function () {
@@ -4552,7 +4553,12 @@ var ConstructorUI = (function (_super) {
         _this.topBar = new TopBar();
         _this.bottomBar = new BottomBar();
         _this.addToCartPopover = new AddToCartPopover();
-        _this.append(_this.constructorControl, _this.toolBar, _this.sidePanel, _this.sideBar, _this.topBar, _this.bottomBar, _this.addToCartPopover);
+        _this.pagerBar = new Pager()
+            .showWhen(Constructor.instance, function () { return Constructor.instance.sides.length > 1; })
+            .addClass('pager-toolbar')
+            .addClass('desktop')
+            .tooltip('Side');
+        _this.append(_this.constructorControl, _this.toolBar, _this.sidePanel, _this.sideBar, _this.topBar, _this.bottomBar, _this.addToCartPopover, _this.pagerBar);
         host.appendChild(_this.container);
         _this.bindDelKey();
         window.addEventListener("load", function () {
@@ -5762,8 +5768,8 @@ var NewElementPanel = (function (_super) {
         };
         _this.container.appendChild(form);
         _this.append(new Row(new ConditionalButton(function () { return Constructor.instance.setActiveSide(Constructor.instance.getActiveSide().getIndex() - 1); }, function () { return Constructor.instance.getActiveSide().getIndex() > 0; }, Icon.CHEVRON_CIRCLE_LEFT), new Spacer(), new TriggeredLabelControl(Constructor.instance, function () { return Constructor.instance.getActiveSide().name; }), new Spacer(), new ConditionalButton(function () { return Constructor.instance.setActiveSide(Constructor.instance.getActiveSide().getIndex() + 1); }, function () { return Constructor.instance.getActiveSide().getIndex() < Constructor.instance.sides.length - 1; }, Icon.CHEVRON_CIRCLE_RIGHT)).showWhen(Constructor.instance, function () { return Constructor.instance.sides.length > 1; })
-            .addClass('pager')
-            .tooltip('Side', 'bottom'));
+            .addClass('mobile')
+            .tooltip('Side'));
         _this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);
         _this.addButton("Rectangle", ElementType.RECTANGLE, Icon.SQUARE);
         _this.addButton("Triangle", ElementType.TRIANGLE, Icon.CARET_UP);
@@ -6362,28 +6368,44 @@ var Pager = (function (_super) {
     function Pager() {
         var _this = _super.call(this, Constructor.instance) || this;
         _this.index = 0;
+        _this.sideNames = [];
         _this.update();
         return _this;
     }
     Pager.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " toolbar pager vertical";
+        return _super.prototype.getClassName.call(this) + " toolbar pager";
     };
     Pager.prototype.update = function () {
         var _this = this;
+        if (Constructor.instance.sides.length < 2) {
+            this.clear();
+            return;
+        }
+        var sideNames = [];
+        for (var i = 0; i < Constructor.instance.sides.length; i++) {
+            sideNames.push(Constructor.instance.sides[i].name);
+        }
+        if (this.sideNames == sideNames) {
+            return;
+        }
         this.clear();
+        this.append(new Spacer());
         if (Constructor.instance.is2D() && Constructor.instance.sides.length > 1) {
             var _loop_2 = function (i) {
                 var side = this_2.c.sides[i];
                 this_2.append(new ToggleButton(function () {
                     Constructor.instance.setActiveSide(i);
                     _this.index = i;
-                }, function () { return Constructor.instance.getActiveSide().getIndex() == side.getIndex(); }, null, null, null, side.getName()).addClass("desktop"));
+                }, function () {
+                    return Constructor.instance.getActiveSide().getIndex() === i;
+                }, null, null, null, side.getName()));
             };
             var this_2 = this;
             for (var i = 0; i < this.c.sides.length; i++) {
                 _loop_2(i);
             }
         }
+        this.append(new Spacer());
     };
     return Pager;
 }(TriggeredUIControl));

@@ -134,11 +134,12 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
 
             tooltip.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
             tooltip.style.visibility = 'visible';
+            setTimeout(() => tooltip.style.visibility = 'hidden', 1000);
         };
         this.container.onmouseleave = e => {
             tooltip.style.visibility = 'hidden';
         };
-        tooltip.onmousemove
+        tooltip.onmousemove = e => tooltip.style.visibility = 'hidden';
         return this;
     }
 

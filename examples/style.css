@@ -99,11 +99,12 @@ body {
     height: 100vh;
     display: grid;
     grid-template-columns: auto 250px 1fr;
-    grid-template-rows: auto 1fr 48px;
+    grid-template-rows: auto 1fr 48px 48px;
     gap: 0;
     grid-template-areas:
             "sidebar sidepanel topbar"
             "sidebar sidepanel constructor"
+            "sidebar sidepanel pager"
             "sidebar sidepanel bottombar";
 }
 
@@ -122,6 +123,7 @@ body {
     grid-template-areas:
             "sidebar topbar topbar"
             "constructor constructor constructor"
+            "pager pager pager"
             "bottombar bottombar bottombar";
 }
 
@@ -154,8 +156,26 @@ body {
     vertical-align: middle;
 }
 
+.pager-toolbar  {
+    grid-area: pager;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.pager .label {
+    text-align: center;
+}
+
 .toolbar.top .button, .toolbar.bottom .button, .constructor-ui-container.collapsed .sidebar .button {
     color: #333;
+}
+
+.control.pager-toolbar .toggle {
+    color: #555;
+}
+
+.pager-toolbar .toggle.active .label {
+    color: #000 !important;
 }
 
 .toolbar.top .button:hover *, .toolbar.bottom .button:hover * {
@@ -512,14 +532,6 @@ input[type="color"] {
     color: #777 !important;
 }
 
-.pager  {
-    
-}
-
-.pager .label {
-    text-align: center;
-}
-
 .control .tp {
     /*position: relative;*/
     display: inline-block;
@@ -572,7 +584,7 @@ input[type="color"] {
     }
 
     .mobile {
-        display: block
+        display: flex;
     }
 
     select.pager {
@@ -621,7 +633,7 @@ input[type="color"] {
     }
 
     .mobile, .mobile-portrait {
-        display: inherit;
+        display: flex;
     }
 
     .mobile-landscape {
