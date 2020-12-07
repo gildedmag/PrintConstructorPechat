@@ -606,7 +606,7 @@ input[type="color"] {
 
 @media (max-width: 1000px) and (orientation: portrait) {
     .constructor-ui-container {
-        height: 100vh;
+        height: 85vh;
         display: grid;
         grid-template-columns: 42px 1fr;
         grid-template-rows: auto 1fr auto 309px;

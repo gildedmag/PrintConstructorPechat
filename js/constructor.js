@@ -180,7 +180,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "07.12.2020 16:12";
+    Version.version = "07.12.2020 16:43";
     return Version;
 }());
 var Trigger = (function () {
@@ -4601,6 +4601,7 @@ var ConstructorUI = (function (_super) {
         _this.bindDelKey();
         window.addEventListener("load", function () {
             setTimeout(function () {
+                document.head.innerHTML = document.head.innerHTML + '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=1" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />';
                 window.scrollTo(0, 0);
             }, 0);
             setTimeout(function () { return window.scrollTo(0, 1); }, 1000);
