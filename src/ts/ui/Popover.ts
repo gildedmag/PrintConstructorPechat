@@ -31,11 +31,11 @@ class Popover extends UIControl {
 
             if (content){
                 frame.append(
-                    new Spacer(),
                     new Row(
+                        new Spacer(),
                         new LabelControl(content).allowUserSelect(),
+                        new Spacer(),
                     ),
-                    new Spacer(),
                 );
             }
 

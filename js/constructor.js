@@ -180,7 +180,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "07.12.2020 13:41";
+    Version.version = "07.12.2020 16:00";
     return Version;
 }());
 var Trigger = (function () {
@@ -204,7 +204,7 @@ var Trigger = (function () {
                 action(_this);
             }
             catch (e) {
-                console.error(e.message);
+                console.log(e.message);
             }
         });
     };
@@ -462,7 +462,6 @@ var Preview = (function (_super) {
         for (var _i = 1; _i < arguments.length; _i++) {
             indices[_i - 1] = arguments[_i];
         }
-        console.log("setFills", color, indices);
         if (this.fills && this.fills.length) {
             for (var _a = 0, indices_1 = indices; _a < indices_1.length; _a++) {
                 var index = indices_1[_a];
@@ -714,6 +713,7 @@ var Constructor = (function (_super) {
             Constructor.instance.spinner.update();
             var div = container;
             Constructor.instance.zoomToFit();
+            document.body.requestFullscreen();
         });
         return _this;
     }
@@ -965,12 +965,14 @@ var Constructor = (function (_super) {
         }
     };
     Constructor.prototype.duplicate = function () {
+        var _this = this;
         var selection = this.getSelection();
         if (selection) {
-            var element = selection.clone();
-            this.getActiveSide().add(element);
-            element.randomizePosition();
-            return this.getActiveSide().select(element);
+            selection.clone(function (element) {
+                _this.getActiveSide().add(element);
+                element.randomizePosition();
+                return _this.getActiveSide().select(element);
+            });
         }
     };
     Constructor.prototype.getState = function (prettyPrint) {
@@ -1057,7 +1059,7 @@ var Constructor = (function (_super) {
     };
     Constructor.version = Version.version;
     Constructor.settings = new Settings();
-    Constructor.zoomStep = 0.05;
+    Constructor.zoomStep = 0.5;
     Constructor.onReadyHandler = function () { return true; };
     return Constructor;
 }(View));
@@ -2730,6 +2732,28 @@ var Utils = (function () {
         console.log(url);
         return url;
     };
+    Utils.copyToClipboard = function (text) {
+        if (window.clipboardData && window.clipboardData.setData) {
+            return clipboardData.setData("Text", text);
+        }
+        else if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
+            var textarea = document.createElement("textarea");
+            textarea.textContent = text;
+            textarea.style.position = "fixed";
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                return document.execCommand("copy");
+            }
+            catch (ex) {
+                console.warn("Copy to clipboard failed.", ex);
+                return false;
+            }
+            finally {
+                document.body.removeChild(textarea);
+            }
+        }
+    };
     return Utils;
 }());
 var Dimensions = (function () {
@@ -3224,11 +3248,27 @@ var Element2D = (function (_super) {
         var multiplier = size / maxSize;
         return this.object.toDataURL({ multiplier: multiplier });
     };
-    Element2D.prototype.clone = function () {
-        var object = fabric.util.object.clone(this.object);
-        var element = new Element2D(this.type, this.side);
-        element.object = object;
-        return element;
+    Element2D.prototype.clone = function (callback) {
+        var _this = this;
+        var objectOptions = this.serialize();
+        if (objectOptions.type === 'image') {
+            var object = objectOptions.toObject();
+            fabric.Image.fromObject(object, function (image) {
+                if (image === null) {
+                    return;
+                }
+                var element = new Element2D(ElementType.IMAGE);
+                element.side = _this;
+                element.object = image;
+                element.setOptions(element.object);
+                callback(element);
+            });
+        }
+        else {
+            var element = Element2D.prototype.deserialize(objectOptions);
+            callback && callback(element);
+            element.object.dirty = true;
+        }
     };
     Element2D.prototype.remove = function () {
         var _this = this;
@@ -3774,7 +3814,6 @@ var Side2D = (function (_super) {
             alert("Too many objects on the canvas! Please consider removing some objects before adding new.");
             return null;
         }
-        console.log('ADDED:', element.type);
         Utils.logMethodName();
         element.side = this;
         this.elements.push(element);
@@ -3881,7 +3920,7 @@ var Side2D = (function (_super) {
             element.object = image;
             element.setOptions(element.object);
             side.add(element);
-            callback && callback();
+            callback && callback(element);
             if (objectOptions.filters) {
                 element.filters = [];
                 for (var _i = 0, _a = objectOptions.filters; _i < _a.length; _i++) {
@@ -4315,7 +4354,7 @@ var Popover = (function (_super) {
                 frame.append(new Row(new Spacer(), new LabelControl(title).addClass("title"), new Spacer()));
             }
             if (content) {
-                frame.append(new Spacer(), new Row(new LabelControl(content).allowUserSelect()), new Spacer());
+                frame.append(new Row(new Spacer(), new LabelControl(content).allowUserSelect(), new Spacer()));
             }
             frame.append(new Row(new Spacer(), new Button(function () {
                 _this.hide();
@@ -5876,7 +5915,10 @@ var SelectionPanel = (function (_super) {
         if (!this.c.getSelection()) {
             return;
         }
-        this.append(new SelectRangePropertyControl("Transparency", function (value) { return _this.c.getSelection().setAlpha(value / 100); }, function () { return _this.c.getSelection().getAlpha() * 100; }, 10, 100, 10), new SelectRangePropertyControl("Shadow", function (value) { return _this.c.getSelection().setShadow(value / 10); }, function () { return _this.c.getSelection().getShadow() * 10; }), new SelectionColorControl("Color", function (value) { return _this.c.getSelection().setColor(value); }, function () { return _this.c.getSelection().getColor().toHex(); }).showWhen(Constructor.instance, function () { return Constructor.instance.hasImageSelection(); }));
+        this.append(new SelectRangePropertyControl("Transparency", function (value) { return _this.c.getSelection().setAlpha(value / 100); }, function () { return _this.c.getSelection().getAlpha() * 100; }, 10, 100, 10), new SelectRangePropertyControl("Shadow", function (value) { return _this.c.getSelection().setShadow(value / 10); }, function () { return _this.c.getSelection().getShadow() * 10; }));
+        if (!this.c.hasImageSelection()) {
+            this.append(new SelectionColorControl("Color", function (value) { return _this.c.getSelection().setColor(value); }, function () { return _this.c.getSelection().getColor().toHex(); }));
+        }
         if (this.c.hasTextSelection()) {
             this.append(new SelectRangePropertyControl("Font Size", function (value) { return _this.c.getSelection().setFontSize(value); }, function () { return _this.c.getSelection().getFontSize(); }, 4, 96, 8), new SelectRangePropertyControl("Letter Spacing", function (value) { return _this.c.getSelection().setLetterSpacing(value); }, function () { return _this.c.getSelection().getLetterSpacing(); }, -200, 2000, 50), new SelectRangePropertyControl("Line Height", function (value) { return _this.c.getSelection().setLineHeight(value); }, function () { return _this.c.getSelection().getLineHeight(); }, 0.5, 3, 0.25), new Row(new LabelControl("Font Family"), new Spacer(), new Button(function () { return ConstructorUI.instance.sidePanel.fontFamilyPanel.show(); }, null, this.c.getSelection().getFontFamily())), new Row(new LabelControl("Font"), new Spacer(), this.textPropertyToggleButton("Bold"), this.textPropertyToggleButton("Italic"), this.textPropertyToggleButton("Underline"), this.textPropertyToggleButton("Linethrough")), new Row(new LabelControl("Alignment"), new Spacer(), this.textAlignmentButton(TextAlignment.LEFT, Icon.ALIGN_LEFT), this.textAlignmentButton(TextAlignment.CENTER, Icon.ALIGN_CENTER), this.textAlignmentButton(TextAlignment.RIGHT, Icon.ALIGN_RIGHT), this.textAlignmentButton(TextAlignment.JUSTIFY, Icon.ALIGN_JUSTIFY)));
         }
@@ -6280,7 +6322,12 @@ var Order = (function (_super) {
             response.json().then(function (link) {
                 console.log(link);
                 var url = ConstructorUI.instance.domain + '/create_constructor?url=' + link;
-                new Popover('Share as Link', url);
+                if (Utils.copyToClipboard(url)) {
+                    new Popover('Share as Link', 'The link is copied to clipboard!');
+                }
+                else {
+                    new Popover('Share as Link', url);
+                }
             });
         });
     };

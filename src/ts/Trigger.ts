@@ -19,7 +19,7 @@ abstract class Trigger<T> {
             try {
                 action(this);
             } catch (e) {
-                console.error(e.message);
+                console.log(e.message);
             }
         });
     }

@@ -307,7 +307,11 @@ class Order extends Trigger<Order> {
             response.json().then(link => {
                 console.log(link);
                 let url = ConstructorUI.instance.domain + '/create_constructor?url=' + link;
-                new Popover('Share as Link', url);
+                if (Utils.copyToClipboard(url)){
+                    new Popover('Share as Link', 'The link is copied to clipboard!');
+                } else {
+                    new Popover('Share as Link', url);
+                }
             });
         });
     }

@@ -571,11 +571,34 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         return this.object.toDataURL({multiplier: multiplier});
     }
 
-    clone(): Element2D {
-        let object = fabric.util.object.clone(this.object);
-        let element = new Element2D(this.type, this.side);
-        element.object = object;
-        return element;
+    clone(callback: (Element2D) => any) {
+        let objectOptions: ObjectOptions = this.serialize();
+
+        if (objectOptions.type === 'image') {
+            let object = objectOptions.toObject();
+            (fabric.Image as any).fromObject(object, image => {
+                if (image === null) {
+                    return
+                }
+                let element = new Element2D(ElementType.IMAGE);
+                element.side = this;
+                element.object = image;
+                element.setOptions(element.object);
+                callback(element);
+            });
+        } else {
+            let element = Element2D.prototype.deserialize(objectOptions);
+            callback && callback(element);
+            element.object.dirty = true;
+        }
+            // if (element.type === ElementType.TEXT) {
+            //     setTimeout(() => element.setFontFamily(element.getFontFamily()), 0);
+            // }
+        // }
+        //
+        //
+        // let element = new Element2D(this.type, this.side);
+        // element.object = object;
     }
 
     remove() {

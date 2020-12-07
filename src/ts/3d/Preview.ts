@@ -188,7 +188,6 @@ class Preview extends View<Preview> {
     }
 
     setFills(color: any, ...indices: number[]) {
-        console.log("setFills", color, indices);
         if (this.fills && this.fills.length) {
             for (let index of indices) {
                 if (this.fills.length > index) {

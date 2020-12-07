@@ -34,12 +34,16 @@ class SelectionPanel extends TriggeredUIControl<Constructor> {
                 value => this.c.getSelection().setShadow(value / 10),
                 () => this.c.getSelection().getShadow() * 10
             ),
-            new SelectionColorControl(
-                "Color",
-                value => this.c.getSelection().setColor(value),
-                () => this.c.getSelection().getColor().toHex()
-            ).showWhen(Constructor.instance, () => Constructor.instance.hasImageSelection()),
         );
+        if (!this.c.hasImageSelection()) {
+            this.append(
+                new SelectionColorControl(
+                    "Color",
+                    value => this.c.getSelection().setColor(value),
+                    () => this.c.getSelection().getColor().toHex()
+                )
+            )
+        }
         if (this.c.hasTextSelection()) {
             this.append(
                 new SelectRangePropertyControl(
@@ -100,7 +104,7 @@ class SelectionPanel extends TriggeredUIControl<Constructor> {
         this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
     }
 
-    textAlignmentButton(alignment: TextAlignment, icon: Icon){
+    textAlignmentButton(alignment: TextAlignment, icon: Icon) {
         return new ToggleButton(
             () => this.c.getSelection().setTextAlignment(alignment),
             () => this.c.hasTextSelection() && this.c.getSelection().getTextAlignment() == alignment,

@@ -42,7 +42,7 @@ class Constructor extends View<Constructor> {
     static version = Version.version;
     static settings: Settings = new Settings();
     static instance: Constructor;
-    private static zoomStep: number = 0.05;
+    private static zoomStep: number = 0.5;
 
     static onReadyHandler = () => true;
     static onReady(handler: () => any){
@@ -102,6 +102,7 @@ class Constructor extends View<Constructor> {
             Constructor.instance.zoomToFit();
             //if (div.scrollWidth > div.clientWidth || div.scrollHeight > div.clientHeight) {
             //}
+            document.body.requestFullscreen();
         })
     }
 
@@ -441,13 +442,14 @@ class Constructor extends View<Constructor> {
     /**
      * Make a copy of active sides's selected element
      */
-    duplicate(): Element2D {
+    duplicate(): void {
         let selection = this.getSelection();
         if (selection) {
-            let element = selection.clone();
-            this.getActiveSide().add(element);
-            element.randomizePosition();
-            return this.getActiveSide().select(element);
+            selection.clone(element => {
+                this.getActiveSide().add(element);
+                element.randomizePosition();
+                return this.getActiveSide().select(element);
+            });
         }
     }
 

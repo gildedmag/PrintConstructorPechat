@@ -180,7 +180,6 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
             alert("Too many objects on the canvas! Please consider removing some objects before adding new.")
             return null;
         }
-        console.log('ADDED:', element.type);
         Utils.logMethodName();
         element.side = this;
         this.elements.push(element);
@@ -292,7 +291,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         this.saveState();
     }
 
-    addImageFromObjectOptions(objectOptions: ObjectOptions, callback?: () => any): void {
+    addImageFromObjectOptions(objectOptions: ObjectOptions, callback?: (any) => any): void {
         Utils.logMethodName();
         let object = objectOptions.toObject();
         let side = this;
@@ -305,7 +304,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
             element.object = image;
             element.setOptions(element.object);
             side.add(element);
-            callback && callback();
+            callback && callback(element);
             if (objectOptions.filters) {
                 element.filters = [];
                 for (let filterName of objectOptions.filters) {
