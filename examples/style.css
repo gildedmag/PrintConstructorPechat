@@ -5,7 +5,6 @@
 
 html, body {
     overflow-x: hidden;
-    overflow-y: hidden;
 }
 
 body {
@@ -208,6 +207,7 @@ body {
 .constructor-container {
     grid-area: constructor;
     background: #eee;
+    touch-action: auto;
 }
 
 .canvas-container {
@@ -539,12 +539,10 @@ input[type="color"] {
 }
 
 .control .tp {
-    /*position: relative;*/
     display: inline-block;
     color: #fff !important;
     visibility: hidden;
     background-color: black;
-    /*color: #fff;*/
     text-align: center;
     padding: 4px 8px;
     border-radius: 4px;
@@ -552,12 +550,9 @@ input[type="color"] {
     z-index: 1;
     font-size: 14px;
     min-width: 100px;
+    max-width: 200px;
     transition: none !important;
 }
-
-/*.control:hover > .tp {*/
-/*    visibility: visible;*/
-/*}*/
 
 @media (max-height: 600px) and (orientation: landscape) {
     .constructor-ui-container {
@@ -606,7 +601,7 @@ input[type="color"] {
 
 @media (max-width: 1000px) and (orientation: portrait) {
     .constructor-ui-container {
-        height: 85vh;
+        height: 100vh;
         display: grid;
         grid-template-columns: 42px 1fr;
         grid-template-rows: auto 1fr auto 309px;

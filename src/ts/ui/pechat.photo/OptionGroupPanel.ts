@@ -3,14 +3,14 @@
 
 class OptionGroupPanel extends UIControl {
 
-    option: Option;
+    option: pechat.Option;
     values: OptionButton[] = [];
 
     getClassName(): string {
         return super.getClassName() + " options-group vertical";
     }
 
-    constructor(option: Option) {
+    constructor(option: pechat.Option) {
         super();
         this.option = option;
 
@@ -23,7 +23,7 @@ class OptionGroupPanel extends UIControl {
                 new LabelControl(option.name).addClass("bold"),
                 new Spacer(),
             )
-        );
+        ).tooltip(option.description);
     }
 
     addOption(option: ConstructorModelOption): OptionButton {

@@ -21,6 +21,7 @@ class OptionButton extends ToggleButton {
             null,
             ConstructorUI.instance.order
         );
+        this.tooltip(value.description);
         this.parent = parent;
         this.value = value;
 

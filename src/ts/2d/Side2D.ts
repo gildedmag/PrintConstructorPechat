@@ -102,8 +102,12 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     }
 
     setRoundCorners() {
-        let smallestSide = Math.min(this.canvasElement.width, this.canvasElement.height);
-        this.canvasElement.style.borderRadius = smallestSide / 2 * this.roundCorners / 100 + Constants.PX;
+        if (this.roundCorners == 100){
+            this.canvasElement.style.borderRadius = 1e5 + Constants.PX;
+        } else {
+            let smallestSide = Math.min(this.canvasElement.width, this.canvasElement.height);
+            this.canvasElement.style.borderRadius = smallestSide / 2 * (this.roundCorners / 100) + Constants.PX;
+        }
     }
 
     centerPosition() {

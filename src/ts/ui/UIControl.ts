@@ -89,12 +89,17 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
     }
 
     tooltip(value: string) {
+        if (!value){
+            return;
+        }
         let tooltip = document.createElement('span');
-        tooltip.className = 'tp';
+        tooltip.classList.add('tp');
+        tooltip.classList.add('desktop');
         tooltip.innerHTML = this.translate(value);
         this.container.appendChild(tooltip);
         let parent = this;
         this.container.onmouseover = e => {
+            //tooltip.innerHTML = ScreenPosition[parent.getPositionOnScreen()];
             let parentWidth = parent.container.offsetWidth;
             let halfWidth = tooltip.offsetWidth / 2 - parentWidth / 2;
             let dx = 0;

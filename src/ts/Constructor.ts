@@ -42,7 +42,7 @@ class Constructor extends View<Constructor> {
     static version = Version.version;
     static settings: Settings = new Settings();
     static instance: Constructor;
-    private static zoomStep: number = 0.5;
+    private static zoomStep: number = 0.1;
 
     static onReadyHandler = () => true;
     static onReady(handler: () => any){

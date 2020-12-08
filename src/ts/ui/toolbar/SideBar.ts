@@ -12,6 +12,10 @@ class SideBar extends VerticalToolBarUIControl {
         let panel = ConstructorUI.instance.sidePanel;
         this.append(
             this.createSwitch(
+                panel.modelsPanel,
+                Icon.MUG_HOT,
+            ).tooltip('Product Types'),
+            this.createSwitch(
                 panel.newElementPanel,
                 Icon.BOOK_OPEN,
                 () => Constructor.instance.is2D()
@@ -37,17 +41,14 @@ class SideBar extends VerticalToolBarUIControl {
                 () => Constructor.instance.hasImageSelection()
             ).tooltip('Filters'),
             this.createSwitch(
+                panel.optionsPanel,
+                Icon.CLIPBOARD_LIST,
+                () => ConstructorUI.instance.order.model && ConstructorUI.instance.order.model.constructor_model_option && ConstructorUI.instance.order.model.constructor_model_option.length > 0
+            ).tooltip('Options'),
+            this.createSwitch(
                 panel.samplesPanel,
                 Icon.INFO_CIRCLE,
             ).tooltip('Product Info'),
-            this.createSwitch(
-                panel.modelsPanel,
-                Icon.MUG_HOT,
-            ).tooltip('Product Types'),
-            this.createSwitch(
-                panel.optionsPanel,
-                Icon.CLIPBOARD_LIST,
-            ).tooltip('Options'),
             this.createSwitch(
                 panel.sharePanel,
                 Icon.FILE_DOWNLOAD,

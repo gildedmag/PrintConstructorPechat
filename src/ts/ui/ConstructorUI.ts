@@ -87,7 +87,7 @@ class ConstructorUI extends UIControl {
                 document.head.innerHTML = document.head.innerHTML + '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=1" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />'
                 window.scrollTo(0, 0);
             }, 0);
-            setTimeout(() => window.scrollTo(0,1), 1000);
+            setTimeout(() => window.scrollTo(0, 1), 1000);
         });
         window.addEventListener("orientationchange", function () {
             setTimeout(function () {
@@ -113,6 +113,11 @@ class ConstructorUI extends UIControl {
     loadCategory(categoryId: number) {
 
         let c = Constructor.instance;
+
+        if (c.preview && constructorConfiguration && constructorConfiguration.previewBackground){
+            c.preview.setSceneBackgroundColor(constructorConfiguration.previewBackground);
+        }
+
         PechatUtils.getCategoryOptions(categoryId, options => {
             if (!options || !options.constructor_models) {
                 console.error('error loading category options for category #' + categoryId)
@@ -160,7 +165,7 @@ class ConstructorUI extends UIControl {
                             new ImageControl(url),
                             new Spacer(),
                         ),
-                    ),
+                    ).tooltip(model.description),
                     new Row(
                         new Spacer(),
                         new LabelControl(model.name),
@@ -189,21 +194,24 @@ class ConstructorUI extends UIControl {
         console.log(model);
         this.sidePanel.optionsPanel.clear();
 
-        if (!constructorConfiguration || !constructorConfiguration.sharedState) {
+        if (!constructorConfiguration || !constructorConfiguration.sharedState || Constructor.instance.sides.length != model.printareas.length || Constructor.instance.sides[0].name != model.printareas[0].name) {
             if (Constructor.instance.sides.length != model.printareas.length) {
                 this.createSides(model.printareas);
             }
-            for (var i = 0; i < Constructor.instance.sides.length; i++) {
+            for (let i = 0; i < Constructor.instance.sides.length; i++) {
                 let side = Constructor.instance.sides[i];
                 let area = model.printareas[i];
                 if (side.width != area.width || side.height != area.height) {
                     this.createSides(model.printareas);
                     break;
                 }
+                if (side.name != area.name) {
+                    side.name = area.name;
+                }
                 side.price = parseInt(area.price) || 0;
                 side.name = area.name;
             }
-
+            Constructor.instance.changed();
         }
 
         this.order.setModel(model);

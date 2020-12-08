@@ -92,10 +92,6 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                 .tooltip('Side')
         )
 
-        this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);
-        this.addButton("Rectangle", ElementType.RECTANGLE, Icon.SQUARE);
-        this.addButton("Triangle", ElementType.TRIANGLE, Icon.CARET_UP);
-        this.addButton("Text", ElementType.TEXT, Icon.FONT);
         this.append(
             new Row(
                 new Button(
@@ -105,6 +101,10 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                 )
             )
         );
+        this.addButton("Text", ElementType.TEXT, Icon.FONT);
+        this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);
+        this.addButton("Rectangle", ElementType.RECTANGLE, Icon.SQUARE);
+        this.addButton("Triangle", ElementType.TRIANGLE, Icon.CARET_UP);
         this.append(
             new Row(
                 new ConditionalButton(
