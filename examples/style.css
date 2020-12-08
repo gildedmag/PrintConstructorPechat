@@ -161,7 +161,7 @@ body {
     vertical-align: middle;
 }
 
-.pager-toolbar  {
+.pager-toolbar {
     grid-area: pager;
     text-align: center;
     vertical-align: middle;
@@ -309,9 +309,9 @@ body {
     font-size: 18px;
 }
 
-.control.popover .control.button .label {
-    color: #00b0e8;
-}
+/*.control.popover .control.button .label {*/
+/*    color: #00b0e8;*/
+/*}*/
 
 .control.popover > .control > .control.row {
     margin: 4px;
@@ -411,15 +411,35 @@ body {
     display: block;
 }
 
-.sidepanel .options-panel {
-    padding: 0 8px;
-}
-.sidepanel .options-panel .control.button.toggle.active {
-    background: #222;
-    border-radius: 2px;
+/*.sidepanel .options-panel {*/
+/*    padding: 0 8px;*/
+/*}*/
+
+/*.sidepanel .options-panel .color .fa-square {*/
+/*    font-size: 32px;*/
+/*}*/
+
+.options-panel .color {
+    margin: 2px;
+    padding: 0;
+    font-size: 32px;
 }
 
-.sidepanel .options-panel .control.button.toggle.active .fa {
+.options-panel .control.button.color.toggle.active {
+    background: none !important;
+}
+
+.options-panel .control.button .label {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/*.options-panel .control.button.toggle.active {*/
+/*    background: #222;*/
+/*    border-radius: 2px;*/
+/*}*/
+
+.options-panel .control.button.toggle.active .fa {
     color: unset;
 }
 
@@ -427,13 +447,14 @@ body {
 /*    color: #fff;*/
 /*}*/
 
-.sidepanel .options-panel .control.button.toggle.active .icon {
-        
-}
-
 .models-panel {
     flex-flow: wrap;
     text-align: justify;
+}
+
+.models-panel .control.button.toggle.active {
+    background: #000;
+    border-radius: 4px;
 }
 
 /*.models-panel .image {*/
@@ -552,6 +573,53 @@ input[type="color"] {
     min-width: 100px;
     max-width: 200px;
     transition: none !important;
+}
+
+.fa.fa-mug-hot {
+    color: #1a9c31 !important;
+}
+
+.control.flow {
+    display: grid;
+    grid-auto-rows: auto;
+}
+
+.control.flow .button, .flow img {
+    width: 100%;
+}
+
+@media (min-width: 1000px) and (orientation: landscape) {
+
+    .price-bottom {
+        width: 60px;
+        height: 60px;
+        position: absolute;
+        right: 0;
+        bottom: 0;
+    }
+
+    .price-bottom .fa {
+        font-size: 34px;
+        margin-bottom: 8px !important;
+    }
+
+    .price-bottom * {
+        padding: 0;
+        margin: 0 !important;
+        color: #1a9c31 !important;
+    }
+
+    .price-bottom:hover .fa {
+        color: #08340f !important;
+    }
+
+    .popover .label {
+        font-size: 16px;
+    }
+
+    .popover .label.title {
+        font-size: 22px;
+    }
 }
 
 @media (max-height: 600px) and (orientation: landscape) {

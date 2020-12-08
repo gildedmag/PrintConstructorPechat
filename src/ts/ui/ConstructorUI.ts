@@ -111,10 +111,9 @@ class ConstructorUI extends UIControl {
     }
 
     loadCategory(categoryId: number) {
-
         let c = Constructor.instance;
 
-        if (c.preview && constructorConfiguration && constructorConfiguration.previewBackground){
+        if (c.preview && constructorConfiguration && constructorConfiguration.previewBackground) {
             c.preview.setSceneBackgroundColor(constructorConfiguration.previewBackground);
         }
 
@@ -128,9 +127,12 @@ class ConstructorUI extends UIControl {
             this.sidePanel.modelsPanel.append(
                 new LabelControl("Product Types").addClass('title'),
             );
+            let modelsContainer = new FlowControl(3);
             options.constructor_models.forEach(model => {
+                let active = false;
 
                 if (!modelLoaded) {
+                    active = true;
                     this.loadModelOptions(model, options);
                     try {
                         c.loadModel(
@@ -150,29 +152,26 @@ class ConstructorUI extends UIControl {
                 }
 
                 let url = model.thumb;
-                this.sidePanel.modelsPanel.append(
-                    Button.of(
-                        () => {
-                            c.loadModel(model.file_main, () => {
-                                if (constructorConfiguration && constructorConfiguration.sharedState) {
-                                    c.setMode(Mode.Mode3D);
-                                }
-                            });
-                            this.loadModelOptions(model, options);
-                        },
-                        new Row(
-                            new Spacer(),
-                            new ImageControl(url),
-                            new Spacer(),
-                        ),
-                    ).tooltip(model.description),
-                    new Row(
-                        new Spacer(),
-                        new LabelControl(model.name),
-                        new Spacer(),
-                    )
-                );
-            })
+                let button = new ToggleButton(
+                    () => {
+                        c.loadModel(model.file_main, () => {
+                            if (constructorConfiguration && constructorConfiguration.sharedState) {
+                                c.setMode(Mode.Mode3D);
+                            }
+                        });
+                        this.loadModelOptions(model, options);
+                    },
+                    () => this.order.model.constructor_model_id == model.constructor_model_id,
+                    null
+                ).append(new ImageControl(url))
+                    .tooltip(model.description);
+                modelsContainer.append(button);
+                if (active){
+                    button.addClass('active');
+                }
+            });
+            this.sidePanel.modelsPanel.append(modelsContainer);
+
         })
     }
 

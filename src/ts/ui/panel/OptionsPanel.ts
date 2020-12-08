@@ -13,5 +13,4 @@ class OptionsPanel extends TriggeredUIControl<Constructor> {
     update() {
     }
 
-
 }

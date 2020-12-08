@@ -6,7 +6,6 @@ class OptionButton extends ToggleButton {
     parent: OptionGroupPanel;
     value: ConstructorModelOption;
 
-
     getClassName(): string {
         return super.getClassName() + " ";
     }
@@ -15,24 +14,31 @@ class OptionButton extends ToggleButton {
         super(
             () => this.select(),
             () => ConstructorUI.instance.order.hasOption(value),
+            Icon.CHECK_SQUARE,
+            Icon.SQUARE,
             null,
-            null,
-            null,
-            null,
+            value.type == 'color' ? null : value.name,
             ConstructorUI.instance.order
         );
         this.tooltip(value.description);
         this.parent = parent;
         this.value = value;
 
-        this.append(
-            new IconControl(Icon.SQUARE)
-                .setColor(value.constructor_value),
-            new LabelControl(value.name),
-            new Spacer(),
-            new LabelControl(value.priceText),
-        );
-        this.addClass("row");
+        if (value.type == 'color'){
+            this.addClass('color');
+        }
+
+        this.icon.setColor(value.constructor_value);
+        this.tooltip(value.name + " " + value.priceText);
+        // this.append(
+        //     new IconControl(Icon.SQUARE)
+        //         .setColor(value.constructor_value)
+        //
+        //     // new LabelControl(value.name),
+        //     // new Spacer(),
+        //     // new LabelControl(value.priceText),
+        // );
+        //this.addClass("row");
 
         this.enabledCheck = () => {
             if (this.isSelected() || ConstructorUI.instance.order.selectedOptions.length == 0) {

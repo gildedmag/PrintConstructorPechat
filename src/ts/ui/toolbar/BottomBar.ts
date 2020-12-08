@@ -73,15 +73,35 @@ class BottomBar extends ToolBar {
 
             new Spacer(),
 
-            new TriggeredLabelControl(
-                ConstructorUI.instance.order,
-                () => ConstructorUI.instance.order.getPricePerItem()
-            ).addClass('desktop'),
+            Button.of(
+                () => ConstructorUI.instance.addToCartPopover.show(),
+                new Row(
+                    new Spacer(),
+                    new IconControl(Icon.CART_PLUS),
+                    new Spacer(),
+                ),
+                new Row(
+                    new Spacer(),
+                    new TriggeredLabelControl(
+                        ConstructorUI.instance.order,
+                        () => ConstructorUI.instance.order.getPricePerItem()
+                    ),
+                    new LabelControl('$'),
+                    new Spacer(),
+                ),
+            ).addClass('price-bottom').addClass('desktop').addClass('vertical'),
+
+            // new TriggeredLabelControl(
+            //     ConstructorUI.instance.order,
+            //     () => ConstructorUI.instance.order.getPricePerItem()
+            // ).addClass('desktop').addClass('price-bottom'),
+
+            //new LabelControl('$').addClass('desktop').addClass('price-bottom'),
 
             new Button(
                 () => ConstructorUI.instance.addToCartPopover.show(),
                 Icon.CART_PLUS
-            ).tooltip('Add to Cart'),
+            ).addClass('mobile').tooltip('Add to Cart'),
         );
     }
 

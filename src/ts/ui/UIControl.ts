@@ -57,8 +57,10 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
 
 
     private appendChild(control: UIControl): UIControl {
-        this.children.push(control);
-        this.container.appendChild(control.container);
+        if (control && control.container){
+            this.children.push(control);
+            this.container.appendChild(control.container);
+        }
         return this;
     }
 
