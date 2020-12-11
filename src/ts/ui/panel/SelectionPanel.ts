@@ -50,8 +50,8 @@ class SelectionPanel extends TriggeredUIControl<Constructor> {
                     "Font Size",
                     value => this.c.getSelection().setFontSize(value),
                     () => this.c.getSelection().getFontSize(),
-                    4,
-                    96,
+                    8,
+                    120,
                     8
                 ),
                 new SelectRangePropertyControl(

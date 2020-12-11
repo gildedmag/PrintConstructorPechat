@@ -1,14 +1,16 @@
 /// <reference path="TriggeredUIControl.ts" />
 class TriggeredLabelControl<T extends Trigger<any>> extends TriggeredUIControl<T> {
 
-    getter: () => any;
+    getter: (TriggeredUIControl?) => any;
+    control: TriggeredLabelControl<any>;
 
     getClassName(): string {
         return super.getClassName() + " label";
     }
 
-    constructor(trigger: T, getter: () => any) {
+    constructor(trigger: T, getter: (TriggeredUIControl?) => any) {
         super(trigger);
+        this.control = this;
         this.getter = getter;
         setTimeout(this.update, 100);
         this.update();
@@ -21,7 +23,7 @@ class TriggeredLabelControl<T extends Trigger<any>> extends TriggeredUIControl<T
     update() {
         let value: object = null;
         try {
-            value = this.getter();
+            value = this.translate(this.getter(this.control));
         } catch (e){}
 
         if (value != null){

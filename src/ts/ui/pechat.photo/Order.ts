@@ -24,7 +24,7 @@ class Order extends Trigger<Order> {
     }
 
     getPricePerItem(): number {
-        let price = this.model ? this.model.price : 0;
+        let price = this.model && this.model.price ? parseInt(this.model.price) : 0;
         price += this.getOptionsPrice();
         price += this.getSidePrice();
         return price;
@@ -267,21 +267,9 @@ class Order extends Trigger<Order> {
                     response.json().then(result => {
                         Constructor.instance.spinner.hide();
                         console.log(result);
-                        fetch(window.location).then(
-                            response => response.text().then(html => {
-                                let dom = document.createElement('div');
-                                dom.innerHTML = html;
-                                let modals = dom.getElementsByClassName('modal');
-                                for (let i = 0; i < modals.length; i++) {
-                                    let modal = modals[i];
-                                    if (modal.id == 'cartModal') {
-                                        let cartModal = document.getElementById('cartModal');
-                                        cartModal.innerHTML = modal.innerHTML;
-                                    }
-                                }
-                            })
-                        );
-                        new Popover('Product added to cart', result.success);
+                        let url = result.success.match(/(<a\s.+?\/a>)/)[1];
+                        url += '<br>' + result.success.match(/.+(<a\s.+\/a>)/)[1];
+                        new Popover('Product added to cart', url).addClass('popover-added');
                     });
                 });
 

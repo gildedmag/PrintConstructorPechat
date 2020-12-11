@@ -41,7 +41,7 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
     return function (d, b) {
@@ -183,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "10.12.2020 15:05";
+    Version.version = "11.12.2020 11:16";
     return Version;
 }());
 var Trigger = (function () {
@@ -1031,6 +1031,7 @@ var Constructor = (function (_super) {
                 side.canvas.renderAll();
             });
         }
+        this.sides.forEach(function (side) { return side.saveState(); });
         if (state.model && this.preview.modelName != state.model) {
             this.loadModel(state.model, function () {
                 _this.setFills(state);
@@ -4160,12 +4161,14 @@ var LocalizedStrings = (function () {
         'Add to Cart': 'Добавить в корзину',
         'Quantity': 'Количество',
         'Price': 'Цена',
-        'Discount': 'Скидка',
+        'Price without discount': 'Цена без скидки',
+        'Price with discount': 'Итоговая стоимость',
+        'Discount': 'Ваша скидка',
         'Cancel': 'Отмена',
         'Product added to cart': 'Продукт добавлен',
         'Share as Link': 'Поделиться ссылкой',
         'Choose other product': 'Выбрать другую модель',
-        'Real Product Photos': 'Примеры',
+        'Real Product Photos': 'Примеры работ',
         'Page': 'Объекты',
         'Layers': 'Слои',
         'Properties': 'Свойства объекта',
@@ -4265,7 +4268,7 @@ var UIControl = (function (_super) {
         });
         this.children = [];
     };
-    UIControl.prototype.tooltip = function (value) {
+    UIControl.prototype.tooltip = function (value, persistent) {
         if (!value || Utils.isCompact()) {
             return this;
         }
@@ -4313,7 +4316,9 @@ var UIControl = (function (_super) {
             }
             tooltip.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
             tooltip.style.visibility = 'visible';
-            setTimeout(function () { return tooltip.style.visibility = 'hidden'; }, 1000);
+            if (!persistent) {
+                setTimeout(function () { return tooltip.style.visibility = 'hidden'; }, 1000);
+            }
         };
         this.container.onmouseleave = function (e) {
             tooltip.style.visibility = 'hidden';
@@ -4451,16 +4456,28 @@ var Popover = (function (_super) {
 var AddToCartPopover = (function (_super) {
     __extends(AddToCartPopover, _super);
     function AddToCartPopover() {
-        var _this = _super.call(this, null, null, new Row(new Spacer(), new LabelControl("Add to Cart").addClass("title"), new Spacer()), new Row(new LabelControl("Quantity"), new Spacer(), new ConditionalButton(function () { return ConstructorUI.instance.order.decrementQuantity(); }, function () { return ConstructorUI.instance.order.getQuantity() > 1; }, Icon.MINUS_CIRCLE, null, ConstructorUI.instance.order), new Button(function () { return ConstructorUI.instance.order.incrementQuantity(); }, Icon.PLUS_CIRCLE), new NumberInputControl(function (v) { return ConstructorUI.instance.order.setQuantity(v); }, function () { return ConstructorUI.instance.order.getQuantity(); }, ConstructorUI.instance.order)), new Row(new LabelControl("Price"), new Spacer(), new TriggeredLabelControl(ConstructorUI.instance.order, function () {
+        var _this = _super.call(this, null, null, new Row(new Spacer(), new LabelControl("Add to Cart").addClass("title"), new Spacer()), new Row(new LabelControl("Quantity"), new Spacer(), new ConditionalButton(function () { return ConstructorUI.instance.order.decrementQuantity(); }, function () { return ConstructorUI.instance.order.getQuantity() > 1; }, Icon.MINUS_CIRCLE, null, ConstructorUI.instance.order), new Button(function () { return ConstructorUI.instance.order.incrementQuantity(); }, Icon.PLUS_CIRCLE), new NumberInputControl(function (v) { return ConstructorUI.instance.order.setQuantity(v); }, function () { return ConstructorUI.instance.order.getQuantity(); }, ConstructorUI.instance.order)), new Row(new LabelControl("Price"), new Spacer(), new TriggeredLabelControl(ConstructorUI.instance.order, function (control) {
             var price = ConstructorUI.instance.order.getTotalCostWithoutDiscount();
-            return (ConstructorUI.instance.order.hasDiscount() ? price : '');
-        }).addClass("price-without-discount"), new TriggeredLabelControl(ConstructorUI.instance.order, function () {
-            var price = ConstructorUI.instance.order.getTotalCostWithDiscount();
-            return price ? price : '';
-        })), new Row(new LabelControl("Discount"), new Spacer(), new TriggeredLabelControl(ConstructorUI.instance.order, function () {
+            if (ConstructorUI.instance.order.hasDiscount()) {
+                control.addClass("price-without-discount");
+            }
+            else {
+                control.removeClass("price-without-discount");
+            }
+            return price;
+        })), new Row(new TriggeredLabelControl(ConstructorUI.instance.order, function () {
+            var discount = ConstructorUI.instance.order.getTotalDiscount();
+            return (discount ? 'Discount' : '');
+        }), new Spacer(), new TriggeredLabelControl(ConstructorUI.instance.order, function () {
             var discount = ConstructorUI.instance.order.getTotalDiscount();
             return (discount ? discount : '');
-        }).addClass('discount')), new Row(), new Row(new Spacer(), new Button(function () { return _this.hide(); }, null, "Cancel"), new Spacer(), new Spacer(), new Button(function () {
+        }).addClass('discount')), new Row(new TriggeredLabelControl(ConstructorUI.instance.order, function () {
+            var discount = ConstructorUI.instance.order.getTotalDiscount();
+            return (discount ? 'Price with discount' : '');
+        }), new Spacer(), new TriggeredLabelControl(ConstructorUI.instance.order, function () {
+            var price = ConstructorUI.instance.order.getTotalCostWithDiscount();
+            return ConstructorUI.instance.order.hasDiscount() ? price : '';
+        })), new Row(), new Row(new Spacer(), new Button(function () { return _this.hide(); }, null, "Cancel"), new Spacer(), new Spacer(), new Button(function () {
             ConstructorUI.instance.order.addToCart();
             _this.hide();
         }, null, "OK"), new Spacer())) || this;
@@ -4715,8 +4732,8 @@ var ConstructorUI = (function (_super) {
                     });
                     _this.loadModelOptions(model, options);
                     Constructor.instance.changed();
-                }, function () { return ConstructorUI.instance.order.model.constructor_model_id == model.constructor_model_id; }, null).append(new ImageControl(url))
-                    .tooltip(model.description);
+                }, function () { return ConstructorUI.instance.order.model.constructor_model_id == model.constructor_model_id; }, null).append(new ImageControl(url).addClass('zoom'))
+                    .tooltip(model.description, true);
                 modelsContainer.append(button);
                 if (active) {
                     button.addClass('active');
@@ -4741,18 +4758,20 @@ var ConstructorUI = (function (_super) {
             if (Constructor.instance.sides.length != model.printareas.length) {
                 this.createSides(model.printareas);
             }
-            for (var i = 0; i < Constructor.instance.sides.length; i++) {
-                var side = Constructor.instance.sides[i];
-                var area = model.printareas[i];
-                if (side.width != area.width || side.height != area.height) {
-                    this.createSides(model.printareas);
-                    break;
-                }
-                if (side.name != area.name) {
+            else {
+                for (var i = 0; i < Constructor.instance.sides.length; i++) {
+                    var side = Constructor.instance.sides[i];
+                    var area = model.printareas[i];
+                    if (side.width != area.width || side.height != area.height) {
+                        this.createSides(model.printareas);
+                        break;
+                    }
+                    if (side.name != area.name) {
+                        side.name = area.name;
+                    }
+                    side.price = parseInt(area.price) || 0;
                     side.name = area.name;
                 }
-                side.price = parseInt(area.price) || 0;
-                side.name = area.name;
             }
             Constructor.instance.changed();
         }
@@ -5032,6 +5051,7 @@ var TriggeredLabelControl = (function (_super) {
     __extends(TriggeredLabelControl, _super);
     function TriggeredLabelControl(trigger, getter) {
         var _this = _super.call(this, trigger) || this;
+        _this.control = _this;
         _this.getter = getter;
         setTimeout(_this.update, 100);
         _this.update();
@@ -5046,7 +5066,7 @@ var TriggeredLabelControl = (function (_super) {
     TriggeredLabelControl.prototype.update = function () {
         var value = null;
         try {
-            value = this.getter();
+            value = this.translate(this.getter(this.control));
         }
         catch (e) { }
         if (value != null) {
@@ -6031,6 +6051,7 @@ var SamplesPanel = (function (_super) {
         _this.samples = new LabelControl()
             .addClass('samples')
             .addClass('vertical');
+        _this.title = new LabelControl("Real Product Photos").addClass('title');
         _this.update();
         return _this;
     }
@@ -6047,7 +6068,7 @@ var SamplesPanel = (function (_super) {
         var model = this.trigger.model;
         var options = ConstructorUI.instance.options;
         this.clear();
-        this.append(new Row(new LabelControl(options.name).addClass('title')), new Row(new LabelControl(options.description)), new Row(new LabelControl(model.name).addClass('title')), new Row(new ImageControl(model.thumb)), new Row(new LabelControl(model.description)), new Row(new Spacer()), new Row(new LabelControl("Real Product Photos").addClass('title')), this.samples);
+        this.append(new Row(new LabelControl(options.name).addClass('title')), new Row(new LabelControl(options.description)), new Row(new LabelControl(model.name).addClass('title')), new Row(new ImageControl(model.thumb)), new Row(new LabelControl(model.description)), new Row(new Spacer()), new Row(this.title), this.samples);
     };
     SamplesPanel.prototype.updateSamples = function () {
         if (this.samples.container.innerHTML != this.trigger.samplesHtml) {
@@ -6055,9 +6076,11 @@ var SamplesPanel = (function (_super) {
         }
         if (this.samples.isEmpty()) {
             this.samples.hide();
+            this.title.hide();
         }
         else {
             this.samples.show();
+            this.title.show();
         }
     };
     return SamplesPanel;
@@ -6087,7 +6110,7 @@ var SelectionPanel = (function (_super) {
             this.append(new SelectionColorControl("Color", function (value) { return _this.c.getSelection().setColor(value); }, function () { return _this.c.getSelection().getColor().toHex(); }));
         }
         if (this.c.hasTextSelection()) {
-            this.append(new SelectRangePropertyControl("Font Size", function (value) { return _this.c.getSelection().setFontSize(value); }, function () { return _this.c.getSelection().getFontSize(); }, 4, 96, 8), new SelectRangePropertyControl("Letter Spacing", function (value) { return _this.c.getSelection().setLetterSpacing(value); }, function () { return _this.c.getSelection().getLetterSpacing(); }, -200, 2000, 50), new SelectRangePropertyControl("Line Height", function (value) { return _this.c.getSelection().setLineHeight(value); }, function () { return _this.c.getSelection().getLineHeight(); }, 0.5, 3, 0.25), new Row(new LabelControl("Font Family"), new Spacer(), new Button(function () { return ConstructorUI.instance.sidePanel.fontFamilyPanel.show(); }, null, this.c.getSelection().getFontFamily())), new Row(new LabelControl("Font"), new Spacer(), this.textPropertyToggleButton("Bold"), this.textPropertyToggleButton("Italic"), this.textPropertyToggleButton("Underline"), this.textPropertyToggleButton("Linethrough")), new Row(new LabelControl("Alignment"), new Spacer(), this.textAlignmentButton(TextAlignment.LEFT, Icon.ALIGN_LEFT), this.textAlignmentButton(TextAlignment.CENTER, Icon.ALIGN_CENTER), this.textAlignmentButton(TextAlignment.RIGHT, Icon.ALIGN_RIGHT), this.textAlignmentButton(TextAlignment.JUSTIFY, Icon.ALIGN_JUSTIFY)));
+            this.append(new SelectRangePropertyControl("Font Size", function (value) { return _this.c.getSelection().setFontSize(value); }, function () { return _this.c.getSelection().getFontSize(); }, 8, 120, 8), new SelectRangePropertyControl("Letter Spacing", function (value) { return _this.c.getSelection().setLetterSpacing(value); }, function () { return _this.c.getSelection().getLetterSpacing(); }, -200, 2000, 50), new SelectRangePropertyControl("Line Height", function (value) { return _this.c.getSelection().setLineHeight(value); }, function () { return _this.c.getSelection().getLineHeight(); }, 0.5, 3, 0.25), new Row(new LabelControl("Font Family"), new Spacer(), new Button(function () { return ConstructorUI.instance.sidePanel.fontFamilyPanel.show(); }, null, this.c.getSelection().getFontFamily())), new Row(new LabelControl("Font"), new Spacer(), this.textPropertyToggleButton("Bold"), this.textPropertyToggleButton("Italic"), this.textPropertyToggleButton("Underline"), this.textPropertyToggleButton("Linethrough")), new Row(new LabelControl("Alignment"), new Spacer(), this.textAlignmentButton(TextAlignment.LEFT, Icon.ALIGN_LEFT), this.textAlignmentButton(TextAlignment.CENTER, Icon.ALIGN_CENTER), this.textAlignmentButton(TextAlignment.RIGHT, Icon.ALIGN_RIGHT), this.textAlignmentButton(TextAlignment.JUSTIFY, Icon.ALIGN_JUSTIFY)));
         }
     };
     SelectionPanel.prototype.updateVisibility = function () {
@@ -6255,7 +6278,7 @@ var Order = (function (_super) {
         return this.discountPricePerItem;
     };
     Order.prototype.getPricePerItem = function () {
-        var price = this.model ? this.model.price : 0;
+        var price = this.model && this.model.price ? parseInt(this.model.price) : 0;
         price += this.getOptionsPrice();
         price += this.getSidePrice();
         return price;
@@ -6467,19 +6490,9 @@ var Order = (function (_super) {
                     response.json().then(function (result) {
                         Constructor.instance.spinner.hide();
                         console.log(result);
-                        fetch(window.location).then(function (response) { return response.text().then(function (html) {
-                            var dom = document.createElement('div');
-                            dom.innerHTML = html;
-                            var modals = dom.getElementsByClassName('modal');
-                            for (var i = 0; i < modals.length; i++) {
-                                var modal = modals[i];
-                                if (modal.id == 'cartModal') {
-                                    var cartModal = document.getElementById('cartModal');
-                                    cartModal.innerHTML = modal.innerHTML;
-                                }
-                            }
-                        }); });
-                        new Popover('Product added to cart', result.success);
+                        var url = result.success.match(/(<a\s.+?\/a>)/)[1];
+                        url += '<br>' + result.success.match(/.+(<a\s.+\/a>)/)[1];
+                        new Popover('Product added to cart', url).addClass('popover-added');
                     });
                 });
             });

@@ -90,7 +90,7 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
         this.children = [];
     }
 
-    tooltip(value: string) {
+    tooltip(value: string, persistent?: boolean) {
         if (!value || Utils.isCompact()){
             return this;
         }
@@ -141,7 +141,9 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
 
             tooltip.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
             tooltip.style.visibility = 'visible';
-            setTimeout(() => tooltip.style.visibility = 'hidden', 1000);
+            if (!persistent){
+                setTimeout(() => tooltip.style.visibility = 'hidden', 1000);
+            }
         };
         this.container.onmouseleave = e => {
             tooltip.style.visibility = 'hidden';

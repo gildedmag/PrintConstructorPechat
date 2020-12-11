@@ -36,21 +36,32 @@ class AddToCartPopover extends Popover {
                 new Spacer(),
                 new TriggeredLabelControl(
                     ConstructorUI.instance.order,
-                    () => {
+                    (control) => {
                         let price = ConstructorUI.instance.order.getTotalCostWithoutDiscount();
-                        return (ConstructorUI.instance.order.hasDiscount() ? price : '');
+                        if (ConstructorUI.instance.order.hasDiscount()){
+                            control.addClass("price-without-discount");
+                        } else {
+                            control.removeClass("price-without-discount");
+                        }
+                        return price;
                     }
-                ).addClass("price-without-discount"),
+                ),
+                // new TriggeredLabelControl(
+                //     ConstructorUI.instance.order,
+                //     () => {
+                //         let price = ConstructorUI.instance.order.getTotalCostWithoutDiscount();
+                //         return (ConstructorUI.instance.order.hasDiscount() ? '' : price);
+                //     }
+                // ),
+            ),
+            new Row(
                 new TriggeredLabelControl(
                     ConstructorUI.instance.order,
                     () => {
-                        let price = ConstructorUI.instance.order.getTotalCostWithDiscount();
-                        return price ? price : '';
+                        let discount = ConstructorUI.instance.order.getTotalDiscount();
+                        return (discount ? 'Discount' : '');
                     }
                 ),
-            ),
-            new Row(
-                new LabelControl("Discount"),
                 new Spacer(),
                 new TriggeredLabelControl(
                     ConstructorUI.instance.order,
@@ -59,6 +70,23 @@ class AddToCartPopover extends Popover {
                         return (discount ? discount : '');
                     }
                 ).addClass('discount')
+            ),
+            new Row(
+                new TriggeredLabelControl(
+                    ConstructorUI.instance.order,
+                    () => {
+                        let discount = ConstructorUI.instance.order.getTotalDiscount();
+                        return (discount ? 'Price with discount' : '');
+                    }
+                ),
+                new Spacer(),
+                new TriggeredLabelControl(
+                    ConstructorUI.instance.order,
+                    () => {
+                        let price = ConstructorUI.instance.order.getTotalCostWithDiscount();
+                        return ConstructorUI.instance.order.hasDiscount() ? price : '';
+                    }
+                ),
             ),
             new Row(),
             new Row(

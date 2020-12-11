@@ -194,8 +194,8 @@ class ConstructorUI extends UIControl {
                     },
                     () => ConstructorUI.instance.order.model.constructor_model_id == model.constructor_model_id,
                     null
-                ).append(new ImageControl(url))
-                    .tooltip(model.description);
+                ).append(new ImageControl(url).addClass('zoom'))
+                    .tooltip(model.description, true);
                 modelsContainer.append(button);
                 if (active){
                     button.addClass('active');
@@ -228,19 +228,20 @@ class ConstructorUI extends UIControl {
         if (!constructorConfiguration || !constructorConfiguration.sharedState || Constructor.instance.sides.length != model.printareas.length || Constructor.instance.sides[0].name != model.printareas[0].name) {
             if (Constructor.instance.sides.length != model.printareas.length) {
                 this.createSides(model.printareas);
-            }
-            for (let i = 0; i < Constructor.instance.sides.length; i++) {
-                let side = Constructor.instance.sides[i];
-                let area = model.printareas[i];
-                if (side.width != area.width || side.height != area.height) {
-                    this.createSides(model.printareas);
-                    break;
-                }
-                if (side.name != area.name) {
+            } else {
+                for (let i = 0; i < Constructor.instance.sides.length; i++) {
+                    let side = Constructor.instance.sides[i];
+                    let area = model.printareas[i];
+                    if (side.width != area.width || side.height != area.height) {
+                        this.createSides(model.printareas);
+                        break;
+                    }
+                    if (side.name != area.name) {
+                        side.name = area.name;
+                    }
+                    side.price = parseInt(area.price) || 0;
                     side.name = area.name;
                 }
-                side.price = parseInt(area.price) || 0;
-                side.name = area.name;
             }
             Constructor.instance.changed();
         }

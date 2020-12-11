@@ -6,6 +6,7 @@ class SamplesPanel extends TriggeredUIControl<Order> {
     samples = new LabelControl()
         .addClass('samples')
         .addClass('vertical');
+    title: UIControl;
 
     getClassName(): string {
         return super.getClassName() + " samples-panel vertical";
@@ -13,6 +14,7 @@ class SamplesPanel extends TriggeredUIControl<Order> {
 
     constructor() {
         super(ConstructorUI.instance.order);
+        this.title = new LabelControl("Real Product Photos").addClass('title');
         this.update();
     }
 
@@ -46,7 +48,7 @@ class SamplesPanel extends TriggeredUIControl<Order> {
                 new Spacer(),
             ),
             new Row(
-                new LabelControl("Real Product Photos").addClass('title'),
+                this.title,
             ),
             this.samples,
         );
@@ -57,10 +59,12 @@ class SamplesPanel extends TriggeredUIControl<Order> {
         if (this.samples.container.innerHTML != this.trigger.samplesHtml) {
             this.samples.setValue(this.trigger.samplesHtml);
         }
-        if (this.samples.isEmpty()){
+        if (this.samples.isEmpty()) {
             this.samples.hide();
+            this.title.hide();
         } else {
             this.samples.show();
+            this.title.show();
         }
     }
 

@@ -502,7 +502,7 @@ class Constructor extends View<Constructor> {
     }
 
     /**
-     * Load current state from JSON without resetting localStorage cache
+     * Load current state from JSON and reset localStorage cache
      * @param {string} json
      * @param {() => void} callback
      */
@@ -514,6 +514,7 @@ class Constructor extends View<Constructor> {
      * Load current state from JSON
      * @param {string} json
      * @param {() => void} callback
+     * @param clearHistory
      */
     setStateInternal(json: string | object, callback?: () => void, clearHistory?: boolean) {
         Utils.logMethodName();
@@ -528,6 +529,7 @@ class Constructor extends View<Constructor> {
         if (state.sides) {
             state.sides.forEach(sideState => {
                 let side = Side2D.prototype.deserialize(sideState);
+                //side.saveState();
                 if (side.elements && side.elements.length > 0) {
                     //this.isExplicitlyLoaded = true;
                     this.insertSide(side, true);
@@ -537,7 +539,7 @@ class Constructor extends View<Constructor> {
                 side.canvas.renderAll();
             });
         }
-        //this.sides.forEach(side => side.saveState());
+        this.sides.forEach(side => side.saveState());
         if (state.model && this.preview.modelName != state.model) {
             this.loadModel(state.model, () => {
                 this.setFills(state);
