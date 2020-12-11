@@ -91,8 +91,8 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
     }
 
     tooltip(value: string) {
-        if (!value){
-            return;
+        if (!value || Utils.isCompact()){
+            return this;
         }
         let tooltip = document.createElement('span');
         tooltip.classList.add('tp');
@@ -187,6 +187,26 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
         }
 
         return ScreenPosition.center;
+    }
+
+    calculateBoundingClientRect(): Promise<DOMRect> {
+        return new Promise(resolve => {
+            const element = this.container.cloneNode(true) as HTMLElement;
+            element.style.visibility = "hidden";
+            element.style.position = "absolute";
+            document.body.appendChild(element);
+            resolve(element.getBoundingClientRect());
+            element.remove();
+        });
+    }
+
+    show(){
+        super.show()
+        this.showed();
+    }
+
+    showed(){
+        this.children.forEach(child => child.showed());
     }
 
 }

@@ -7,7 +7,13 @@
     "sourceMap": true,
     "alwaysStrict": true,
     "outFile": "js/constructor.js",
-    "noEmitOnError": false
+    "noEmitOnError": false,
+    "lib": [
+      "dom",
+      "es5",
+      "scripthost",
+      "es2015.promise"
+    ]
   },
   "include": [
     "src/**/*.ts"

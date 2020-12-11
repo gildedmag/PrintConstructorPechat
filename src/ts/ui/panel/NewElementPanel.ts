@@ -68,29 +68,9 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
         }
         this.container.appendChild(form);
 
-        this.append(
-            new Row(
-                new ConditionalButton(
-                    () => Constructor.instance.setActiveSide(Constructor.instance.getActiveSide().getIndex() - 1),
-                    () => Constructor.instance.getActiveSide().getIndex() > 0,
-                    Icon.CHEVRON_CIRCLE_LEFT
-                ),
-                new Spacer(),
-                new TriggeredLabelControl(
-                    Constructor.instance,
-                    () => Constructor.instance.getActiveSide().name
-                ),
-                new Spacer(),
-                new ConditionalButton(
-                    () => Constructor.instance.setActiveSide(Constructor.instance.getActiveSide().getIndex() + 1),
-                    () => Constructor.instance.getActiveSide().getIndex() < Constructor.instance.sides.length - 1,
-                    Icon.CHEVRON_CIRCLE_RIGHT
-                ),
-            ).showWhen(Constructor.instance, () => Constructor.instance.sides.length > 1)
-                .addClass('mobile')
-                //.addClass('pager')
-                .tooltip('Side')
-        )
+        // this.append(
+        //
+        // )
 
         this.append(
             new Row(

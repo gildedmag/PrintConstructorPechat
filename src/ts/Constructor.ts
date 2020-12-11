@@ -114,6 +114,7 @@ class Constructor extends View<Constructor> {
     loadModel(modelName: string, callback?: () => void, error?: (string) => void) {
         Utils.logMethodName();
         this.preview.loadModel(modelName, callback, error);
+        this.changed();
     }
 
     addSide(width: number, height: number, roundCorners?: number, name?: string, price?: number): Side2D {

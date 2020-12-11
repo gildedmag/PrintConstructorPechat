@@ -13,6 +13,20 @@ class TopBar extends TriggeredToolBar {
 
         this.append(
             new Spacer(),
+            new ToggleButton(
+                () => this.c.toggleSnapToGrid(),
+                () => this.c.snapToGrid,
+                Icon.BORDER_ALL,
+                null,
+                () => this.c.is2D(),
+            ).tooltip('Snap to Grid'),
+            new ToggleButton(
+                () => this.c.toggleSnapToObjects(),
+                () => this.c.snapToObjects,
+                Icon.VECTOR_SQUARE,
+                null,
+                () => this.c.is2D(),
+            ).tooltip('Snap to Objects'),
             new ConditionalButton(
                 () => this.c.undo(),
                 () => this.c.getActiveSide().history.hasPrevious(),

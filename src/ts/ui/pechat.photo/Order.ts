@@ -179,7 +179,7 @@ class Order extends Trigger<Order> {
     }
 
     updateSamples() {
-        fetch(ConstructorUI.instance.domain + '/index.php?route=constructor/constructor/get_add_img', {
+        fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/get_add_img', {
             method: 'POST',
             headers: new Headers({'content-type': 'application/x-www-form-urlencoded'}),
             body: Utils.toUrlParameters({

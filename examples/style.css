@@ -10,7 +10,7 @@ html, body {
 body {
     margin: 0;
     padding: 0;
-    background: #eee;
+    /*background: #eee;background: #eee;*/
     width: 100%;
     height: 100%;
     overflow: hidden;
@@ -104,7 +104,7 @@ body {
     height: 100vh;
     display: grid;
     grid-template-columns: auto 250px 1fr;
-    grid-template-rows: auto 1fr 48px 48px;
+    grid-template-rows: auto 1fr auto 48px;
     gap: 0;
     grid-template-areas:
             "sidebar sidepanel topbar"
@@ -155,7 +155,7 @@ body {
 }
 
 .control.toolbar.top {
-    background: #eee;
+    /*background: #eee;*/
     grid-area: topbar;
     text-align: center;
     vertical-align: middle;
@@ -165,6 +165,16 @@ body {
     grid-area: pager;
     text-align: center;
     vertical-align: middle;
+}
+
+.pager-toolbar-mobile {
+    grid-area: pager;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.pager-toolbar-mobile .label, .pager-toolbar-mobile .icon, .pager-toolbar-mobile .button:hover * {
+    color: #333 !important;
 }
 
 .pager .label {
@@ -193,6 +203,7 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
     touch-action: manipulation;
+    flex-flow: column;
 }
 
 .control.sidepanel * {
@@ -200,13 +211,13 @@ body {
 }
 
 .control.toolbar.bottom {
-    background: #eee;
+    /*background: #eee;*/
     grid-area: bottombar;
 }
 
 .constructor-container {
     grid-area: constructor;
-    background: #eee;
+    /*background: #eee;*/
     touch-action: auto;
 }
 
@@ -423,6 +434,7 @@ body {
     margin: 2px;
     padding: 0;
     font-size: 32px;
+    justify-content: center;
 }
 
 .options-panel .control.button.color.toggle.active {
@@ -575,27 +587,47 @@ input[type="color"] {
     transition: none !important;
 }
 
-.fa.fa-mug-hot {
+.fa.fa-mug-hot, .fa.fa-dice-d6 {
     color: #1a9c31 !important;
 }
 
 .control.flow {
     display: grid;
     grid-auto-rows: auto;
+    gap: 2px;
+    margin: 4px;
 }
 
-.control.flow .button, .flow img {
+.control.flow > .control {
+    padding: 0;
+    margin: 0;
+}
+
+.control.flow img {
     width: 100%;
+    height: 100%;
+}
+
+.price-bottom.control.label{
+    color: #333 !important;
+    margin-left: 8px;
+}
+
+.sidepanel-freespace {
+    width: 100px;
+    height: 120px;
+    /*background-color: #0000cc;*/
+    display: inline-table !important;
 }
 
 @media (min-width: 1000px) and (orientation: landscape) {
 
     .price-bottom {
-        width: 60px;
-        height: 60px;
-        position: absolute;
-        right: 0;
-        bottom: 0;
+        /*width: 60px;*/
+        /*height: 60px;*/
+        /*//position: absolute;*/
+        /*right: 0;*/
+        /*bottom: 0;*/
     }
 
     .price-bottom .fa {
@@ -627,17 +659,19 @@ input[type="color"] {
         height: 100vh;
         display: grid;
         grid-template-columns: auto 240px auto 1fr auto;
-        grid-template-rows: 1fr;
+        grid-template-rows: 1fr auto;
         gap: 0;
         grid-template-areas:
-            "sidebar sidepanel bottombar constructor topbar";
+            "sidebar sidepanel bottombar constructor topbar"
+            "sidebar sidepanel bottombar pager topbar";
     }
 
     .constructor-ui-container.collapsed {
         grid-template-columns: auto 1fr auto;
-        grid-template-rows: 1fr;
+        grid-template-rows: 1fr auto;
         grid-template-areas:
-            "bottombar constructor topbar";
+            "bottombar constructor topbar"
+            "bottombar pager topbar";
     }
 
     .mobile-landscape {
@@ -672,21 +706,23 @@ input[type="color"] {
         height: 100vh;
         display: grid;
         grid-template-columns: 42px 1fr;
-        grid-template-rows: auto 1fr auto 309px;
+        grid-template-rows: auto 1fr auto auto 324px;
         gap: 0;
         grid-template-areas:
             "topbar topbar"
             "constructor constructor"
+            "pager pager"
             "bottombar bottombar"
             "sidebar sidepanel";
     }
 
     .constructor-ui-container.collapsed {
         grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr 84px;
+        grid-template-rows: auto 1fr auto 64px 96px;
         grid-template-areas:
             "topbar"
             "constructor"
+            "pager"
             "bottombar";
     }
 
@@ -731,7 +767,7 @@ input[type="color"] {
         bottom: 0;
         margin-bottom: 0;
         border-radius: 16px 16px 0 0;
-        padding: 0 0 32px 0;
+        padding: 0 0 128px 0;
     }
 
     /*.control.button {*/

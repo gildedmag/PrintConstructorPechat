@@ -41,7 +41,7 @@ class LocalizedStrings {
         'Share as Link': 'Поделиться ссылкой',
         'Choose other product': 'Выбрать другую модель',
         'Real Product Photos': 'Примеры',
-        'Page': 'Стороны и объекты',
+        'Page': 'Объекты',
         'Layers': 'Слои',
         'Properties': 'Свойства объекта',
         'Fonts': 'Шрифты',
@@ -66,6 +66,9 @@ class LocalizedStrings {
     }
 
     static translate(key: string): string {
+        if (key == '$' && ConstructorUI.instance.currencySymbol){
+            return ConstructorUI.instance.currencySymbol;
+        }
         if (this.translation[key]) {
             return this.translation[key];
         }

@@ -17,7 +17,7 @@ class SideBar extends VerticalToolBarUIControl {
             ).tooltip('Product Types'),
             this.createSwitch(
                 panel.newElementPanel,
-                Icon.BOOK_OPEN,
+                Icon.SHAPES,
                 () => Constructor.instance.is2D()
             ).tooltip('Page'),
             this.createSwitch(

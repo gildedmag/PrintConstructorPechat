@@ -37,21 +37,6 @@ class BottomBar extends ToolBar {
             ).tooltip('Zoom to Fit'),
 
             new ToggleButton(
-                () => this.c.toggleSnapToGrid(),
-                () => this.c.snapToGrid,
-                Icon.BORDER_ALL,
-                null,
-                () => this.c.is2D(),
-            ).tooltip('Snap to Grid'),
-            new ToggleButton(
-                () => this.c.toggleSnapToObjects(),
-                () => this.c.snapToObjects,
-                Icon.VECTOR_SQUARE,
-                null,
-                () => this.c.is2D(),
-            ).tooltip('Snap to Objects'),
-
-            new ToggleButton(
                 () => {
                     if (this.c.is2D()) {
                         ConstructorUI.instance.sidePanel.optionsPanel.show();
@@ -63,8 +48,9 @@ class BottomBar extends ToolBar {
                         }
                     }
                     this.c.toggleMode();
+                    setTimeout(() => window.dispatchEvent(new Event('resize')), 100)
                 },
-                () => this.c.getMode() == Mode.Mode3D,
+                () => this.c.is3D(),
                 Icon.DICE_D6,
                 null,
                 null,
@@ -75,33 +61,27 @@ class BottomBar extends ToolBar {
 
             Button.of(
                 () => ConstructorUI.instance.addToCartPopover.show(),
-                new Row(
-                    new Spacer(),
-                    new IconControl(Icon.CART_PLUS),
-                    new Spacer(),
-                ),
-                new Row(
-                    new Spacer(),
                     new TriggeredLabelControl(
                         ConstructorUI.instance.order,
                         () => ConstructorUI.instance.order.getPricePerItem()
                     ),
                     new LabelControl('$'),
-                    new Spacer(),
-                ),
-            ).addClass('price-bottom').addClass('desktop').addClass('vertical'),
+                    new IconControl(Icon.CART_PLUS),
+            ).addClass('price-bottom')
+                .addClass('desktop'),
+                //.addClass('vertical'),
 
-            // new TriggeredLabelControl(
-            //     ConstructorUI.instance.order,
-            //     () => ConstructorUI.instance.order.getPricePerItem()
-            // ).addClass('desktop').addClass('price-bottom'),
+            new TriggeredLabelControl(
+                ConstructorUI.instance.order,
+                () => ConstructorUI.instance.order.getPricePerItem() + this.translate('$')
+            ).addClass('mobile').addClass('price-bottom'),
 
-            //new LabelControl('$').addClass('desktop').addClass('price-bottom'),
+            //new LabelControl('$').addClass('mobile').addClass('price-bottom'),
 
             new Button(
                 () => ConstructorUI.instance.addToCartPopover.show(),
                 Icon.CART_PLUS
-            ).addClass('mobile').tooltip('Add to Cart'),
+            ).addClass('mobile').tooltip('Add to Cart')
         );
     }
 

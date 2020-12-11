@@ -38,9 +38,12 @@ var Associated = (function () {
     return Associated;
 }());
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -180,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "08.12.2020 18:45";
+    Version.version = "10.12.2020 15:05";
     return Version;
 }());
 var Trigger = (function () {
@@ -722,6 +725,7 @@ var Constructor = (function (_super) {
     Constructor.prototype.loadModel = function (modelName, callback, error) {
         Utils.logMethodName();
         this.preview.loadModel(modelName, callback, error);
+        this.changed();
     };
     Constructor.prototype.addSide = function (width, height, roundCorners, name, price) {
         Utils.logMethodName();
@@ -2711,7 +2715,7 @@ var Utils = (function () {
         return window.innerWidth == screen.width && window.innerHeight == screen.height;
     };
     Utils.isCompact = function () {
-        return window.innerWidth < 800;
+        return window.innerWidth < 1000;
     };
     Utils.isIos = function () {
         return [
@@ -4113,6 +4117,9 @@ var LocalizedStrings = (function () {
     function LocalizedStrings() {
     }
     LocalizedStrings.translate = function (key) {
+        if (key == '$' && ConstructorUI.instance.currencySymbol) {
+            return ConstructorUI.instance.currencySymbol;
+        }
         if (this.translation[key]) {
             return this.translation[key];
         }
@@ -4159,7 +4166,7 @@ var LocalizedStrings = (function () {
         'Share as Link': 'Поделиться ссылкой',
         'Choose other product': 'Выбрать другую модель',
         'Real Product Photos': 'Примеры',
-        'Page': 'Стороны и объекты',
+        'Page': 'Объекты',
         'Layers': 'Слои',
         'Properties': 'Свойства объекта',
         'Fonts': 'Шрифты',
@@ -4259,8 +4266,8 @@ var UIControl = (function (_super) {
         this.children = [];
     };
     UIControl.prototype.tooltip = function (value) {
-        if (!value) {
-            return;
+        if (!value || Utils.isCompact()) {
+            return this;
         }
         var tooltip = document.createElement('span');
         tooltip.classList.add('tp');
@@ -4346,6 +4353,24 @@ var UIControl = (function (_super) {
             return ScreenPosition.bottom;
         }
         return ScreenPosition.center;
+    };
+    UIControl.prototype.calculateBoundingClientRect = function () {
+        var _this = this;
+        return new Promise(function (resolve) {
+            var element = _this.container.cloneNode(true);
+            element.style.visibility = "hidden";
+            element.style.position = "absolute";
+            document.body.appendChild(element);
+            resolve(element.getBoundingClientRect());
+            element.remove();
+        });
+    };
+    UIControl.prototype.show = function () {
+        _super.prototype.show.call(this);
+        this.showed();
+    };
+    UIControl.prototype.showed = function () {
+        this.children.forEach(function (child) { return child.showed(); });
     };
     UIControl.map = {};
     UIControl.nextId = 0;
@@ -4586,6 +4611,7 @@ var ConstructorUI = (function (_super) {
     function ConstructorUI() {
         var _this = _super.call(this) || this;
         ConstructorUI.instance = _this;
+        _this.currencySymbol = (constructorConfiguration && constructorConfiguration.currencySymbol) ? constructorConfiguration.currencySymbol : _this.translate('$');
         try {
             _this.domain = constructorConfiguration.domain;
         }
@@ -4606,16 +4632,19 @@ var ConstructorUI = (function (_super) {
         _this.bottomBar = new BottomBar();
         _this.addToCartPopover = new AddToCartPopover();
         _this.pagerBar = new Pager()
-            .showWhen(Constructor.instance, function () { return Constructor.instance.sides.length > 1; })
+            .showWhen(Constructor.instance, function () { return Constructor.instance.sides.length > 1 && Constructor.instance.is2D(); })
             .addClass('pager-toolbar')
             .addClass('desktop')
             .tooltip('Side');
-        _this.append(_this.constructorControl, _this.toolBar, _this.sidePanel, _this.sideBar, _this.topBar, _this.bottomBar, _this.addToCartPopover, _this.pagerBar);
+        _this.pagerBarMobile = new Row(new Spacer(), new ConditionalButton(function () { return Constructor.instance.setActiveSide(Constructor.instance.getActiveSide().getIndex() - 1); }, function () { return Constructor.instance.getActiveSide().getIndex() > 0; }, Icon.CHEVRON_CIRCLE_LEFT), new TriggeredLabelControl(Constructor.instance, function () { return Constructor.instance.getActiveSide().name; }), new ConditionalButton(function () { return Constructor.instance.setActiveSide(Constructor.instance.getActiveSide().getIndex() + 1); }, function () { return Constructor.instance.getActiveSide().getIndex() < Constructor.instance.sides.length - 1; }, Icon.CHEVRON_CIRCLE_RIGHT), new Spacer()).showWhen(Constructor.instance, function () { return Constructor.instance.sides.length > 1 && Constructor.instance.is2D(); })
+            .addClass('pager-toolbar-mobile')
+            .addClass('mobile')
+            .tooltip('Side');
+        _this.append(_this.constructorControl, _this.toolBar, _this.sidePanel, _this.sideBar, _this.topBar, _this.bottomBar, _this.addToCartPopover, _this.pagerBar, _this.pagerBarMobile);
         host.appendChild(_this.container);
         _this.bindDelKey();
         window.addEventListener("load", function () {
             setTimeout(function () {
-                document.head.innerHTML = document.head.innerHTML + '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=1" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />';
                 window.scrollTo(0, 0);
             }, 0);
             setTimeout(function () { return window.scrollTo(0, 1); }, 1000);
@@ -4658,7 +4687,7 @@ var ConstructorUI = (function (_super) {
             _this.options = options;
             var modelLoaded = false;
             _this.sidePanel.modelsPanel.append(new LabelControl("Product Types").addClass('title'));
-            var modelsContainer = new FlowControl(3);
+            var modelsContainer = new FlowControl(3, false);
             options.constructor_models.forEach(function (model) {
                 var active = false;
                 if (!modelLoaded) {
@@ -4685,7 +4714,8 @@ var ConstructorUI = (function (_super) {
                         }
                     });
                     _this.loadModelOptions(model, options);
-                }, function () { return _this.order.model.constructor_model_id == model.constructor_model_id; }, null).append(new ImageControl(url))
+                    Constructor.instance.changed();
+                }, function () { return ConstructorUI.instance.order.model.constructor_model_id == model.constructor_model_id; }, null).append(new ImageControl(url))
                     .tooltip(model.description);
                 modelsContainer.append(button);
                 if (active) {
@@ -4701,6 +4731,7 @@ var ConstructorUI = (function (_super) {
             Constructor.instance.addSide(area.width, area.height, parseInt(area.roundCorners), area.name, area.price);
             Constructor.instance.zoomToFit();
         });
+        Constructor.instance.sides.forEach(function (side) { return side.changed(); });
     };
     ConstructorUI.prototype.loadModelOptions = function (model, options) {
         var _this = this;
@@ -4816,15 +4847,98 @@ var Divider = (function (_super) {
     };
     return Divider;
 }(UIControl));
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
 var FlowControl = (function (_super) {
     __extends(FlowControl, _super);
-    function FlowControl(maxColumns) {
+    function FlowControl(maxColumns, autoFlow) {
         var _this = _super.call(this) || this;
-        _this.maxColumns = maxColumns || 5;
+        _this.maxColumns = maxColumns || 6;
+        _this.autoFlow = autoFlow == null ? true : autoFlow;
         return _this;
     }
     FlowControl.prototype.getClassName = function () {
         return _super.prototype.getClassName.call(this) + ' flow';
+    };
+    FlowControl.prototype.showed = function () {
+        if (this.autoFlow) {
+            console.log('this.autoFlow', this.autoFlow);
+            this.reflow();
+        }
+    };
+    FlowControl.prototype.reflow = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var maxColumnWidth, i, rect, columns;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        maxColumnWidth = 0;
+                        i = 0;
+                        _a.label = 1;
+                    case 1:
+                        if (!(i < this.children.length)) return [3, 4];
+                        return [4, this.children[i].calculateBoundingClientRect()];
+                    case 2:
+                        rect = _a.sent();
+                        console.log('rect.width', rect.width);
+                        maxColumnWidth = Math.max(maxColumnWidth, rect.width);
+                        _a.label = 3;
+                    case 3:
+                        i++;
+                        return [3, 1];
+                    case 4:
+                        console.log('width', this.container.clientWidth);
+                        console.log('maxColumnWidth', maxColumnWidth);
+                        columns = Math.floor(this.container.clientWidth / maxColumnWidth);
+                        console.log('columns', columns);
+                        this.setColumns(columns);
+                        return [2];
+                }
+            });
+        });
+    };
+    FlowControl.prototype.setColumns = function (value) {
+        if (value == 0) {
+            return;
+        }
+        this.columns = Math.min(value, this.maxColumns, this.children.length);
+        var gap = this.columns == 1 ? 0 : (6 / this.columns);
+        var percent = 100 / this.columns - gap;
+        this.container.style.gridTemplateColumns = 'repeat(' + this.columns + ', ' + percent + '%)';
     };
     FlowControl.prototype.append = function () {
         var controls = [];
@@ -4832,41 +4946,9 @@ var FlowControl = (function (_super) {
             controls[_i] = arguments[_i];
         }
         _super.prototype.append.apply(this, controls);
-        this.columns = Math.min(this.maxColumns, this.children.length);
-        this.container.style.gridTemplateColumns = 'repeat(' + this.columns + ', ' + Math.round(100 / this.columns) + '%)';
+        var columns = Math.min(this.maxColumns, this.children.length);
+        this.setColumns(columns);
         return this;
-    };
-    FlowControl.prototype.checkOverflow = function () {
-        var _this = this;
-        if (this.isOverflown() && this.columns > 1) {
-            console.log('isOverflown!!!');
-            this.columns--;
-            this.container.style.gridTemplateColumns = 'repeat(' + this.columns + ', ' + Math.round(100 / this.columns) + '%)';
-            setTimeout(function () { return _this.checkOverflow(); }, 1000);
-        }
-        else {
-            this.container.style.gridTemplateColumns = 'repeat(' + this.columns + ', ' + Math.round(100 / this.columns) + '%)';
-        }
-    };
-    FlowControl.prototype.isOverflown = function () {
-        var width = this.container.clientWidth;
-        console.log('this.container.clientWidth', this.container.clientWidth);
-        if (width == 0) {
-            return false;
-        }
-        var rowWidth = 0;
-        for (var i = 0; i < this.children.length; i++) {
-            var child = this.children[i].container;
-            rowWidth += child.clientWidth;
-            if ((i - 1) % this.columns == 0) {
-                if (rowWidth > width) {
-                    console.log('rowWidth', rowWidth);
-                    return true;
-                }
-                rowWidth = 0;
-            }
-        }
-        return false;
     };
     return FlowControl;
 }(UIControl));
@@ -5373,20 +5455,6 @@ var SelectControl = (function (_super) {
     };
     return SelectControl;
 }(TriggeredUIControl));
-var SelectionColorControl = (function (_super) {
-    __extends(SelectionColorControl, _super);
-    function SelectionColorControl(label, setter, getter, max, step) {
-        var _this = _super.call(this) || this;
-        _this.append(new Row(new LabelControl(label), new Spacer(), new ColorControl(setter, getter)));
-        return _this;
-    }
-    SelectionColorControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " property-control color";
-    };
-    SelectionColorControl.prototype.update = function () {
-    };
-    return SelectionColorControl;
-}(UIControl));
 var SelectPropertyControl = (function (_super) {
     __extends(SelectPropertyControl, _super);
     function SelectPropertyControl(label, setter, getter, min, max, step) {
@@ -5413,6 +5481,20 @@ var SelectRangePropertyControl = (function (_super) {
         return _super.prototype.getClassName.call(this) + " property-control";
     };
     return SelectRangePropertyControl;
+}(UIControl));
+var SelectionColorControl = (function (_super) {
+    __extends(SelectionColorControl, _super);
+    function SelectionColorControl(label, setter, getter, max, step) {
+        var _this = _super.call(this) || this;
+        _this.append(new Row(new LabelControl(label), new Spacer(), new ColorControl(setter, getter)));
+        return _this;
+    }
+    SelectionColorControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " property-control color";
+    };
+    SelectionColorControl.prototype.update = function () {
+    };
+    return SelectionColorControl;
 }(UIControl));
 var TogglePropertyControl = (function (_super) {
     __extends(TogglePropertyControl, _super);
@@ -5548,87 +5630,6 @@ var FontFamilyPanel = (function (_super) {
         return list;
     };
     return FontFamilyPanel;
-}(TriggeredUIControl));
-var LayersPanelUIControl = (function (_super) {
-    __extends(LayersPanelUIControl, _super);
-    function LayersPanelUIControl() {
-        var _this = _super.call(this, Constructor.instance) || this;
-        _this.update();
-        return _this;
-    }
-    LayersPanelUIControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " layers-panel";
-    };
-    LayersPanelUIControl.prototype.update = function () {
-        if (this.children.length != this.c.sides.length) {
-            this.clear();
-            for (var i = 0; i < this.trigger.sides.length; i++) {
-                var side = this.trigger.sides[i];
-                this.append(new LayersUIControl(side));
-            }
-        }
-    };
-    return LayersPanelUIControl;
-}(TriggeredUIControl));
-var LayersUIControl = (function (_super) {
-    __extends(LayersUIControl, _super);
-    function LayersUIControl(side) {
-        var _this = _super.call(this, side) || this;
-        _this.update();
-        return _this;
-    }
-    LayersUIControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " layers vertical";
-    };
-    LayersUIControl.prototype.update = function () {
-        var layerControls = this.getLayerControls();
-        if (this.trigger.getLayers().length != layerControls.length) {
-            this.repopulate();
-            return;
-        }
-        for (var from = 0; from < layerControls.length; from++) {
-            var layer = layerControls[from];
-            var element = this.trigger.getLayers()[from];
-            if (layer.trigger != element) {
-                this.repopulate();
-                return;
-            }
-        }
-        this.updateVisibility();
-    };
-    LayersUIControl.prototype.getLayerControls = function () {
-        var layerControls = [];
-        for (var i = 0; i < this.children.length; i++) {
-            if (this.children[i] instanceof LayerUIControl) {
-                layerControls.push(this.children[i]);
-            }
-        }
-        return layerControls;
-    };
-    LayersUIControl.prototype.repopulate = function () {
-        var _this = this;
-        var scroll;
-        try {
-            scroll = this.container.parentElement.parentElement.scrollTop;
-        }
-        catch (e) {
-        }
-        this.clear();
-        console.log("CLEARED");
-        this.trigger.getLayers().forEach(function (layer) {
-            _this.append(new LayerUIControl(layer, _this));
-        });
-        if (scroll) {
-            this.container.parentElement.parentElement.scrollTop = scroll;
-        }
-        ConstructorUI.instance.order.changed();
-    };
-    LayersUIControl.prototype.updateVisibility = function () {
-        if (this.isVisible() != this.trigger.isVisible()) {
-            this.setVisible(this.trigger.isVisible());
-        }
-    };
-    return LayersUIControl;
 }(TriggeredUIControl));
 var LayerUIControl = (function (_super) {
     __extends(LayerUIControl, _super);
@@ -5835,6 +5836,87 @@ var LayerUIControl = (function (_super) {
     LayerUIControl.touchStart = 0;
     return LayerUIControl;
 }(TriggeredUIControl));
+var LayersPanelUIControl = (function (_super) {
+    __extends(LayersPanelUIControl, _super);
+    function LayersPanelUIControl() {
+        var _this = _super.call(this, Constructor.instance) || this;
+        _this.update();
+        return _this;
+    }
+    LayersPanelUIControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " layers-panel";
+    };
+    LayersPanelUIControl.prototype.update = function () {
+        if (this.children.length != this.c.sides.length) {
+            this.clear();
+            for (var i = 0; i < this.trigger.sides.length; i++) {
+                var side = this.trigger.sides[i];
+                this.append(new LayersUIControl(side));
+            }
+        }
+    };
+    return LayersPanelUIControl;
+}(TriggeredUIControl));
+var LayersUIControl = (function (_super) {
+    __extends(LayersUIControl, _super);
+    function LayersUIControl(side) {
+        var _this = _super.call(this, side) || this;
+        _this.update();
+        return _this;
+    }
+    LayersUIControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " layers vertical";
+    };
+    LayersUIControl.prototype.update = function () {
+        var layerControls = this.getLayerControls();
+        if (this.trigger.getLayers().length != layerControls.length) {
+            this.repopulate();
+            return;
+        }
+        for (var from = 0; from < layerControls.length; from++) {
+            var layer = layerControls[from];
+            var element = this.trigger.getLayers()[from];
+            if (layer.trigger != element) {
+                this.repopulate();
+                return;
+            }
+        }
+        this.updateVisibility();
+    };
+    LayersUIControl.prototype.getLayerControls = function () {
+        var layerControls = [];
+        for (var i = 0; i < this.children.length; i++) {
+            if (this.children[i] instanceof LayerUIControl) {
+                layerControls.push(this.children[i]);
+            }
+        }
+        return layerControls;
+    };
+    LayersUIControl.prototype.repopulate = function () {
+        var _this = this;
+        var scroll;
+        try {
+            scroll = this.container.parentElement.parentElement.scrollTop;
+        }
+        catch (e) {
+        }
+        this.clear();
+        console.log("CLEARED");
+        this.trigger.getLayers().forEach(function (layer) {
+            _this.append(new LayerUIControl(layer, _this));
+        });
+        if (scroll) {
+            this.container.parentElement.parentElement.scrollTop = scroll;
+        }
+        ConstructorUI.instance.order.changed();
+    };
+    LayersUIControl.prototype.updateVisibility = function () {
+        if (this.isVisible() != this.trigger.isVisible()) {
+            this.setVisible(this.trigger.isVisible());
+        }
+    };
+    return LayersUIControl;
+}(TriggeredUIControl));
 var NewElementPanel = (function (_super) {
     __extends(NewElementPanel, _super);
     function NewElementPanel() {
@@ -5891,9 +5973,6 @@ var NewElementPanel = (function (_super) {
             }
         };
         _this.container.appendChild(form);
-        _this.append(new Row(new ConditionalButton(function () { return Constructor.instance.setActiveSide(Constructor.instance.getActiveSide().getIndex() - 1); }, function () { return Constructor.instance.getActiveSide().getIndex() > 0; }, Icon.CHEVRON_CIRCLE_LEFT), new Spacer(), new TriggeredLabelControl(Constructor.instance, function () { return Constructor.instance.getActiveSide().name; }), new Spacer(), new ConditionalButton(function () { return Constructor.instance.setActiveSide(Constructor.instance.getActiveSide().getIndex() + 1); }, function () { return Constructor.instance.getActiveSide().getIndex() < Constructor.instance.sides.length - 1; }, Icon.CHEVRON_CIRCLE_RIGHT)).showWhen(Constructor.instance, function () { return Constructor.instance.sides.length > 1; })
-            .addClass('mobile')
-            .tooltip('Side'));
         _this.append(new Row(new Button(function () { return input.click(); }, Icon.IMAGE, "Image")));
         _this.addButton("Text", ElementType.TEXT, Icon.FONT);
         _this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);
@@ -5968,14 +6047,17 @@ var SamplesPanel = (function (_super) {
         var model = this.trigger.model;
         var options = ConstructorUI.instance.options;
         this.clear();
-        this.append(new Row(new LabelControl(options.name).addClass('title')), new Row(new LabelControl(options.description)), new Row(new LabelControl(model.name).addClass('title')), new Row(new ImageControl(model.thumb)), new Row(new LabelControl(model.description)), new Row(new Spacer()));
-        if (!this.samples.isEmpty()) {
-            this.append(new Row(new LabelControl("Real Product Photos").addClass('title')), this.samples);
-        }
+        this.append(new Row(new LabelControl(options.name).addClass('title')), new Row(new LabelControl(options.description)), new Row(new LabelControl(model.name).addClass('title')), new Row(new ImageControl(model.thumb)), new Row(new LabelControl(model.description)), new Row(new Spacer()), new Row(new LabelControl("Real Product Photos").addClass('title')), this.samples);
     };
     SamplesPanel.prototype.updateSamples = function () {
         if (this.samples.container.innerHTML != this.trigger.samplesHtml) {
             this.samples.setValue(this.trigger.samplesHtml);
+        }
+        if (this.samples.isEmpty()) {
+            this.samples.hide();
+        }
+        else {
+            this.samples.show();
         }
     };
     return SamplesPanel;
@@ -6037,7 +6119,9 @@ var SidePanel = (function (_super) {
         _this.optionsPanel = new OptionsPanel();
         _this.filtersPanel = new FiltersPanel();
         _this.sharePanel = new ExportPanel();
-        _this.append(_this.newElementPanel, _this.layersPanel, _this.selectionPanel, _this.fontFamilyPanel, _this.modelsPanel, _this.samplesPanel, _this.optionsPanel, _this.filtersPanel, _this.sharePanel);
+        _this.append(_this.newElementPanel, _this.layersPanel, _this.selectionPanel, _this.fontFamilyPanel, _this.modelsPanel, _this.samplesPanel, _this.optionsPanel, _this.filtersPanel, _this.sharePanel, new Container()
+            .addClass('sidepanel-freespace')
+            .addClass('mobile'));
         _this.container.onclick = function (e) {
             if (Constructor.instance && e.target === _this.container) {
                 Constructor.instance.getActiveSide().deselect();
@@ -6050,6 +6134,13 @@ var SidePanel = (function (_super) {
     };
     return SidePanel;
 }(ToolBar));
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
 var OptionButton = (function (_super) {
     __extends(OptionButton, _super);
     function OptionButton(value, parent) {
@@ -6090,11 +6181,12 @@ var OptionButton = (function (_super) {
         return _super.prototype.getClassName.call(this) + " ";
     };
     OptionButton.prototype.select = function () {
+        var _a;
         var fillsArray;
         var order = ConstructorUI.instance.order;
         if (this.value.zalivka) {
             fillsArray = this.value.zalivka.split(',').map(function (s) { return parseInt(s); });
-            (_a = Constructor.instance.preview).setFills.apply(_a, [null].concat(fillsArray));
+            (_a = Constructor.instance.preview).setFills.apply(_a, __spreadArrays([null], fillsArray));
         }
         if (order.hasOption(this.value)) {
             ConstructorUI.instance.order.removeSelectedOption(this.value);
@@ -6107,17 +6199,16 @@ var OptionButton = (function (_super) {
         if (this.value.zalivka) {
             this.setFillsAsync(fillsArray);
         }
-        var _a;
     };
     OptionButton.prototype.setFillsAsync = function (fillsArray) {
+        var _a;
         var _this = this;
         if (Constructor.instance.preview.isLoaded) {
-            (_a = Constructor.instance.preview).setFills.apply(_a, [this.value.constructor_value].concat(fillsArray));
+            (_a = Constructor.instance.preview).setFills.apply(_a, __spreadArrays([this.value.constructor_value], fillsArray));
         }
         else {
             setTimeout(function () { return _this.setFillsAsync(fillsArray); }, 100);
         }
-        var _a;
     };
     OptionButton.prototype.isSelected = function () {
         return ConstructorUI.instance.order.hasOption(this.value);
@@ -6298,7 +6389,7 @@ var Order = (function (_super) {
     };
     Order.prototype.updateSamples = function () {
         var _this = this;
-        fetch(ConstructorUI.instance.domain + '/index.php?route=constructor/constructor/get_add_img', {
+        fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/get_add_img', {
             method: 'POST',
             headers: new Headers({ 'content-type': 'application/x-www-form-urlencoded' }),
             body: Utils.toUrlParameters({
@@ -6483,7 +6574,7 @@ var BottomBar = (function (_super) {
             _this.c.zoomIn();
         }, Icon.SEARCH_PLUS).tooltip('Zoom In'), new Button(function () {
             _this.c.zoomOut();
-        }, Icon.SEARCH_MINUS).tooltip('Zoom Out'), new ConditionalButton(function () { return _this.c.zoomToFit(); }, function () { return _this.c.is2D(); }, Icon.SEARCH).tooltip('Zoom to Fit'), new ToggleButton(function () { return _this.c.toggleSnapToGrid(); }, function () { return _this.c.snapToGrid; }, Icon.BORDER_ALL, null, function () { return _this.c.is2D(); }).tooltip('Snap to Grid'), new ToggleButton(function () { return _this.c.toggleSnapToObjects(); }, function () { return _this.c.snapToObjects; }, Icon.VECTOR_SQUARE, null, function () { return _this.c.is2D(); }).tooltip('Snap to Objects'), new ToggleButton(function () {
+        }, Icon.SEARCH_MINUS).tooltip('Zoom Out'), new ConditionalButton(function () { return _this.c.zoomToFit(); }, function () { return _this.c.is2D(); }, Icon.SEARCH).tooltip('Zoom to Fit'), new ToggleButton(function () {
             if (_this.c.is2D()) {
                 ConstructorUI.instance.sidePanel.optionsPanel.show();
             }
@@ -6496,7 +6587,9 @@ var BottomBar = (function (_super) {
                 }
             }
             _this.c.toggleMode();
-        }, function () { return _this.c.getMode() == Mode.Mode3D; }, Icon.DICE_D6, null, null, Utils.isCompact() ? null : "3D").tooltip('Toggle 3D Mode'), new Spacer(), Button.of(function () { return ConstructorUI.instance.addToCartPopover.show(); }, new Row(new Spacer(), new IconControl(Icon.CART_PLUS), new Spacer()), new Row(new Spacer(), new TriggeredLabelControl(ConstructorUI.instance.order, function () { return ConstructorUI.instance.order.getPricePerItem(); }), new LabelControl('$'), new Spacer())).addClass('price-bottom').addClass('desktop').addClass('vertical'), new Button(function () { return ConstructorUI.instance.addToCartPopover.show(); }, Icon.CART_PLUS).addClass('mobile').tooltip('Add to Cart'));
+            setTimeout(function () { return window.dispatchEvent(new Event('resize')); }, 100);
+        }, function () { return _this.c.is3D(); }, Icon.DICE_D6, null, null, Utils.isCompact() ? null : "3D").tooltip('Toggle 3D Mode'), new Spacer(), Button.of(function () { return ConstructorUI.instance.addToCartPopover.show(); }, new TriggeredLabelControl(ConstructorUI.instance.order, function () { return ConstructorUI.instance.order.getPricePerItem(); }), new LabelControl('$'), new IconControl(Icon.CART_PLUS)).addClass('price-bottom')
+            .addClass('desktop'), new TriggeredLabelControl(ConstructorUI.instance.order, function () { return ConstructorUI.instance.order.getPricePerItem() + _this.translate('$'); }).addClass('mobile').addClass('price-bottom'), new Button(function () { return ConstructorUI.instance.addToCartPopover.show(); }, Icon.CART_PLUS).addClass('mobile').tooltip('Add to Cart'));
     };
     return BottomBar;
 }(ToolBar));
@@ -6562,7 +6655,7 @@ var SideBar = (function (_super) {
         var _this = _super.call(this) || this;
         _this.buttons = [];
         var panel = ConstructorUI.instance.sidePanel;
-        _this.append(_this.createSwitch(panel.modelsPanel, Icon.MUG_HOT).tooltip('Product Types'), _this.createSwitch(panel.newElementPanel, Icon.BOOK_OPEN, function () { return Constructor.instance.is2D(); }).tooltip('Page'), _this.createSwitch(panel.layersPanel, Icon.LAYER_GROUP, function () { return Constructor.instance.is2D(); }).tooltip('Layers'), _this.createSwitch(panel.selectionPanel, Icon.SLIDERS_H, function () { return Constructor.instance.hasSelection(); }).tooltip('Properties'), _this.createSwitch(panel.fontFamilyPanel, Icon.FONT, function () { return Constructor.instance.hasTextSelection(); }).tooltip('Fonts'), _this.createSwitch(panel.filtersPanel, Icon.TINT, function () { return Constructor.instance.hasImageSelection(); }).tooltip('Filters'), _this.createSwitch(panel.optionsPanel, Icon.CLIPBOARD_LIST, function () { return ConstructorUI.instance.order.model && ConstructorUI.instance.order.model.constructor_model_option && ConstructorUI.instance.order.model.constructor_model_option.length > 0; }).tooltip('Options'), _this.createSwitch(panel.samplesPanel, Icon.INFO_CIRCLE).tooltip('Product Info'), _this.createSwitch(panel.sharePanel, Icon.FILE_DOWNLOAD).tooltip('Export & Sharing'), new Spacer());
+        _this.append(_this.createSwitch(panel.modelsPanel, Icon.MUG_HOT).tooltip('Product Types'), _this.createSwitch(panel.newElementPanel, Icon.SHAPES, function () { return Constructor.instance.is2D(); }).tooltip('Page'), _this.createSwitch(panel.layersPanel, Icon.LAYER_GROUP, function () { return Constructor.instance.is2D(); }).tooltip('Layers'), _this.createSwitch(panel.selectionPanel, Icon.SLIDERS_H, function () { return Constructor.instance.hasSelection(); }).tooltip('Properties'), _this.createSwitch(panel.fontFamilyPanel, Icon.FONT, function () { return Constructor.instance.hasTextSelection(); }).tooltip('Fonts'), _this.createSwitch(panel.filtersPanel, Icon.TINT, function () { return Constructor.instance.hasImageSelection(); }).tooltip('Filters'), _this.createSwitch(panel.optionsPanel, Icon.CLIPBOARD_LIST, function () { return ConstructorUI.instance.order.model && ConstructorUI.instance.order.model.constructor_model_option && ConstructorUI.instance.order.model.constructor_model_option.length > 0; }).tooltip('Options'), _this.createSwitch(panel.samplesPanel, Icon.INFO_CIRCLE).tooltip('Product Info'), _this.createSwitch(panel.sharePanel, Icon.FILE_DOWNLOAD).tooltip('Export & Sharing'), new Spacer());
         _this.hideOthers(!_this.c.getActiveSide() || _this.c.getActiveSide().isEmpty() ? panel.newElementPanel : panel.layersPanel);
         return _this;
     }
@@ -6630,7 +6723,7 @@ var TopBar = (function (_super) {
     __extends(TopBar, _super);
     function TopBar() {
         var _this = _super.call(this) || this;
-        _this.append(new Spacer(), new ConditionalButton(function () { return _this.c.undo(); }, function () { return _this.c.getActiveSide().history.hasPrevious(); }, Icon.UNDO_ALT).tooltip('Undo'), new ConditionalButton(function () { return _this.c.redo(); }, function () { return _this.c.getActiveSide().history.hasNext(); }, Icon.REDO_ALT).tooltip('Redo'), new ConditionalButton(function () { return _this.c.duplicate(); }, function () { return _this.c.hasSelection(); }, Icon.CLONE).tooltip('Duplicate'), new ConditionalButton(function () { return _this.c.getSelection().remove(); }, function () { return _this.c.hasSelection(); }, Icon.TRASH).tooltip('Delete'), new Spacer());
+        _this.append(new Spacer(), new ToggleButton(function () { return _this.c.toggleSnapToGrid(); }, function () { return _this.c.snapToGrid; }, Icon.BORDER_ALL, null, function () { return _this.c.is2D(); }).tooltip('Snap to Grid'), new ToggleButton(function () { return _this.c.toggleSnapToObjects(); }, function () { return _this.c.snapToObjects; }, Icon.VECTOR_SQUARE, null, function () { return _this.c.is2D(); }).tooltip('Snap to Objects'), new ConditionalButton(function () { return _this.c.undo(); }, function () { return _this.c.getActiveSide().history.hasPrevious(); }, Icon.UNDO_ALT).tooltip('Undo'), new ConditionalButton(function () { return _this.c.redo(); }, function () { return _this.c.getActiveSide().history.hasNext(); }, Icon.REDO_ALT).tooltip('Redo'), new ConditionalButton(function () { return _this.c.duplicate(); }, function () { return _this.c.hasSelection(); }, Icon.CLONE).tooltip('Duplicate'), new ConditionalButton(function () { return _this.c.getSelection().remove(); }, function () { return _this.c.hasSelection(); }, Icon.TRASH).tooltip('Delete'), new Spacer());
         return _this;
     }
     TopBar.prototype.getClassName = function () {

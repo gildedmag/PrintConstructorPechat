@@ -17,11 +17,14 @@ class ConstructorUI extends UIControl {
     toolBar: ToolBar;
     topBar: TopBar;
     pagerBar: UIControl;
+    pagerBarMobile: UIControl;
     bottomBar: BottomBar;
     addToCartPopover: AddToCartPopover;
 
     options: pechat.Options;
     order: Order;
+
+    currencySymbol: string;
 
     static instance: ConstructorUI;
     static test = ConstructorUI.init();
@@ -40,6 +43,8 @@ class ConstructorUI extends UIControl {
     private constructor() {
         super();
         ConstructorUI.instance = this;
+
+        this.currencySymbol = (constructorConfiguration && constructorConfiguration.currencySymbol) ? constructorConfiguration.currencySymbol : this.translate('$');
 
         try {
             this.domain = constructorConfiguration.domain;
@@ -63,9 +68,33 @@ class ConstructorUI extends UIControl {
         this.bottomBar = new BottomBar();
         this.addToCartPopover = new AddToCartPopover();
         this.pagerBar = new Pager()
-            .showWhen(Constructor.instance, () => Constructor.instance.sides.length > 1)
+            .showWhen(Constructor.instance, () => Constructor.instance.sides.length > 1 && Constructor.instance.is2D())
             .addClass('pager-toolbar')
             .addClass('desktop')
+            .tooltip('Side');
+        this.pagerBarMobile = new Row(
+            new Spacer(),
+            new ConditionalButton(
+                () => Constructor.instance.setActiveSide(Constructor.instance.getActiveSide().getIndex() - 1),
+                () => Constructor.instance.getActiveSide().getIndex() > 0,
+                Icon.CHEVRON_CIRCLE_LEFT
+            ),
+            //new Spacer(),
+            new TriggeredLabelControl(
+                Constructor.instance,
+                () => Constructor.instance.getActiveSide().name
+            ),
+            //new Spacer(),
+            new ConditionalButton(
+                () => Constructor.instance.setActiveSide(Constructor.instance.getActiveSide().getIndex() + 1),
+                () => Constructor.instance.getActiveSide().getIndex() < Constructor.instance.sides.length - 1,
+                Icon.CHEVRON_CIRCLE_RIGHT
+            ),
+            new Spacer(),
+        ).showWhen(Constructor.instance, () => Constructor.instance.sides.length > 1 && Constructor.instance.is2D())
+            .addClass('pager-toolbar-mobile')
+            .addClass('mobile')
+            //.addClass('pager')
             .tooltip('Side');
 
         this.append(
@@ -76,7 +105,8 @@ class ConstructorUI extends UIControl {
             this.topBar,
             this.bottomBar,
             this.addToCartPopover,
-            this.pagerBar
+            this.pagerBar,
+            this.pagerBarMobile,
         );
 
         host.appendChild(this.container);
@@ -84,7 +114,7 @@ class ConstructorUI extends UIControl {
 
         window.addEventListener("load", function () {
             setTimeout(function () {
-                document.head.innerHTML = document.head.innerHTML + '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=1" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />'
+                // document.head.innerHTML = document.head.innerHTML + '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=1" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />'
                 window.scrollTo(0, 0);
             }, 0);
             setTimeout(() => window.scrollTo(0, 1), 1000);
@@ -127,7 +157,7 @@ class ConstructorUI extends UIControl {
             this.sidePanel.modelsPanel.append(
                 new LabelControl("Product Types").addClass('title'),
             );
-            let modelsContainer = new FlowControl(3);
+            let modelsContainer = new FlowControl(3, false);
             options.constructor_models.forEach(model => {
                 let active = false;
 
@@ -160,8 +190,9 @@ class ConstructorUI extends UIControl {
                             }
                         });
                         this.loadModelOptions(model, options);
+                        Constructor.instance.changed();
                     },
-                    () => this.order.model.constructor_model_id == model.constructor_model_id,
+                    () => ConstructorUI.instance.order.model.constructor_model_id == model.constructor_model_id,
                     null
                 ).append(new ImageControl(url))
                     .tooltip(model.description);
@@ -187,6 +218,7 @@ class ConstructorUI extends UIControl {
             );
             Constructor.instance.zoomToFit();
         });
+        Constructor.instance.sides.forEach(side => side.changed());
     }
 
     loadModelOptions(model: ConstructorModel, options: Options) {

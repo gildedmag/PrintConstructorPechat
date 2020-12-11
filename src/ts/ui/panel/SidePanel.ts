@@ -38,6 +38,9 @@ class SidePanel extends ToolBar {
             this.optionsPanel,
             this.filtersPanel,
             this.sharePanel,
+            new Container()
+                .addClass('sidepanel-freespace')
+                .addClass('mobile')
         );
 
         this.container.onclick = e => {
