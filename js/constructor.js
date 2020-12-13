@@ -41,7 +41,7 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
     return function (d, b) {
@@ -183,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "13.12.2020 18:05";
+    Version.version = "13.12.2020 21:58";
     return Version;
 }());
 var Trigger = (function () {
@@ -4899,53 +4899,6 @@ var Container = (function (_super) {
     };
     return Container;
 }(UIControl));
-var Row = (function (_super) {
-    __extends(Row, _super);
-    function Row() {
-        var controls = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            controls[_i] = arguments[_i];
-        }
-        var _this = _super.call(this) || this;
-        _this.append.apply(_this, controls);
-        return _this;
-    }
-    Row.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " row";
-    };
-    return Row;
-}(UIControl));
-var CopyToClipboardPopover = (function (_super) {
-    __extends(CopyToClipboardPopover, _super);
-    function CopyToClipboardPopover(title, value) {
-        var _this = _super.call(this, null, null, true, new Row(new Spacer(), new LabelControl(title).addClass("title"), new Spacer()), new Row(new Spacer(), new Button(function () { return _this.copy(); }, null, value).addClass('copy-text'), new Spacer()), CopyToClipboardPopover.message, new Row(new Spacer(), new Button(function () { return _this.hide(); }, null, "OK"), new Spacer())) || this;
-        _this.permanent = false;
-        document.body.appendChild(_this.container);
-        _this.copy();
-        return _this;
-    }
-    CopyToClipboardPopover.prototype.copy = function () {
-        var node = document.querySelector('.copy-text *');
-        var range = document.createRange();
-        range.selectNode(node);
-        window.getSelection().addRange(range);
-        var successful = false;
-        try {
-            successful = document.execCommand('copy');
-            var msg = successful ? 'successful' : 'unsuccessful';
-            console.log('Copy email command was ' + msg);
-        }
-        catch (err) {
-            console.log('Oops, unable to copy');
-        }
-        CopyToClipboardPopover.message.clear();
-        if (successful) {
-            CopyToClipboardPopover.message.append(new Spacer(), new LabelControl('The link is copied to clipboard!'), new Spacer());
-        }
-    };
-    CopyToClipboardPopover.message = new Row();
-    return CopyToClipboardPopover;
-}(Popover));
 var Divider = (function (_super) {
     __extends(Divider, _super);
     function Divider(vertical) {
@@ -5122,6 +5075,22 @@ var LabelControl = (function (_super) {
         this.container.innerHTML = this.translate(value);
     };
     return LabelControl;
+}(UIControl));
+var Row = (function (_super) {
+    __extends(Row, _super);
+    function Row() {
+        var controls = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            controls[_i] = arguments[_i];
+        }
+        var _this = _super.call(this) || this;
+        _this.append.apply(_this, controls);
+        return _this;
+    }
+    Row.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " row";
+    };
+    return Row;
 }(UIControl));
 var Spacer = (function (_super) {
     __extends(Spacer, _super);
@@ -6858,4 +6827,35 @@ var TopBar = (function (_super) {
     };
     return TopBar;
 }(TriggeredToolBar));
+var CopyToClipboardPopover = (function (_super) {
+    __extends(CopyToClipboardPopover, _super);
+    function CopyToClipboardPopover(title, value) {
+        var _this = _super.call(this, null, null, true, new Row(new Spacer(), new LabelControl(title).addClass("title"), new Spacer()), new Row(new Spacer(), new Button(function () { return _this.copy(); }, null, value).addClass('copy-text'), new Spacer()), CopyToClipboardPopover.message, new Row(new Spacer(), new Button(function () { return _this.hide(); }, null, "OK"), new Spacer())) || this;
+        _this.permanent = false;
+        document.body.appendChild(_this.container);
+        _this.copy();
+        return _this;
+    }
+    CopyToClipboardPopover.prototype.copy = function () {
+        var node = document.querySelector('.copy-text *');
+        var range = document.createRange();
+        range.selectNode(node);
+        window.getSelection().addRange(range);
+        var successful = false;
+        try {
+            successful = document.execCommand('copy');
+            var msg = successful ? 'successful' : 'unsuccessful';
+            console.log('Copy email command was ' + msg);
+        }
+        catch (err) {
+            console.log('Oops, unable to copy');
+        }
+        CopyToClipboardPopover.message.clear();
+        if (successful) {
+            CopyToClipboardPopover.message.append(new Spacer(), new LabelControl('The link is copied to clipboard!'), new Spacer());
+        }
+    };
+    CopyToClipboardPopover.message = new Row();
+    return CopyToClipboardPopover;
+}(Popover));
 //# sourceMappingURL=constructor.js.map

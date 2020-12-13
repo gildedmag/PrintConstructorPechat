@@ -685,11 +685,11 @@ input[type="color"] {
         height: 100vh;
         display: grid;
         grid-template-columns: auto 240px auto 1fr auto;
-        grid-template-rows: 1fr auto;
+        grid-template-rows: auto 1fr;
         gap: 0;
         grid-template-areas:
-            "sidebar sidepanel bottombar constructor topbar"
-            "sidebar sidepanel bottombar pager topbar";
+            "sidebar sidepanel bottombar pager topbar"
+            "sidebar sidepanel bottombar constructor topbar";
     }
 
     .constructor-ui-container.collapsed {
