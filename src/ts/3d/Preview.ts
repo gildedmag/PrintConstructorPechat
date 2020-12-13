@@ -228,15 +228,16 @@ class Preview extends View<Preview> {
                     let src: string = side.canvas.toDataURL({format: Constants.PNG, multiplier: multiplier});
                     this.sides[i].userData = null;
                     let image = document.createElement(Constants.IMG);
-                    image.crossOrigin = "anonymous";
+                    //image.crossOrigin = "anonymous";
                     image.src = src;
                     image.onload = function () {
                         map = new THREE.Texture(image);
                         map.wrapS = map.wrapT = THREE.ClampToEdgeWrapping;
-                        map.minFilter = THREE.NearestMipMapNearestFilter;
-                        map.anisotropy = Constructor.instance.preview.renderer.capabilities.getMaxAnisotropy();
+                        //map.minFilter = THREE.NearestMipMapNearestFilter;
+                        //map.anisotropy = Constructor.instance.preview.renderer.capabilities.getMaxAnisotropy();
                         map.needsUpdate = true;
                         let side = Constructor.instance.preview.sides[i];
+                        side.alphaTest = 0.01;
                         side.map = map;
                         side.transparent = true;
                         side.needsUpdate = true;

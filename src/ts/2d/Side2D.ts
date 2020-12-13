@@ -295,12 +295,13 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         this.saveState();
     }
 
-    addImageFromObjectOptions(objectOptions: ObjectOptions, callback?: (any) => any): void {
+    addImageFromObjectOptions(objectOptions: ObjectOptions, callback?: (any?) => any): void {
         Utils.logMethodName();
         let object = objectOptions.toObject();
         let side = this;
         (fabric.Image as any).fromObject(object, image => {
             if (image === null) {
+                callback && callback()
                 return
             }
             let element = new Element2D(ElementType.IMAGE);
@@ -338,8 +339,8 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         if (objectsBuffer.length == 0){
             this.saveToLocalStorage(this.getState());
             this.canvas.requestRenderAll();
-            this.history.unlock();
             Constructor.instance.changed();
+            setTimeout(() => this.history.unlock(), 100);
             return;
         }
         let objectOptions = objectsBuffer.shift();
@@ -387,6 +388,10 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     saveState() {
         Utils.logMethodName();
         let state = new Side2DStateObjects(this);
+        console.log(state.objects[0]);
+        if (!state.objects[0]){//} && this.elements.length > 0){
+            return;
+        }
         this.history.add(state);
         this.saveToLocalStorage(state);
         this.changed();
@@ -395,11 +400,15 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
 
     undo() {
         let state = this.history.back();
+        console.log(state.objects[0]);
+        this.history.lock();
         if (state) this.setState(state);
     }
 
     redo() {
         let state = this.history.forward();
+        console.log(state.objects[0]);
+        this.history.lock();
         if (state) this.setState(state);
     }
 

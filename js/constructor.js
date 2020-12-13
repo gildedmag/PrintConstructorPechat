@@ -41,7 +41,7 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
     return function (d, b) {
@@ -183,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "11.12.2020 11:16";
+    Version.version = "12.12.2020 15:20";
     return Version;
 }());
 var Trigger = (function () {
@@ -507,15 +507,13 @@ var Preview = (function (_super) {
                     var src = side.canvas.toDataURL({ format: Constants.PNG, multiplier: multiplier });
                     this_1.sides[i].userData = null;
                     var image_1 = document.createElement(Constants.IMG);
-                    image_1.crossOrigin = "anonymous";
                     image_1.src = src;
                     image_1.onload = function () {
                         map = new THREE.Texture(image_1);
                         map.wrapS = map.wrapT = THREE.ClampToEdgeWrapping;
-                        map.minFilter = THREE.NearestMipMapNearestFilter;
-                        map.anisotropy = Constructor.instance.preview.renderer.capabilities.getMaxAnisotropy();
                         map.needsUpdate = true;
                         var side = Constructor.instance.preview.sides[i];
+                        side.alphaTest = 0.01;
                         side.map = map;
                         side.transparent = true;
                         side.needsUpdate = true;
@@ -1098,6 +1096,7 @@ var HistoryList = (function () {
         this.locked = true;
     };
     HistoryList.prototype.unlock = function () {
+        console.log('HISTORY UNLOCKED');
         this.locked = false;
     };
     HistoryList.prototype.current = function () {
@@ -1110,26 +1109,49 @@ var HistoryList = (function () {
         return !!this.state.previous;
     };
     HistoryList.prototype.back = function () {
-        if (this.state.previous) {
-            this.state = this.state.previous;
+        if (this.hasPrevious()) {
+            var newState = new DoubleLinkedNode(this.state.previous.value);
+            newState.previous = this.state.previous;
+            newState.next = this.state;
+            this.state = newState;
             return this.state.value;
         }
         return null;
     };
     HistoryList.prototype.forward = function () {
-        if (this.state.next) {
-            this.state = this.state.next;
+        if (this.hasNext()) {
+            var newState = new DoubleLinkedNode(this.state.next.value);
+            newState.previous = this.state;
+            newState.next = this.state.next;
+            this.state = newState;
             return this.state.value;
         }
         return null;
     };
     HistoryList.prototype.add = function (value) {
         if (!this.locked && !value.equals(this.current())) {
+            console.log('history#add !!!!!!!!!', value.objects);
             var next = new DoubleLinkedNode(value);
             next.previous = this.state;
             this.state.next = next;
             this.state = next;
         }
+    };
+    HistoryList.prototype.print = function () {
+        var cursor = this.state;
+        while (cursor.previous) {
+            console.log(cursor.value.objects);
+            cursor = cursor.previous;
+        }
+        console.log(cursor.value.objects);
+    };
+    HistoryList.prototype.printForward = function () {
+        var cursor = this.state;
+        while (cursor.next) {
+            console.log(cursor.value.objects);
+            cursor = cursor.next;
+        }
+        console.log(cursor.value.objects);
     };
     return HistoryList;
 }());
@@ -3922,6 +3944,7 @@ var Side2D = (function (_super) {
         var side = this;
         fabric.Image.fromObject(object, function (image) {
             if (image === null) {
+                callback && callback();
                 return;
             }
             var element = new Element2D(ElementType.IMAGE);
@@ -3960,8 +3983,8 @@ var Side2D = (function (_super) {
         if (objectsBuffer.length == 0) {
             this.saveToLocalStorage(this.getState());
             this.canvas.requestRenderAll();
-            this.history.unlock();
             Constructor.instance.changed();
+            setTimeout(function () { return _this.history.unlock(); }, 100);
             return;
         }
         var objectOptions = objectsBuffer.shift();
@@ -4007,6 +4030,10 @@ var Side2D = (function (_super) {
     Side2D.prototype.saveState = function () {
         Utils.logMethodName();
         var state = new Side2DStateObjects(this);
+        console.log(state.objects[0]);
+        if (!state.objects[0]) {
+            return;
+        }
         this.history.add(state);
         this.saveToLocalStorage(state);
         this.changed();
@@ -4014,11 +4041,15 @@ var Side2D = (function (_super) {
     };
     Side2D.prototype.undo = function () {
         var state = this.history.back();
+        console.log(state.objects[0]);
+        this.history.lock();
         if (state)
             this.setState(state);
     };
     Side2D.prototype.redo = function () {
         var state = this.history.forward();
+        console.log(state.objects[0]);
+        this.history.lock();
         if (state)
             this.setState(state);
     };
@@ -4702,9 +4733,10 @@ var ConstructorUI = (function (_super) {
                 return;
             }
             _this.options = options;
-            var modelLoaded = false;
+            var modelLoaded = c.preview.modelName != null;
             _this.sidePanel.modelsPanel.append(new LabelControl("Product Types").addClass('title'));
             var modelsContainer = new FlowControl(3, false);
+            _this.sidePanel.modelsPanel.append(modelsContainer);
             options.constructor_models.forEach(function (model) {
                 var active = false;
                 if (!modelLoaded) {
@@ -4723,6 +4755,11 @@ var ConstructorUI = (function (_super) {
                         alert(e.message);
                     }
                 }
+                else if (constructorConfiguration && constructorConfiguration.sharedState) {
+                    c.setMode(Mode.Mode3D);
+                    ConstructorUI.instance.sidePanel.optionsPanel.show();
+                    ConstructorUI.instance.order.changed();
+                }
                 var url = model.thumb;
                 var button = new ToggleButton(function () {
                     c.loadModel(model.file_main, function () {
@@ -4732,14 +4769,18 @@ var ConstructorUI = (function (_super) {
                     });
                     _this.loadModelOptions(model, options);
                     Constructor.instance.changed();
-                }, function () { return ConstructorUI.instance.order.model.constructor_model_id == model.constructor_model_id; }, null).append(new ImageControl(url).addClass('zoom'))
+                }, function () {
+                    if (!ConstructorUI.instance.order.model) {
+                        return false;
+                    }
+                    return ConstructorUI.instance.order.model.constructor_model_id == model.constructor_model_id;
+                }, null).append(new ImageControl(url).addClass('zoom'))
                     .tooltip(model.description, true);
                 modelsContainer.append(button);
                 if (active) {
                     button.addClass('active');
                 }
             });
-            _this.sidePanel.modelsPanel.append(modelsContainer);
         });
     };
     ConstructorUI.prototype.createSides = function (printareas) {
@@ -6110,7 +6151,7 @@ var SelectionPanel = (function (_super) {
             this.append(new SelectionColorControl("Color", function (value) { return _this.c.getSelection().setColor(value); }, function () { return _this.c.getSelection().getColor().toHex(); }));
         }
         if (this.c.hasTextSelection()) {
-            this.append(new SelectRangePropertyControl("Font Size", function (value) { return _this.c.getSelection().setFontSize(value); }, function () { return _this.c.getSelection().getFontSize(); }, 8, 120, 8), new SelectRangePropertyControl("Letter Spacing", function (value) { return _this.c.getSelection().setLetterSpacing(value); }, function () { return _this.c.getSelection().getLetterSpacing(); }, -200, 2000, 50), new SelectRangePropertyControl("Line Height", function (value) { return _this.c.getSelection().setLineHeight(value); }, function () { return _this.c.getSelection().getLineHeight(); }, 0.5, 3, 0.25), new Row(new LabelControl("Font Family"), new Spacer(), new Button(function () { return ConstructorUI.instance.sidePanel.fontFamilyPanel.show(); }, null, this.c.getSelection().getFontFamily())), new Row(new LabelControl("Font"), new Spacer(), this.textPropertyToggleButton("Bold"), this.textPropertyToggleButton("Italic"), this.textPropertyToggleButton("Underline"), this.textPropertyToggleButton("Linethrough")), new Row(new LabelControl("Alignment"), new Spacer(), this.textAlignmentButton(TextAlignment.LEFT, Icon.ALIGN_LEFT), this.textAlignmentButton(TextAlignment.CENTER, Icon.ALIGN_CENTER), this.textAlignmentButton(TextAlignment.RIGHT, Icon.ALIGN_RIGHT), this.textAlignmentButton(TextAlignment.JUSTIFY, Icon.ALIGN_JUSTIFY)));
+            this.append(new SelectRangePropertyControl("Font Size", function (value) { return _this.c.getSelection().setFontSize(value); }, function () { return _this.c.getSelection().getFontSize(); }, 32, 124, 8), new SelectRangePropertyControl("Letter Spacing", function (value) { return _this.c.getSelection().setLetterSpacing(value); }, function () { return _this.c.getSelection().getLetterSpacing(); }, -200, 2000, 50), new SelectRangePropertyControl("Line Height", function (value) { return _this.c.getSelection().setLineHeight(value); }, function () { return _this.c.getSelection().getLineHeight(); }, 0.5, 3, 0.25), new Row(new LabelControl("Font Family"), new Spacer(), new Button(function () { return ConstructorUI.instance.sidePanel.fontFamilyPanel.show(); }, null, this.c.getSelection().getFontFamily())), new Row(new LabelControl("Font"), new Spacer(), this.textPropertyToggleButton("Bold"), this.textPropertyToggleButton("Italic"), this.textPropertyToggleButton("Underline"), this.textPropertyToggleButton("Linethrough")), new Row(new LabelControl("Alignment"), new Spacer(), this.textAlignmentButton(TextAlignment.LEFT, Icon.ALIGN_LEFT), this.textAlignmentButton(TextAlignment.CENTER, Icon.ALIGN_CENTER), this.textAlignmentButton(TextAlignment.RIGHT, Icon.ALIGN_RIGHT), this.textAlignmentButton(TextAlignment.JUSTIFY, Icon.ALIGN_JUSTIFY)));
         }
     };
     SelectionPanel.prototype.updateVisibility = function () {
@@ -6431,7 +6472,6 @@ var Order = (function (_super) {
         var _this = this;
         var c = Constructor.instance;
         var stateJson = c.getState();
-        var constructor_model_id = this.model.constructor_model_id;
         var preview = "";
         c.setActiveSide(0);
         var holst_1 = c.getActiveSide().exportImage(Constructor.settings.printWidth);
@@ -6442,16 +6482,25 @@ var Order = (function (_super) {
         c.setActiveSide(3);
         var holst_4 = c.getActiveSide().exportImage(Constructor.settings.printWidth);
         var optionsEncoded = "";
+        var selectedOptionsIds = [];
+        var selectedSides = [];
         this.selectedOptions.forEach(function (option) {
             optionsEncoded += "+++++" + option.id;
         });
+        this.selectedOptions.forEach(function (option) {
+            selectedOptionsIds.push(parseInt(option.id));
+        });
+        for (var i = 0; i < Constructor.instance.sides.length; i++) {
+            var side = Constructor.instance.sides[i];
+            if (!side.isEmpty()) {
+                selectedSides.push(i);
+            }
+        }
         var body = Utils.toUrlParameters({
             json: stateJson,
-            animation: stateJson,
             price: this.getDiscountPricePerItem(),
-            priceOriginal: "0",
             category: this.model.category_id,
-            constructor_model_id: constructor_model_id,
+            constructor_model_id: this.model.constructor_model_id,
             text_type: this.model.name,
             holst_1: holst_1,
             holst_2: holst_2,
@@ -6459,6 +6508,8 @@ var Order = (function (_super) {
             holst_4: holst_4,
             preview: preview,
             option: optionsEncoded,
+            selectedOptions: JSON.stringify(selectedOptionsIds),
+            selectedSides: JSON.stringify(selectedSides),
             quantity: this.quantity
         });
         this.updateDiscount();
@@ -6500,6 +6551,21 @@ var Order = (function (_super) {
     };
     Order.prototype.shareLink = function () {
         Constructor.instance.spinner.show();
+        var selectedOptionsIds = [];
+        var selectedSides = [];
+        var optionsEncoded = "";
+        this.selectedOptions.forEach(function (option) {
+            optionsEncoded += "+++++" + option.id;
+        });
+        this.selectedOptions.forEach(function (option) {
+            selectedOptionsIds.push(parseInt(option.id));
+        });
+        for (var i = 0; i < Constructor.instance.sides.length; i++) {
+            var side = Constructor.instance.sides[i];
+            if (!side.isEmpty()) {
+                selectedSides.push(i);
+            }
+        }
         var headers = new Headers({ 'content-type': 'application/x-www-form-urlencoded' });
         var post = 'POST';
         fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/get_url_post', {
@@ -6509,7 +6575,10 @@ var Order = (function (_super) {
                 data_u: btoa(encodeURIComponent(Constructor.instance.getState())),
                 category: this.model.category_id,
                 text_type: this.model.name,
-                quantity: this.quantity
+                quantity: this.quantity,
+                option: optionsEncoded,
+                selectedOptions: JSON.stringify(selectedOptionsIds),
+                selectedSides: JSON.stringify(selectedSides),
             })
         }).then(function (response) {
             Constructor.instance.spinner.hide();

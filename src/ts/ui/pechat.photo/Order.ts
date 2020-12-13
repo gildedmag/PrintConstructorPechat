@@ -199,7 +199,6 @@ class Order extends Trigger<Order> {
         let c = Constructor.instance;
 
         let stateJson = c.getState();
-        let constructor_model_id = this.model.constructor_model_id;
         let preview = "";
 
         c.setActiveSide(0);
@@ -213,17 +212,29 @@ class Order extends Trigger<Order> {
 
 
         let optionsEncoded = "";
+        let selectedOptionsIds = [];
+        let selectedSides = [];
         this.selectedOptions.forEach(option => {
             optionsEncoded += "+++++" + option.id;
         });
 
+        this.selectedOptions.forEach(option => {
+            selectedOptionsIds.push(parseInt(option.id));
+        });
+        for (let i = 0; i < Constructor.instance.sides.length; i++) {
+            let side = Constructor.instance.sides[i];
+            if (!side.isEmpty()){
+                selectedSides.push(i);
+            }
+        }
+
         let body = Utils.toUrlParameters({
             json: stateJson,
-            animation: stateJson,
+            //animation: stateJson,
             price: this.getDiscountPricePerItem(),
-            priceOriginal: "0",
+            //priceOriginal: "0",
             category: this.model.category_id,
-            constructor_model_id: constructor_model_id,
+            constructor_model_id: this.model.constructor_model_id,
             text_type: this.model.name,
             holst_1: holst_1,
             holst_2: holst_2,
@@ -231,6 +242,8 @@ class Order extends Trigger<Order> {
             holst_4: holst_4,
             preview: preview,
             option: optionsEncoded,
+            selectedOptions: JSON.stringify(selectedOptionsIds),
+            selectedSides: JSON.stringify(selectedSides),
             quantity: this.quantity
         });
 
@@ -279,6 +292,21 @@ class Order extends Trigger<Order> {
 
     shareLink() {
         Constructor.instance.spinner.show();
+        let selectedOptionsIds = [];
+        let selectedSides = [];
+        let optionsEncoded = "";
+        this.selectedOptions.forEach(option => {
+            optionsEncoded += "+++++" + option.id;
+        });
+        this.selectedOptions.forEach(option => {
+            selectedOptionsIds.push(parseInt(option.id));
+        });
+        for (let i = 0; i < Constructor.instance.sides.length; i++) {
+            let side = Constructor.instance.sides[i];
+            if (!side.isEmpty()){
+                selectedSides.push(i);
+            }
+        }
         let headers = new Headers({'content-type': 'application/x-www-form-urlencoded'});
         let post = 'POST';
         fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/get_url_post', {
@@ -288,7 +316,10 @@ class Order extends Trigger<Order> {
                 data_u: btoa(encodeURIComponent(Constructor.instance.getState())),
                 category: this.model.category_id,
                 text_type: this.model.name,
-                quantity: this.quantity
+                quantity: this.quantity,
+                option: optionsEncoded,
+                selectedOptions: JSON.stringify(selectedOptionsIds),
+                selectedSides: JSON.stringify(selectedSides),
             })
         }).then(response => {
             Constructor.instance.spinner.hide();

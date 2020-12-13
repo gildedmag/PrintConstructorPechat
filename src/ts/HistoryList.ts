@@ -18,6 +18,7 @@ class HistoryList<T extends Equalable<T>> {
     }
 
     unlock() {
+        console.log('HISTORY UNLOCKED');
         this.locked = false;
     }
 
@@ -34,16 +35,22 @@ class HistoryList<T extends Equalable<T>> {
     }
 
     back(): T {
-        if (this.state.previous) {
-            this.state = this.state.previous;
+        if (this.hasPrevious()) {
+            let newState = new DoubleLinkedNode<T>(this.state.previous.value);
+            newState.previous = this.state.previous;
+            newState.next = this.state;
+            this.state = newState;
             return this.state.value;
         }
         return null;
     }
 
     forward(): T {
-        if (this.state.next) {
-            this.state = this.state.next;
+        if (this.hasNext()) {
+            let newState = new DoubleLinkedNode<T>(this.state.next.value);
+            newState.previous = this.state;
+            newState.next = this.state.next;
+            this.state = newState;
             return this.state.value;
         }
         return null;
@@ -51,11 +58,30 @@ class HistoryList<T extends Equalable<T>> {
 
     add(value: T) {
         if (!this.locked && !value.equals(this.current())) {
+            console.log('history#add !!!!!!!!!', value.objects);
             let next = new DoubleLinkedNode(value);
             next.previous = this.state;
             this.state.next = next;
             this.state = next;
         }
+    }
+
+    print(){
+        let cursor = this.state;
+        while (cursor.previous){
+            console.log(cursor.value.objects);
+            cursor = cursor.previous;
+        }
+        console.log(cursor.value.objects);
+    }
+
+    printForward(){
+        let cursor = this.state;
+        while (cursor.next){
+            console.log(cursor.value.objects);
+            cursor = cursor.next;
+        }
+        console.log(cursor.value.objects);
     }
 
 }

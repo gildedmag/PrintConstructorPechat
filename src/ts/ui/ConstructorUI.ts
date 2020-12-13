@@ -153,11 +153,12 @@ class ConstructorUI extends UIControl {
                 return;
             }
             this.options = options;
-            let modelLoaded = false;
+            let modelLoaded = c.preview.modelName != null;
             this.sidePanel.modelsPanel.append(
                 new LabelControl("Product Types").addClass('title'),
             );
             let modelsContainer = new FlowControl(3, false);
+            this.sidePanel.modelsPanel.append(modelsContainer);
             options.constructor_models.forEach(model => {
                 let active = false;
 
@@ -179,6 +180,10 @@ class ConstructorUI extends UIControl {
                     } catch (e) {
                         alert(e.message);
                     }
+                } else if (constructorConfiguration && constructorConfiguration.sharedState) {
+                    c.setMode(Mode.Mode3D);
+                    ConstructorUI.instance.sidePanel.optionsPanel.show();
+                    ConstructorUI.instance.order.changed();
                 }
 
                 let url = model.thumb;
@@ -192,7 +197,12 @@ class ConstructorUI extends UIControl {
                         this.loadModelOptions(model, options);
                         Constructor.instance.changed();
                     },
-                    () => ConstructorUI.instance.order.model.constructor_model_id == model.constructor_model_id,
+                    () => {
+                        if (!ConstructorUI.instance.order.model){
+                            return false;
+                        }
+                        return ConstructorUI.instance.order.model.constructor_model_id == model.constructor_model_id;
+                    },
                     null
                 ).append(new ImageControl(url).addClass('zoom'))
                     .tooltip(model.description, true);
@@ -201,8 +211,6 @@ class ConstructorUI extends UIControl {
                     button.addClass('active');
                 }
             });
-            this.sidePanel.modelsPanel.append(modelsContainer);
-
         })
     }
 
