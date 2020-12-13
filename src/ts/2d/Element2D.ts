@@ -478,6 +478,8 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
             = this.object.lockMovementX
             = this.object.lockMovementY
             = locked;
+        this.changed();
+        this.side.saveState();
     }
 
     isLocked(): boolean {

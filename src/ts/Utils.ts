@@ -162,4 +162,25 @@ class Utils {
         }
     }
 
+    test (){
+        let node = document.body.appendChild(document.createElement('div'));
+        node.innerHTML = 'test!!!111';
+        let range = document.createRange();
+        range.selectNode(node);
+        window.getSelection().addRange(range);
+
+        try {
+            var successful = document.execCommand('copy');
+            var msg = successful ? 'successful' : 'unsuccessful';
+            console.log('Copy email command was ' + msg);
+        } catch(err) {
+            console.log('Oops, unable to copy');
+        }
+
+        // Remove the selections - NOTE: Should use
+        // removeRange(range) when it is supported
+        window.getSelection().removeAllRanges();
+        document.body.removeChild(node);
+    }
+
 }

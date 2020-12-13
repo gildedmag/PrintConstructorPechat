@@ -56,6 +56,7 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                                 image.object.height = height;
                                 image.side.canvas.renderAll();
                                 console.log('image src replaced from local to:', json.files[0].file);
+                                image.side.saveState();
                                 //Trigger.preventUpdate = false;
                             });
                         });

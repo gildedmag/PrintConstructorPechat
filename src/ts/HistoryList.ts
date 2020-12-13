@@ -1,12 +1,12 @@
 /** @hidden */
 class HistoryList<T extends Equalable<T>> {
 
-    state: DoubleLinkedNode<T>;
+    cursor = 0;
+    history: T[] = [];
     private locked: boolean;
 
-    constructor(value: T) {
+    constructor() {
         this.locked = false;
-        this.state = new DoubleLinkedNode(value);
     }
 
     public isLocked(): boolean {
@@ -23,65 +23,44 @@ class HistoryList<T extends Equalable<T>> {
     }
 
     current(): T {
-        return this.state.value;
+        if (this.history.length == 0) {
+            return null;
+        }
+        return this.history[this.cursor];
     }
 
     hasNext(): boolean {
-        return !!this.state.next;
+        return this.cursor < (this.history.length - 1);
     }
 
     hasPrevious(): boolean {
-        return !!this.state.previous;
+        return this.cursor > 0;
     }
 
     back(): T {
         if (this.hasPrevious()) {
-            let newState = new DoubleLinkedNode<T>(this.state.previous.value);
-            newState.previous = this.state.previous;
-            newState.next = this.state;
-            this.state = newState;
-            return this.state.value;
+            this.cursor--;
+            return this.current();
         }
         return null;
     }
 
     forward(): T {
         if (this.hasNext()) {
-            let newState = new DoubleLinkedNode<T>(this.state.next.value);
-            newState.previous = this.state;
-            newState.next = this.state.next;
-            this.state = newState;
-            return this.state.value;
+            this.cursor++;
+            return this.current();
         }
         return null;
     }
 
     add(value: T) {
-        if (!this.locked && !value.equals(this.current())) {
-            console.log('history#add !!!!!!!!!', value.objects);
-            let next = new DoubleLinkedNode(value);
-            next.previous = this.state;
-            this.state.next = next;
-            this.state = next;
+        if (!this.locked && value != this.current()) {
+            if (this.hasNext()) {
+                this.history.splice(this.cursor);
+            }
+            this.history.push(value);
+            this.forward();
         }
-    }
-
-    print(){
-        let cursor = this.state;
-        while (cursor.previous){
-            console.log(cursor.value.objects);
-            cursor = cursor.previous;
-        }
-        console.log(cursor.value.objects);
-    }
-
-    printForward(){
-        let cursor = this.state;
-        while (cursor.next){
-            console.log(cursor.value.objects);
-            cursor = cursor.next;
-        }
-        console.log(cursor.value.objects);
     }
 
 }

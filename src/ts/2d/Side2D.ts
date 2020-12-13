@@ -28,7 +28,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     /** @hidden */
     verticalGuide: VerticalGuide;
 
-    history: HistoryList<Side2DStateObjects>;
+    history: HistoryList<string>;
 
     needsHistoryUpdate;
     id: number
@@ -45,7 +45,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     constructor(htmlElement: HTMLElement, width: number, height: number, roundCorners?: number, name?: string, price?: number) {
         super(htmlElement);
         this.id = Math.random() * 1e18;
-        this.history = new HistoryList(new Side2DState(this));
+        this.history = new HistoryList();
         this.width = width;
         this.height = height;
         this.name = name;
@@ -340,7 +340,8 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
             this.saveToLocalStorage(this.getState());
             this.canvas.requestRenderAll();
             Constructor.instance.changed();
-            setTimeout(() => this.history.unlock(), 100);
+            this.history.unlock();//setTimeout(() => this.history.unlock(), 100);
+            Constructor.instance.spinner.hide();
             return;
         }
         let objectOptions = objectsBuffer.shift();
@@ -392,23 +393,31 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         if (!state.objects[0]){//} && this.elements.length > 0){
             return;
         }
-        this.history.add(state);
+        this.history.add(JSON.stringify(state));
         this.saveToLocalStorage(state);
         this.changed();
         Constructor.instance.changed();
     }
 
     undo() {
-        let state = this.history.back();
+        if (this.history.isLocked()){
+            return;
+        }
+        let state = Side2DStateObjects.parse(this.history.back());
         console.log(state.objects[0]);
         this.history.lock();
+        Constructor.instance.spinner.show();
         if (state) this.setState(state);
     }
 
     redo() {
-        let state = this.history.forward();
+        if (this.history.isLocked()){
+            return;
+        }
+        let state = Side2DStateObjects.parse(this.history.forward());
         console.log(state.objects[0]);
         this.history.lock();
+        Constructor.instance.spinner.show();
         if (state) this.setState(state);
     }
 

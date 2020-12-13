@@ -45,9 +45,9 @@ class OptionButton extends ToggleButton {
                 return true;
             }
 
-            if (ConstructorUI.instance.order.selectedOptions[0].option_id == this.value.option_id) {
-                return true;
-            }
+            // if (ConstructorUI.instance.order.selectedOptions[0].option_id == this.value.option_id) {
+            //     return true;
+            // }
 
             let compatibleOptionIds = {};
             for (let i = 0; i < this.value.option_s.length; i++) {
@@ -61,6 +61,8 @@ class OptionButton extends ToggleButton {
                     if (!compatibleOptionIds[selectedOption.id]) {
                         return false;
                     }
+                } else if (selectedOption.id != this.value.id) {
+                    return false;
                 }
             }
             return true;

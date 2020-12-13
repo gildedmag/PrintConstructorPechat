@@ -11,7 +11,7 @@ class Popover extends UIControl {
         return super.getClassName() + " popover";
     }
 
-    constructor(title?: string, content?: string, ...controls: UIControl[]) {
+    constructor(title?: string, content?: string, show?: boolean, ...controls: UIControl[]) {
         super();
         let frame = new Container().addClass("vertical");
 
@@ -72,7 +72,7 @@ class Popover extends UIControl {
             }
 
             this.frame = frame;
-            this.hide();
+            if (show != true) this.hide();
             this.append(frame);
         }
 

@@ -6,6 +6,7 @@ class AddToCartPopover extends Popover {
         super(
             null,
             null,
+            false,
             new Row(
                 new Spacer(),
                 new LabelControl("Add to Cart").addClass("title"),

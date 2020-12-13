@@ -61,6 +61,7 @@ class ToggleButton extends TriggeredUIControl<any> {
     }
 
     updateEnabled() {
+        console.log('updateEnabled');
         if (this.enabledCheck) {
             if (this.enabledCheck()) {
                 this.removeClass("disabled")

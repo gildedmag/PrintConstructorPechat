@@ -64,6 +64,7 @@ class LocalizedStrings {
         'Duplicate': 'Клонировать',
         'Delete': 'Удалить',
         'The link is copied to clipboard!': 'Ссылка скопирована в буфер обмена!',
+        'Copy to Clipboard': 'Скопировать в буфер обмена',
         '$': '₽',
     }
 

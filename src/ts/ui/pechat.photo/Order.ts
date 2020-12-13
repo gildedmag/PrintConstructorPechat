@@ -214,11 +214,9 @@ class Order extends Trigger<Order> {
         let optionsEncoded = "";
         let selectedOptionsIds = [];
         let selectedSides = [];
-        this.selectedOptions.forEach(option => {
-            optionsEncoded += "+++++" + option.id;
-        });
 
         this.selectedOptions.forEach(option => {
+            optionsEncoded += "+++++" + option.id;
             selectedOptionsIds.push(parseInt(option.id));
         });
         for (let i = 0; i < Constructor.instance.sides.length; i++) {
@@ -326,11 +324,12 @@ class Order extends Trigger<Order> {
             response.json().then(link => {
                 console.log(link);
                 let url = ConstructorUI.instance.domain + 'create_constructor?url=' + link;
-                if (Utils.copyToClipboard(url)){
-                    new Popover('Share as Link', 'The link is copied to clipboard!');
-                } else {
-                    new Popover('Share as Link', url);
-                }
+                new CopyToClipboardPopover('Share as Link', url).show();
+                // if (Utils.copyToClipboard(url)){
+                //     new Popover('Share as Link', 'The link is copied to clipboard!');
+                // } else {
+                //     new Popover('Share as Link', url);
+                // }
             });
         });
     }

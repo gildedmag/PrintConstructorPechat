@@ -304,7 +304,7 @@ body {
 }
 
 .control.popover > .control {
-    width: 300px;
+    width: 400px;
     height: fit-content;
     margin: auto;
     background: #555 !important;
@@ -313,6 +313,10 @@ body {
     transition: .5s;
     transition-property: bottom;
     transition-timing-function: ease-out;
+}
+
+.copy-text, .copy-text * {
+    user-select: all;
 }
 
 .control.popover .button {
@@ -451,8 +455,8 @@ body {
 }
 
 .options-panel .control.button .label {
-    white-space: nowrap;
-    overflow: hidden;
+    /*white-space: nowrap;*/
+    /*overflow: hidden;*/
 }
 
 /*.options-panel .control.button.toggle.active {*/

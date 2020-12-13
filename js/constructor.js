@@ -41,7 +41,7 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
     return function (d, b) {
@@ -183,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "12.12.2020 15:20";
+    Version.version = "13.12.2020 18:05";
     return Version;
 }());
 var Trigger = (function () {
@@ -1085,9 +1085,10 @@ var DoubleLinkedNode = (function () {
     return DoubleLinkedNode;
 }());
 var HistoryList = (function () {
-    function HistoryList(value) {
+    function HistoryList() {
+        this.cursor = 0;
+        this.history = [];
         this.locked = false;
-        this.state = new DoubleLinkedNode(value);
     }
     HistoryList.prototype.isLocked = function () {
         return this.locked === true;
@@ -1100,58 +1101,39 @@ var HistoryList = (function () {
         this.locked = false;
     };
     HistoryList.prototype.current = function () {
-        return this.state.value;
+        if (this.history.length == 0) {
+            return null;
+        }
+        return this.history[this.cursor];
     };
     HistoryList.prototype.hasNext = function () {
-        return !!this.state.next;
+        return this.cursor < (this.history.length - 1);
     };
     HistoryList.prototype.hasPrevious = function () {
-        return !!this.state.previous;
+        return this.cursor > 0;
     };
     HistoryList.prototype.back = function () {
         if (this.hasPrevious()) {
-            var newState = new DoubleLinkedNode(this.state.previous.value);
-            newState.previous = this.state.previous;
-            newState.next = this.state;
-            this.state = newState;
-            return this.state.value;
+            this.cursor--;
+            return this.current();
         }
         return null;
     };
     HistoryList.prototype.forward = function () {
         if (this.hasNext()) {
-            var newState = new DoubleLinkedNode(this.state.next.value);
-            newState.previous = this.state;
-            newState.next = this.state.next;
-            this.state = newState;
-            return this.state.value;
+            this.cursor++;
+            return this.current();
         }
         return null;
     };
     HistoryList.prototype.add = function (value) {
-        if (!this.locked && !value.equals(this.current())) {
-            console.log('history#add !!!!!!!!!', value.objects);
-            var next = new DoubleLinkedNode(value);
-            next.previous = this.state;
-            this.state.next = next;
-            this.state = next;
+        if (!this.locked && value != this.current()) {
+            if (this.hasNext()) {
+                this.history.splice(this.cursor);
+            }
+            this.history.push(value);
+            this.forward();
         }
-    };
-    HistoryList.prototype.print = function () {
-        var cursor = this.state;
-        while (cursor.previous) {
-            console.log(cursor.value.objects);
-            cursor = cursor.previous;
-        }
-        console.log(cursor.value.objects);
-    };
-    HistoryList.prototype.printForward = function () {
-        var cursor = this.state;
-        while (cursor.next) {
-            console.log(cursor.value.objects);
-            cursor = cursor.next;
-        }
-        console.log(cursor.value.objects);
     };
     return HistoryList;
 }());
@@ -2780,6 +2762,23 @@ var Utils = (function () {
             }
         }
     };
+    Utils.prototype.test = function () {
+        var node = document.body.appendChild(document.createElement('div'));
+        node.innerHTML = 'test!!!111';
+        var range = document.createRange();
+        range.selectNode(node);
+        window.getSelection().addRange(range);
+        try {
+            var successful = document.execCommand('copy');
+            var msg = successful ? 'successful' : 'unsuccessful';
+            console.log('Copy email command was ' + msg);
+        }
+        catch (err) {
+            console.log('Oops, unable to copy');
+        }
+        window.getSelection().removeAllRanges();
+        document.body.removeChild(node);
+    };
     return Utils;
 }());
 var Dimensions = (function () {
@@ -3195,6 +3194,8 @@ var Element2D = (function (_super) {
                     = this.object.lockMovementX
                         = this.object.lockMovementY
                             = locked;
+        this.changed();
+        this.side.saveState();
     };
     Element2D.prototype.isLocked = function () {
         return this.object && this.object.lockScalingX;
@@ -3664,6 +3665,7 @@ var ObjectOptions = (function () {
 }());
 var Side2DStateObjects = (function () {
     function Side2DStateObjects(side) {
+        console.log('side:', side);
         this.objects = [];
         if (side) {
             for (var _i = 0, _a = side.elements; _i < _a.length; _i++) {
@@ -3683,6 +3685,9 @@ var Side2DStateObjects = (function () {
         return objects;
     };
     Side2DStateObjects.prototype.equals = function (state) {
+        if (!state) {
+            return false;
+        }
         if (state.objects.length != this.objects.length) {
             return false;
         }
@@ -3720,7 +3725,7 @@ var Side2D = (function (_super) {
         _this.elements = [];
         _this.price = 0;
         _this.id = Math.random() * 1e18;
-        _this.history = new HistoryList(new Side2DState(_this));
+        _this.history = new HistoryList();
         _this.width = width;
         _this.height = height;
         _this.name = name;
@@ -3984,7 +3989,8 @@ var Side2D = (function (_super) {
             this.saveToLocalStorage(this.getState());
             this.canvas.requestRenderAll();
             Constructor.instance.changed();
-            setTimeout(function () { return _this.history.unlock(); }, 100);
+            this.history.unlock();
+            Constructor.instance.spinner.hide();
             return;
         }
         var objectOptions = objectsBuffer.shift();
@@ -4034,22 +4040,30 @@ var Side2D = (function (_super) {
         if (!state.objects[0]) {
             return;
         }
-        this.history.add(state);
+        this.history.add(JSON.stringify(state));
         this.saveToLocalStorage(state);
         this.changed();
         Constructor.instance.changed();
     };
     Side2D.prototype.undo = function () {
-        var state = this.history.back();
+        if (this.history.isLocked()) {
+            return;
+        }
+        var state = Side2DStateObjects.parse(this.history.back());
         console.log(state.objects[0]);
         this.history.lock();
+        Constructor.instance.spinner.show();
         if (state)
             this.setState(state);
     };
     Side2D.prototype.redo = function () {
-        var state = this.history.forward();
+        if (this.history.isLocked()) {
+            return;
+        }
+        var state = Side2DStateObjects.parse(this.history.forward());
         console.log(state.objects[0]);
         this.history.lock();
+        Constructor.instance.spinner.show();
         if (state)
             this.setState(state);
     };
@@ -4221,6 +4235,7 @@ var LocalizedStrings = (function () {
         'Duplicate': 'Клонировать',
         'Delete': 'Удалить',
         'The link is copied to clipboard!': 'Ссылка скопирована в буфер обмена!',
+        'Copy to Clipboard': 'Скопировать в буфер обмена',
         '$': '₽',
     };
     return LocalizedStrings;
@@ -4414,10 +4429,10 @@ var UIControl = (function (_super) {
 }(View));
 var Popover = (function (_super) {
     __extends(Popover, _super);
-    function Popover(title, content) {
+    function Popover(title, content, show) {
         var controls = [];
-        for (var _i = 2; _i < arguments.length; _i++) {
-            controls[_i - 2] = arguments[_i];
+        for (var _i = 3; _i < arguments.length; _i++) {
+            controls[_i - 3] = arguments[_i];
         }
         var _this = _super.call(this) || this;
         _this.permanent = true;
@@ -4451,7 +4466,8 @@ var Popover = (function (_super) {
                 }
             };
             _this.frame = frame;
-            _this.hide();
+            if (show != true)
+                _this.hide();
             _this.append(frame);
         }
         return _this;
@@ -4487,7 +4503,7 @@ var Popover = (function (_super) {
 var AddToCartPopover = (function (_super) {
     __extends(AddToCartPopover, _super);
     function AddToCartPopover() {
-        var _this = _super.call(this, null, null, new Row(new Spacer(), new LabelControl("Add to Cart").addClass("title"), new Spacer()), new Row(new LabelControl("Quantity"), new Spacer(), new ConditionalButton(function () { return ConstructorUI.instance.order.decrementQuantity(); }, function () { return ConstructorUI.instance.order.getQuantity() > 1; }, Icon.MINUS_CIRCLE, null, ConstructorUI.instance.order), new Button(function () { return ConstructorUI.instance.order.incrementQuantity(); }, Icon.PLUS_CIRCLE), new NumberInputControl(function (v) { return ConstructorUI.instance.order.setQuantity(v); }, function () { return ConstructorUI.instance.order.getQuantity(); }, ConstructorUI.instance.order)), new Row(new LabelControl("Price"), new Spacer(), new TriggeredLabelControl(ConstructorUI.instance.order, function (control) {
+        var _this = _super.call(this, null, null, false, new Row(new Spacer(), new LabelControl("Add to Cart").addClass("title"), new Spacer()), new Row(new LabelControl("Quantity"), new Spacer(), new ConditionalButton(function () { return ConstructorUI.instance.order.decrementQuantity(); }, function () { return ConstructorUI.instance.order.getQuantity() > 1; }, Icon.MINUS_CIRCLE, null, ConstructorUI.instance.order), new Button(function () { return ConstructorUI.instance.order.incrementQuantity(); }, Icon.PLUS_CIRCLE), new NumberInputControl(function (v) { return ConstructorUI.instance.order.setQuantity(v); }, function () { return ConstructorUI.instance.order.getQuantity(); }, ConstructorUI.instance.order)), new Row(new LabelControl("Price"), new Spacer(), new TriggeredLabelControl(ConstructorUI.instance.order, function (control) {
             var price = ConstructorUI.instance.order.getTotalCostWithoutDiscount();
             if (ConstructorUI.instance.order.hasDiscount()) {
                 control.addClass("price-without-discount");
@@ -4883,6 +4899,53 @@ var Container = (function (_super) {
     };
     return Container;
 }(UIControl));
+var Row = (function (_super) {
+    __extends(Row, _super);
+    function Row() {
+        var controls = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            controls[_i] = arguments[_i];
+        }
+        var _this = _super.call(this) || this;
+        _this.append.apply(_this, controls);
+        return _this;
+    }
+    Row.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " row";
+    };
+    return Row;
+}(UIControl));
+var CopyToClipboardPopover = (function (_super) {
+    __extends(CopyToClipboardPopover, _super);
+    function CopyToClipboardPopover(title, value) {
+        var _this = _super.call(this, null, null, true, new Row(new Spacer(), new LabelControl(title).addClass("title"), new Spacer()), new Row(new Spacer(), new Button(function () { return _this.copy(); }, null, value).addClass('copy-text'), new Spacer()), CopyToClipboardPopover.message, new Row(new Spacer(), new Button(function () { return _this.hide(); }, null, "OK"), new Spacer())) || this;
+        _this.permanent = false;
+        document.body.appendChild(_this.container);
+        _this.copy();
+        return _this;
+    }
+    CopyToClipboardPopover.prototype.copy = function () {
+        var node = document.querySelector('.copy-text *');
+        var range = document.createRange();
+        range.selectNode(node);
+        window.getSelection().addRange(range);
+        var successful = false;
+        try {
+            successful = document.execCommand('copy');
+            var msg = successful ? 'successful' : 'unsuccessful';
+            console.log('Copy email command was ' + msg);
+        }
+        catch (err) {
+            console.log('Oops, unable to copy');
+        }
+        CopyToClipboardPopover.message.clear();
+        if (successful) {
+            CopyToClipboardPopover.message.append(new Spacer(), new LabelControl('The link is copied to clipboard!'), new Spacer());
+        }
+    };
+    CopyToClipboardPopover.message = new Row();
+    return CopyToClipboardPopover;
+}(Popover));
 var Divider = (function (_super) {
     __extends(Divider, _super);
     function Divider(vertical) {
@@ -5059,22 +5122,6 @@ var LabelControl = (function (_super) {
         this.container.innerHTML = this.translate(value);
     };
     return LabelControl;
-}(UIControl));
-var Row = (function (_super) {
-    __extends(Row, _super);
-    function Row() {
-        var controls = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            controls[_i] = arguments[_i];
-        }
-        var _this = _super.call(this) || this;
-        _this.append.apply(_this, controls);
-        return _this;
-    }
-    Row.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " row";
-    };
-    return Row;
 }(UIControl));
 var Spacer = (function (_super) {
     __extends(Spacer, _super);
@@ -5269,6 +5316,7 @@ var ToggleButton = (function (_super) {
         return button;
     };
     ToggleButton.prototype.updateEnabled = function () {
+        console.log('updateEnabled');
         if (this.enabledCheck) {
             if (this.enabledCheck()) {
                 this.removeClass("disabled");
@@ -6026,6 +6074,7 @@ var NewElementPanel = (function (_super) {
                                 image.object.height = height;
                                 image.side.canvas.renderAll();
                                 console.log('image src replaced from local to:', json.files[0].file);
+                                image.side.saveState();
                             });
                         });
                     });
@@ -6221,9 +6270,6 @@ var OptionButton = (function (_super) {
             if (_this.isSelected() || ConstructorUI.instance.order.selectedOptions.length == 0) {
                 return true;
             }
-            if (ConstructorUI.instance.order.selectedOptions[0].option_id == _this.value.option_id) {
-                return true;
-            }
             var compatibleOptionIds = {};
             for (var i = 0; i < _this.value.option_s.length; i++) {
                 var compatibleOptionId = _this.value.option_s[i].option_value_relation_id;
@@ -6235,6 +6281,9 @@ var OptionButton = (function (_super) {
                     if (!compatibleOptionIds[selectedOption.id]) {
                         return false;
                     }
+                }
+                else if (selectedOption.id != _this.value.id) {
+                    return false;
                 }
             }
             return true;
@@ -6486,8 +6535,6 @@ var Order = (function (_super) {
         var selectedSides = [];
         this.selectedOptions.forEach(function (option) {
             optionsEncoded += "+++++" + option.id;
-        });
-        this.selectedOptions.forEach(function (option) {
             selectedOptionsIds.push(parseInt(option.id));
         });
         for (var i = 0; i < Constructor.instance.sides.length; i++) {
@@ -6585,12 +6632,7 @@ var Order = (function (_super) {
             response.json().then(function (link) {
                 console.log(link);
                 var url = ConstructorUI.instance.domain + 'create_constructor?url=' + link;
-                if (Utils.copyToClipboard(url)) {
-                    new Popover('Share as Link', 'The link is copied to clipboard!');
-                }
-                else {
-                    new Popover('Share as Link', url);
-                }
+                new CopyToClipboardPopover('Share as Link', url).show();
             });
         });
     };
