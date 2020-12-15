@@ -16,7 +16,6 @@ class FlowControl extends UIControl {
 
     showed() {
         if (this.autoFlow){
-            console.log('this.autoFlow', this.autoFlow);
             this.reflow();
         }
     }
@@ -25,13 +24,9 @@ class FlowControl extends UIControl {
         let maxColumnWidth = 0;
         for (let i = 0; i < this.children.length; i++) {
             const rect = await this.children[i].calculateBoundingClientRect();
-            console.log('rect.width', rect.width);
             maxColumnWidth = Math.max(maxColumnWidth, rect.width);
         }
-        console.log('width', this.container.clientWidth);
-        console.log('maxColumnWidth', maxColumnWidth);
         let columns = Math.floor(this.container.clientWidth / maxColumnWidth);
-        console.log('columns', columns);
         this.setColumns(columns);
     }
 
@@ -40,7 +35,7 @@ class FlowControl extends UIControl {
             return;
         }
         this.columns = Math.min(value, this.maxColumns, this.children.length);
-        let gap = this.columns == 1 ? 0 : (6 / this.columns); //TODO: 6?
+        let gap = this.columns == 1 ? 0 : (6 / this.columns); //TODO: why 6?
         let percent = 100 / this.columns - gap
         this.container.style.gridTemplateColumns = 'repeat(' + this.columns + ', ' + percent + '%)';
     }

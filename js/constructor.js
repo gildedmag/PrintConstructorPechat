@@ -183,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "13.12.2020 21:58";
+    Version.version = "14.12.2020 18:52";
     return Version;
 }());
 var Trigger = (function () {
@@ -4648,8 +4648,8 @@ var pechat;
                 console.log(e.message);
             }
         };
-        PrintUtils.url = 'https://pechat.photo/index.php?route=product/category/category&category_id=';
-        PrintUtils.modelUrl = 'https://pechat.photo/catalog/view/javascript/constructor/v2/models/';
+        PrintUtils.url = constructorConfiguration.domain + 'index.php?route=product/category/category&category_id=';
+        PrintUtils.modelUrl = constructorConfiguration.domain + 'catalog/view/javascript/constructor/v2/models/';
         return PrintUtils;
     }());
     pechat.PrintUtils = PrintUtils;
@@ -4667,7 +4667,7 @@ var ModelsPanel = (function (_super) {
     };
     ModelsPanel.prototype.update = function () {
     };
-    ModelsPanel.prefix = "https://pechat.photo/image/cache/";
+    ModelsPanel.prefix = constructorConfiguration.domain + "image/cache/";
     return ModelsPanel;
 }(TriggeredUIControl));
 var ConstructorUI = (function (_super) {
@@ -4771,10 +4771,10 @@ var ConstructorUI = (function (_super) {
                         alert(e.message);
                     }
                 }
-                else if (constructorConfiguration && constructorConfiguration.sharedState) {
+                else if (!_this.order.model && c.preview.modelName == model.file_main) {
+                    _this.loadModelOptions(model, options);
                     c.setMode(Mode.Mode3D);
                     ConstructorUI.instance.sidePanel.optionsPanel.show();
-                    ConstructorUI.instance.order.changed();
                 }
                 var url = model.thumb;
                 var button = new ToggleButton(function () {
@@ -4809,7 +4809,6 @@ var ConstructorUI = (function (_super) {
     };
     ConstructorUI.prototype.loadModelOptions = function (model, options) {
         var _this = this;
-        console.log(model);
         this.sidePanel.optionsPanel.clear();
         if (!constructorConfiguration || !constructorConfiguration.sharedState || Constructor.instance.sides.length != model.printareas.length || Constructor.instance.sides[0].name != model.printareas[0].name) {
             if (Constructor.instance.sides.length != model.printareas.length) {
@@ -4899,6 +4898,53 @@ var Container = (function (_super) {
     };
     return Container;
 }(UIControl));
+var Row = (function (_super) {
+    __extends(Row, _super);
+    function Row() {
+        var controls = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            controls[_i] = arguments[_i];
+        }
+        var _this = _super.call(this) || this;
+        _this.append.apply(_this, controls);
+        return _this;
+    }
+    Row.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " row";
+    };
+    return Row;
+}(UIControl));
+var CopyToClipboardPopover = (function (_super) {
+    __extends(CopyToClipboardPopover, _super);
+    function CopyToClipboardPopover(title, value) {
+        var _this = _super.call(this, null, null, true, new Row(new Spacer(), new LabelControl(title).addClass("title"), new Spacer()), new Row(new Spacer(), new Button(function () { return _this.copy(); }, null, value).addClass('copy-text'), new Spacer()), CopyToClipboardPopover.message, new Row(new Spacer(), new Button(function () { return _this.hide(); }, null, "OK"), new Spacer())) || this;
+        _this.permanent = false;
+        document.body.appendChild(_this.container);
+        _this.copy();
+        return _this;
+    }
+    CopyToClipboardPopover.prototype.copy = function () {
+        var node = document.querySelector('.copy-text *');
+        var range = document.createRange();
+        range.selectNode(node);
+        window.getSelection().addRange(range);
+        var successful = false;
+        try {
+            successful = document.execCommand('copy');
+            var msg = successful ? 'successful' : 'unsuccessful';
+            console.log('Copy email command was ' + msg);
+        }
+        catch (err) {
+            console.log('Oops, unable to copy');
+        }
+        CopyToClipboardPopover.message.clear();
+        if (successful) {
+            CopyToClipboardPopover.message.append(new Spacer(), new LabelControl('The link is copied to clipboard!'), new Spacer());
+        }
+    };
+    CopyToClipboardPopover.message = new Row();
+    return CopyToClipboardPopover;
+}(Popover));
 var Divider = (function (_super) {
     __extends(Divider, _super);
     function Divider(vertical) {
@@ -4972,7 +5018,6 @@ var FlowControl = (function (_super) {
     };
     FlowControl.prototype.showed = function () {
         if (this.autoFlow) {
-            console.log('this.autoFlow', this.autoFlow);
             this.reflow();
         }
     };
@@ -4990,17 +5035,13 @@ var FlowControl = (function (_super) {
                         return [4, this.children[i].calculateBoundingClientRect()];
                     case 2:
                         rect = _a.sent();
-                        console.log('rect.width', rect.width);
                         maxColumnWidth = Math.max(maxColumnWidth, rect.width);
                         _a.label = 3;
                     case 3:
                         i++;
                         return [3, 1];
                     case 4:
-                        console.log('width', this.container.clientWidth);
-                        console.log('maxColumnWidth', maxColumnWidth);
                         columns = Math.floor(this.container.clientWidth / maxColumnWidth);
-                        console.log('columns', columns);
                         this.setColumns(columns);
                         return [2];
                 }
@@ -5075,22 +5116,6 @@ var LabelControl = (function (_super) {
         this.container.innerHTML = this.translate(value);
     };
     return LabelControl;
-}(UIControl));
-var Row = (function (_super) {
-    __extends(Row, _super);
-    function Row() {
-        var controls = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            controls[_i] = arguments[_i];
-        }
-        var _this = _super.call(this) || this;
-        _this.append.apply(_this, controls);
-        return _this;
-    }
-    Row.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " row";
-    };
-    return Row;
 }(UIControl));
 var Spacer = (function (_super) {
     __extends(Spacer, _super);
@@ -6827,35 +6852,4 @@ var TopBar = (function (_super) {
     };
     return TopBar;
 }(TriggeredToolBar));
-var CopyToClipboardPopover = (function (_super) {
-    __extends(CopyToClipboardPopover, _super);
-    function CopyToClipboardPopover(title, value) {
-        var _this = _super.call(this, null, null, true, new Row(new Spacer(), new LabelControl(title).addClass("title"), new Spacer()), new Row(new Spacer(), new Button(function () { return _this.copy(); }, null, value).addClass('copy-text'), new Spacer()), CopyToClipboardPopover.message, new Row(new Spacer(), new Button(function () { return _this.hide(); }, null, "OK"), new Spacer())) || this;
-        _this.permanent = false;
-        document.body.appendChild(_this.container);
-        _this.copy();
-        return _this;
-    }
-    CopyToClipboardPopover.prototype.copy = function () {
-        var node = document.querySelector('.copy-text *');
-        var range = document.createRange();
-        range.selectNode(node);
-        window.getSelection().addRange(range);
-        var successful = false;
-        try {
-            successful = document.execCommand('copy');
-            var msg = successful ? 'successful' : 'unsuccessful';
-            console.log('Copy email command was ' + msg);
-        }
-        catch (err) {
-            console.log('Oops, unable to copy');
-        }
-        CopyToClipboardPopover.message.clear();
-        if (successful) {
-            CopyToClipboardPopover.message.append(new Spacer(), new LabelControl('The link is copied to clipboard!'), new Spacer());
-        }
-    };
-    CopyToClipboardPopover.message = new Row();
-    return CopyToClipboardPopover;
-}(Popover));
 //# sourceMappingURL=constructor.js.map

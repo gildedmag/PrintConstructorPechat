@@ -2,8 +2,8 @@ namespace pechat {
 
     export class PrintUtils {
 
-        private static url = 'https://pechat.photo/index.php?route=product/category/category&category_id='
-        private static modelUrl = 'https://pechat.photo/catalog/view/javascript/constructor/v2/models/'
+        private static url = constructorConfiguration.domain + 'index.php?route=product/category/category&category_id='
+        private static modelUrl = constructorConfiguration.domain + 'catalog/view/javascript/constructor/v2/models/'
 
 
         static getCategoryOptions(categoryId: number, callback: (options: Options) => any) {

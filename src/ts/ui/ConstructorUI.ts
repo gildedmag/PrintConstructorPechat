@@ -180,10 +180,11 @@ class ConstructorUI extends UIControl {
                     } catch (e) {
                         alert(e.message);
                     }
-                } else if (constructorConfiguration && constructorConfiguration.sharedState) {
+                }
+                else if (!this.order.model && c.preview.modelName == model.file_main){
+                    this.loadModelOptions(model, options);
                     c.setMode(Mode.Mode3D);
                     ConstructorUI.instance.sidePanel.optionsPanel.show();
-                    ConstructorUI.instance.order.changed();
                 }
 
                 let url = model.thumb;
@@ -230,7 +231,6 @@ class ConstructorUI extends UIControl {
     }
 
     loadModelOptions(model: ConstructorModel, options: Options) {
-        console.log(model);
         this.sidePanel.optionsPanel.clear();
 
         if (!constructorConfiguration || !constructorConfiguration.sharedState || Constructor.instance.sides.length != model.printareas.length || Constructor.instance.sides[0].name != model.printareas[0].name) {

@@ -6,7 +6,7 @@ import PechatUtils = pechat.PrintUtils;
 class ModelsPanel extends TriggeredUIControl<Constructor> {
 
     private options: Options;
-    private static prefix = "https://pechat.photo/image/cache/";
+    private static prefix = constructorConfiguration.domain + "image/cache/";
 
     getClassName(): string {
         return super.getClassName() + " models-panel vertical";
