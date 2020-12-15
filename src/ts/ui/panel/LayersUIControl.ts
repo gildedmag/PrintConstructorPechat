@@ -46,7 +46,6 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
         }
 
         this.clear();
-        console.log("CLEARED");
         this.trigger.getLayers().forEach(layer => {
             this.append(new LayerUIControl(layer, this));
         });
@@ -58,7 +57,7 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
         ConstructorUI.instance.order.changed();
     }
 
-    // fixOrder() {
+    // fixOrder() { //too buggy but can save resource if implemented with care!
     //     console.log("FIX ORDER!!!");
     //     for (let from = 0; from < this.children.length; from++) {
     //         let layer = this.children[from] as LayerUIControl;

@@ -82,7 +82,16 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                 )
             )
         );
-        this.addButton("Text", ElementType.TEXT, Icon.FONT);
+        //this.addButton("Text", ElementType.TEXT, Icon.FONT);
+        this.append(
+            new Row(
+                new Button(
+                    () => this.c.addText(LocalizedStrings.translate('Text')),
+                    Icon.FONT,
+                    'Add Text'
+                ),
+            )
+        );
         this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);
         this.addButton("Rectangle", ElementType.RECTANGLE, Icon.SQUARE);
         this.addButton("Triangle", ElementType.TRIANGLE, Icon.CARET_UP);

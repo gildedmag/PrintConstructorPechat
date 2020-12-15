@@ -4,7 +4,6 @@ class Side2DStateObjects implements Equalable<Side2DStateObjects> {
     objects: ObjectOptions[];
 
     constructor(side?: Side2D) {
-        console.log('side:', side);
         this.objects = [];
         if (side) {
             for (let element of side.elements) {

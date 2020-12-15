@@ -147,7 +147,7 @@ class ConstructorUI extends UIControl {
             c.preview.setSceneBackgroundColor(constructorConfiguration.previewBackground);
         }
 
-        PechatUtils.getCategoryOptions(categoryId, options => {
+        this.getCategoryOptions(categoryId, options => {
             if (!options || !options.constructor_models) {
                 console.error('error loading category options for category #' + categoryId)
                 return;
@@ -171,7 +171,7 @@ class ConstructorUI extends UIControl {
                             () => {
                                 if (constructorConfiguration && constructorConfiguration.sharedState) {
                                     c.setMode(Mode.Mode3D);
-                                    ConstructorUI.instance.sidePanel.optionsPanel.show();
+                                    this.show3D();
                                 }
                             },
                             error => alert(error)
@@ -180,11 +180,9 @@ class ConstructorUI extends UIControl {
                     } catch (e) {
                         alert(e.message);
                     }
-                }
-                else if (!this.order.model && c.preview.modelName == model.file_main){
+                } else if (!this.order.model && c.preview.modelName == model.file_main) {
                     this.loadModelOptions(model, options);
-                    c.setMode(Mode.Mode3D);
-                    ConstructorUI.instance.sidePanel.optionsPanel.show();
+                    this.show3D();
                 }
 
                 let url = model.thumb;
@@ -192,14 +190,14 @@ class ConstructorUI extends UIControl {
                     () => {
                         c.loadModel(model.file_main, () => {
                             if (constructorConfiguration && constructorConfiguration.sharedState) {
-                                c.setMode(Mode.Mode3D);
+                                this.show3D();
                             }
                         });
                         this.loadModelOptions(model, options);
                         Constructor.instance.changed();
                     },
                     () => {
-                        if (!ConstructorUI.instance.order.model){
+                        if (!ConstructorUI.instance.order.model) {
                             return false;
                         }
                         return ConstructorUI.instance.order.model.constructor_model_id == model.constructor_model_id;
@@ -208,11 +206,29 @@ class ConstructorUI extends UIControl {
                 ).append(new ImageControl(url).addClass('zoom'))
                     .tooltip(model.description, true);
                 modelsContainer.append(button);
-                if (active){
+                if (active) {
                     button.addClass('active');
                 }
             });
         })
+    }
+
+    show3D() {
+        Constructor.instance.setMode(Mode.Mode3D);
+        if (!this.order.model || !this.order.model.constructor_model_option || !this.order.model.constructor_model_option.length) {
+            ConstructorUI.instance.sidePanel.modelsPanel.show();
+        } else {
+            ConstructorUI.instance.sidePanel.optionsPanel.show();
+        }
+    }
+
+    show2D() {
+        Constructor.instance.setMode(Mode.Mode2D);
+        if (this.c.getActiveSide().isEmpty()) {
+            ConstructorUI.instance.sidePanel.newElementPanel.show();
+        } else {
+            ConstructorUI.instance.sidePanel.layersPanel.show();
+        }
     }
 
     createSides(printareas: pechat.Printarea[]) {
@@ -304,6 +320,21 @@ class ConstructorUI extends UIControl {
                 Popover.instance.hide();
             }
         }, false);
+    }
+
+
+    getCategoryOptions(categoryId: number, callback: (options: Options) => any) {
+        let url = this.domain + 'index.php?route=product/category/category&category_id=' + categoryId;
+        let xhr = new XMLHttpRequest();
+
+        xhr.open('GET', url);
+        xhr.setRequestHeader('x-requested-with', 'XMLHttpRequest')
+        xhr.onreadystatechange = (res) => {
+            if (xhr.readyState === 4 && callback) {
+                callback(JSON.parse(xhr.response) as Options);
+            }
+        };
+        xhr.send();
     }
 
 

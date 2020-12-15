@@ -11,7 +11,7 @@ class LocalizedStrings {
         'Circle': 'Добавить круг',
         'Rectangle': 'Добавить квадрат',
         'Triangle': 'Добавить треугольник',
-        'Text': 'Добавить текст',
+        'Text': 'Текст',
         'Image': 'Загрузить фото',
         'Alignment': 'Выравнивание',
         'Font': 'Стиль шрифта',
@@ -66,6 +66,9 @@ class LocalizedStrings {
         'The link is copied to clipboard!': 'Ссылка скопирована в буфер обмена!',
         'Copy to Clipboard': 'Скопировать в буфер обмена',
         '$': '₽',
+        '3D-Preview': 'Просмотр в 3D',
+        'Exit 3D-Preview': 'Выйти из просмотра',
+        'Add Text': 'Добавить текст',
     }
 
     static translate(key: string): string {

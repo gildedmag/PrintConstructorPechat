@@ -366,6 +366,14 @@ class Constructor extends View<Constructor> {
         return element;
     }
 
+    addText(value?: string){
+        let element = this.addElement(ElementType.TEXT);
+        if (value){
+            element.setText(value);
+        }
+        return element;
+    }
+
     addImage(src: string, callback?: (Element2D) => void): Element2D {
         Utils.logMethodName();
         let element = this.getActiveSide().addElement(ElementType.IMAGE);

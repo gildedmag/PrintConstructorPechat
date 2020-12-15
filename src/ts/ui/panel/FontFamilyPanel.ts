@@ -45,6 +45,13 @@ class FontFamilyPanel extends TriggeredUIControl<Constructor> {
                     fontFamily = font.value[0].family;
                 }
                 if (!list.includes(fontFamily) && !fontFamily.includes("Awesome")) {
+                    if (constructorConfiguration
+                        && constructorConfiguration.fonts
+                        && constructorConfiguration.fonts.length
+                        && !constructorConfiguration.fonts.includes(fontFamily)
+                    ){
+                        continue;
+                    }
                     list.push(fontFamily);
                 }
             } else {

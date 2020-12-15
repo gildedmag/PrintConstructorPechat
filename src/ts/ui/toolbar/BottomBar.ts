@@ -54,8 +54,34 @@ class BottomBar extends ToolBar {
                 Icon.DICE_D6,
                 null,
                 null,
-                Utils.isCompact() ? null : "3D"
-            ).tooltip('Toggle 3D Mode'),
+                null
+            ).addClass('mobile'),
+
+            new Button(
+                () => {
+                    ConstructorUI.instance.show3D();
+                    setTimeout(() => window.dispatchEvent(new Event('resize')), 100)
+                },
+                Icon.DICE_D6,
+                Utils.isCompact() ? null : "3D-Preview",
+            ).showWhen(Constructor.instance, () => this.c.is2D())
+                .addClass('desktop')
+                .addClass('preview-3d'),
+
+            new Button(
+                () => {
+                    ConstructorUI.instance.show2D();
+                    setTimeout(() => window.dispatchEvent(new Event('resize')), 100)
+                },
+                Icon.DICE_D6,
+                Utils.isCompact() ? null : "Exit 3D-Preview"
+            ).showWhen(Constructor.instance, () => this.c.is3D())
+                .addClass('desktop')
+                .addClass('preview-3d')
+                .addClass('preview-3d-exit'),
+
+
+            //.tooltip('Toggle 3D Mode'),
 
             new Spacer(),
 

@@ -319,6 +319,19 @@ body {
     user-select: all;
 }
 
+.preview-3d {
+    background: #ffebc0;
+    border-radius: 4px;
+}
+
+.preview-3d-exit {
+    background: #f7b82c;
+}
+
+.preview-3d .label {
+    color: black;
+}
+
 .control.popover .button {
     font-weight: bold;
     font-size: 18px;

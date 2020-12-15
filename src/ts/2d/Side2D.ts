@@ -341,7 +341,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
             this.canvas.requestRenderAll();
             Constructor.instance.changed();
             this.history.unlock();//setTimeout(() => this.history.unlock(), 100);
-            Constructor.instance.spinner.hide();
+            //Constructor.instance.spinner.hide();
             return;
         }
         let objectOptions = objectsBuffer.shift();
@@ -389,7 +389,6 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     saveState() {
         Utils.logMethodName();
         let state = new Side2DStateObjects(this);
-        console.log(state.objects[0]);
         if (!state.objects[0]){//} && this.elements.length > 0){
             return;
         }
@@ -404,9 +403,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
             return;
         }
         let state = Side2DStateObjects.parse(this.history.back());
-        console.log(state.objects[0]);
         this.history.lock();
-        Constructor.instance.spinner.show();
         if (state) this.setState(state);
     }
 
@@ -415,9 +412,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
             return;
         }
         let state = Side2DStateObjects.parse(this.history.forward());
-        console.log(state.objects[0]);
         this.history.lock();
-        Constructor.instance.spinner.show();
         if (state) this.setState(state);
     }
 
