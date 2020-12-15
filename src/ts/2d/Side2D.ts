@@ -389,9 +389,9 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     saveState() {
         Utils.logMethodName();
         let state = new Side2DStateObjects(this);
-        if (!state.objects[0]){//} && this.elements.length > 0){
-            return;
-        }
+        // if (!state.objects[0]){//} && this.elements.length > 0){
+        //     return;
+        // }
         this.history.add(JSON.stringify(state));
         this.saveToLocalStorage(state);
         this.changed();
@@ -417,8 +417,8 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
     }
 
     exportImage(maxSize?: number, format?: ImageType): string {
-        let w = this.canvas.getWidth() / this.getZoom();
-        let h = this.canvas.getHeight() / this.getZoom();
+        let w = this.canvas.getWidth();// / this.getZoom();
+        let h = this.canvas.getHeight();// / this.getZoom();
         let multiplier = maxSize ? maxSize / Math.max(w, h) : 1;
         if (!format) format = ImageType.PNG;
         if (format == ImageType.JPG) {

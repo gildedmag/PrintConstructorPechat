@@ -180,7 +180,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "15.12.2020 16:32";
+    Version.version = "15.12.2020 18:32";
     return Version;
 }());
 var Trigger = (function () {
@@ -4038,9 +4038,6 @@ var Side2D = (function (_super) {
     Side2D.prototype.saveState = function () {
         Utils.logMethodName();
         var state = new Side2DStateObjects(this);
-        if (!state.objects[0]) {
-            return;
-        }
         this.history.add(JSON.stringify(state));
         this.saveToLocalStorage(state);
         this.changed();
@@ -4065,8 +4062,8 @@ var Side2D = (function (_super) {
             this.setState(state);
     };
     Side2D.prototype.exportImage = function (maxSize, format) {
-        var w = this.canvas.getWidth() / this.getZoom();
-        var h = this.canvas.getHeight() / this.getZoom();
+        var w = this.canvas.getWidth();
+        var h = this.canvas.getHeight();
         var multiplier = maxSize ? maxSize / Math.max(w, h) : 1;
         if (!format)
             format = ImageType.PNG;
@@ -5734,6 +5731,7 @@ var LayersPanelUIControl = (function (_super) {
         return _super.prototype.getClassName.call(this) + " layers-panel";
     };
     LayersPanelUIControl.prototype.update = function () {
+        var _this = this;
         if (this.children.length != this.c.sides.length) {
             this.clear();
             for (var i = 0; i < this.trigger.sides.length; i++) {
@@ -5741,6 +5739,7 @@ var LayersPanelUIControl = (function (_super) {
                 this.append(new LayersUIControl(side));
             }
         }
+        this.append(new Row(new ConditionalButton(function () { return Constructor.instance.getActiveSide().clear(); }, function () { return !Constructor.instance.getActiveSide() || !_this.c.getActiveSide().isEmpty(); }, null, "Clear Side")));
     };
     return LayersPanelUIControl;
 }(TriggeredUIControl));

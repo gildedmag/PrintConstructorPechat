@@ -200,7 +200,6 @@ body {
 .control.sidepanel {
     background: #444;
     grid-area: sidepanel;
-    overflow-y: auto;
     overflow-x: hidden;
     touch-action: manipulation;
     flex-flow: column;
@@ -330,6 +329,7 @@ body {
 
 .preview-3d .label {
     color: black;
+    margin-right: 8px;
 }
 
 .control.popover .button {
@@ -650,6 +650,10 @@ input[type="color"] {
 
     .models-panel .control.button {
         overflow: hidden;
+    }
+
+    .control.sidepanel {
+        overflow-y: scroll !important;
     }
 
     img.zoom {

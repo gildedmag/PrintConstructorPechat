@@ -18,6 +18,16 @@ class LayersPanelUIControl extends TriggeredUIControl<Constructor> {
                 this.append(new LayersUIControl(side));
             }
         }
+        this.append(
+            new Row(
+                new ConditionalButton(
+                    () => Constructor.instance.getActiveSide().clear(),
+                    () => !Constructor.instance.getActiveSide() || !this.c.getActiveSide().isEmpty(),
+                    null,
+                    "Clear Side"
+                )
+            )
+        )
     }
 
     // updateVisibility() {
