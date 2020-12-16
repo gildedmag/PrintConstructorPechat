@@ -179,7 +179,8 @@ class Order extends Trigger<Order> {
     }
 
     updateSamples() {
-        fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/get_add_img', {
+        //fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/get_add_img', {
+        fetch('index.php?route=constructor/constructor/get_add_img', {
             method: 'POST',
             headers: new Headers({'content-type': 'application/x-www-form-urlencoded'}),
             body: Utils.toUrlParameters({
@@ -251,7 +252,8 @@ class Order extends Trigger<Order> {
         let post = 'POST';
 
         Constructor.instance.spinner.show();
-        fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/add_product_by_constructor', {
+        //fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/add_product_by_constructor', {
+        fetch('index.php?route=constructor/constructor/add_product_by_constructor', {
             method: post,
             headers: headers,
             body: body,
@@ -259,7 +261,8 @@ class Order extends Trigger<Order> {
             response.json().then(productId => {
                 console.log("productId", productId);
 
-                fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/rendering', {
+                //fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/rendering', {
+                fetch('index.php?route=constructor/constructor/rendering', {
                     method: post,
                     headers: headers,
                     body: Utils.toUrlParameters({
@@ -267,7 +270,8 @@ class Order extends Trigger<Order> {
                     })
                 });
 
-                fetch(ConstructorUI.instance.domain + 'index.php?route=checkout/cart/add', {
+                //fetch(ConstructorUI.instance.domain + 'index.php?route=checkout/cart/add', {
+                fetch('index.php?route=checkout/cart/add', {
                     method: post,
                     headers: headers,
                     body: Utils.toUrlParameters({
@@ -307,7 +311,8 @@ class Order extends Trigger<Order> {
         }
         let headers = new Headers({'content-type': 'application/x-www-form-urlencoded'});
         let post = 'POST';
-        fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/get_url_post', {
+        //fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/get_url_post', {
+        fetch('index.php?route=constructor/constructor/get_url_post', {
             method: post,
             headers: headers,
             body: Utils.toUrlParameters({
@@ -323,7 +328,8 @@ class Order extends Trigger<Order> {
             Constructor.instance.spinner.hide();
             response.json().then(link => {
                 console.log(link);
-                let url = ConstructorUI.instance.domain + 'create_constructor?url=' + link;
+                //let url = ConstructorUI.instance.domain + 'create_constructor?url=' + link;
+                let url = 'create_constructor?url=' + link;
                 new CopyToClipboardPopover('Share as Link', url).show();
                 // if (Utils.copyToClipboard(url)){
                 //     new Popover('Share as Link', 'The link is copied to clipboard!');
@@ -360,7 +366,8 @@ class Order extends Trigger<Order> {
             priceSide: this.getSidePrice(),
         });
 
-        fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/calcPriceAjax', {
+        //fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/calcPriceAjax', {
+        fetch('index.php?route=constructor/constructor/calcPriceAjax', {
             method: 'POST',
             headers: new Headers({'content-type': 'application/x-www-form-urlencoded'}),
             body: body

@@ -324,7 +324,8 @@ class ConstructorUI extends UIControl {
 
 
     getCategoryOptions(categoryId: number, callback: (options: Options) => any) {
-        let url = this.domain + 'index.php?route=product/category/category&category_id=' + categoryId;
+        let url = 'index.php?route=product/category/category&category_id=' + categoryId;
+        //let url = this.domain + 'index.php?route=product/category/category&category_id=' + categoryId;
         let xhr = new XMLHttpRequest();
 
         xhr.open('GET', url);

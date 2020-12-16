@@ -11,7 +11,8 @@ class ModelsPanel extends TriggeredUIControl<Constructor> {
         this.append(
             new Row(
                 new Button(
-                    () => window.location = ConstructorUI.instance.domain + '3Dconstructor',
+                    //() => window.location = ConstructorUI.instance.domain + '3Dconstructor',
+                    () => window.location = '3Dconstructor',
                     Icon.BACKWARD,
                     'Choose other product'
                 ),

@@ -266,7 +266,8 @@ class LayerUIControl extends TriggeredUIControl<Element2D> {
             defs =
                 '<defs>' +
                 //'   <style type="text/css">@import url(\'https://fonts.googleapis.com/css?family=' + fontFamily + '\');</style>' +
-                '   <style type="text/css">@import url(\'' + ConstructorUI.instance.domain + '/catalog/view/theme/default/stylesheet/photobook/loaded_fonts.css\');</style>' +
+               // '   <style type="text/css">@import url(\'' + ConstructorUI.instance.domain + '/catalog/view/theme/default/stylesheet/photobook/loaded_fonts.css\');</style>' +
+                '   <style type="text/css">@import url(\'' + '/catalog/view/theme/default/stylesheet/photobook/loaded_fonts.css\');</style>' +
                 '</defs>';
         }
 

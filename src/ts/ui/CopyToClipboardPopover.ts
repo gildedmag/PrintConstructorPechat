@@ -32,11 +32,16 @@ class CopyToClipboardPopover extends Popover {
         );
         this.permanent = false;
         document.body.appendChild(this.container);
-        this.copy();
+        //this.copy();
+    }
+
+    show() {
+        CopyToClipboardPopover.message.clear();
+        super.show();
     }
 
     copy() {
-        let node = document.querySelector('.copy-text *');
+        let node = document.querySelector('.copy-text .label');
         let range = document.createRange();
         range.selectNode(node);
         window.getSelection().addRange(range);

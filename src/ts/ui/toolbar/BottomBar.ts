@@ -39,15 +39,10 @@ class BottomBar extends ToolBar {
             new ToggleButton(
                 () => {
                     if (this.c.is2D()) {
-                        ConstructorUI.instance.sidePanel.optionsPanel.show();
+                        ConstructorUI.instance.show3D();
                     } else {
-                        if (this.c.getActiveSide().isEmpty()) {
-                            ConstructorUI.instance.sidePanel.newElementPanel.show();
-                        } else {
-                            ConstructorUI.instance.sidePanel.layersPanel.show();
-                        }
+                        ConstructorUI.instance.show2D();
                     }
-                    this.c.toggleMode();
                     setTimeout(() => window.dispatchEvent(new Event('resize')), 100)
                 },
                 () => this.c.is3D(),

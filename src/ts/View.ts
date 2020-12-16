@@ -11,14 +11,16 @@ abstract class View<T> extends Trigger<T> {
         this.container = container;
     }
 
-    show(): void {
+    show() {
         this.getElement().style.display = null;
         this.visibilityChanged();
+        return this;
     }
 
-    hide(): void {
+    hide() {
         this.getElement().style.display = Constants.NONE;
         this.visibilityChanged();
+        return this;
     }
 
     setVisible(value: boolean): void {

@@ -39,7 +39,8 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                         data.append(key, value);
                     })
 
-                    fetch(ConstructorUI.instance.domain + 'index.php?route=tool/upload', {
+                    //fetch(ConstructorUI.instance.domain + 'index.php?route=tool/upload', {
+                    fetch('index.php?route=tool/upload', {
                         method: 'POST',
                         body: formData,
                         headers: {
