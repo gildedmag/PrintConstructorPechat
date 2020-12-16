@@ -69,6 +69,10 @@ class LocalizedStrings {
         '3D-Preview': 'Просмотр в 3D',
         'Exit 3D-Preview': 'Выйти из просмотра',
         'Add Text': 'Добавить текст',
+        'Error': 'Ошибка',
+        'Please select one file of Jpeg or Png type!': 'Пожалуйста, выберите один файл!',
+        'Please select Jpeg or Png image!': 'Пожалуйста, выберите файл изображения в формате Jpeg или Png!',
+
     }
 
     static translate(key: string): string {

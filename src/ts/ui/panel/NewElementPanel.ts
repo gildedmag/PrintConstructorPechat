@@ -16,7 +16,7 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
         text.value = '1';
         input.type = "file";
         input.name = "file";
-        input.accept = "image/*";
+        input.accept = "image/jpeg, image/png";
         input.size = 24;
         input.hidden = true;
         form.append(input);
@@ -26,6 +26,15 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
             let target = e.target || window.event.srcElement;
             let files = target.files;
             if (FileReader && files && files.length) {
+                if (files.length > 1){
+                    new Popover("Error", "Please select one file of Jpeg or Png type!")
+                    return;
+                } else {
+                    if (!files[0].name.endsWith('.jpg') && !files[0].name.endsWith('.jpeg') && !files[0].name.endsWith('.png')){
+                        new Popover("Error", "Please select Jpeg or Png image!")
+                        return;
+                    }
+                }
                 var reader = new FileReader();
                 reader.onload = function () {
                     //Trigger.preventUpdate = true;
