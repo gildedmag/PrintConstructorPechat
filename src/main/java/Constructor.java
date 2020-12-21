@@ -35,6 +35,7 @@ public class Constructor {
         this.driver = driver;
         this.driver.get(RENDERER_PATH);
         driver.manage().timeouts().setScriptTimeout(5, TimeUnit.SECONDS);
+        driver.executeScript("Constructor.settings.localStorage.enabled=false;");
         updateVersion();
     }
 
@@ -47,6 +48,8 @@ public class Constructor {
                     .replaceFirst($, String.valueOf(width))
                     .replaceFirst($, String.valueOf(height));
             driver.executeScript(script);
+        } else {
+            driver.executeScript("c.preview.updateSideMaterials();");
         }
     }
 
@@ -70,11 +73,11 @@ public class Constructor {
 
     public void setState(final String json, final String modelName) {
         String state = json;
-        for (String domain : Settings.DOMAINS) {
-            if (!isEmpty(domain)) {
-                state = json.replaceAll(domain, "file://" + Settings.WEB_DIR);
-            }
-        }
+//        for (String domain : Settings.DOMAINS) {
+//            if (!isEmpty(domain)) {
+//                state = json.replaceAll(domain, "file://" + Settings.WEB_DIR);
+//            }
+//        }
 
         String script = setStateScript.replaceFirst($, state);
         driver.executeAsyncScript(script);

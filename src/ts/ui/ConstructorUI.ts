@@ -44,7 +44,11 @@ class ConstructorUI extends UIControl {
         super();
         ConstructorUI.instance = this;
 
-        this.currencySymbol = (constructorConfiguration && constructorConfiguration.currencySymbol) ? constructorConfiguration.currencySymbol : this.translate('$');
+        try {
+            this.currencySymbol = (constructorConfiguration && constructorConfiguration.currencySymbol) ? constructorConfiguration.currencySymbol : this.translate('$');
+        } catch (e) {
+            this.currencySymbol = this.translate('$');
+        }
 
         try {
             this.domain = constructorConfiguration.domain;
@@ -224,7 +228,7 @@ class ConstructorUI extends UIControl {
 
     show2D() {
         Constructor.instance.setMode(Mode.Mode2D);
-        if (this.c.getActiveSide().isEmpty()) {
+        if (!this.c.getActiveSide() || this.c.getActiveSide().isEmpty()) {
             ConstructorUI.instance.sidePanel.newElementPanel.show();
         } else {
             ConstructorUI.instance.sidePanel.layersPanel.show();

@@ -18,6 +18,9 @@ public class Utils {
     private static Map<String, Long> times = new HashMap<>();
     private static final Pattern MODEL_PATTERN = Pattern.compile("\"model\"\\s?:\\s?\"([^\'^\"]{1,50})\"");
 
+    public static String getJatPath() {
+        return new File(".").getAbsolutePath();
+    }
 
     public static String readResource(String path) {
         try {

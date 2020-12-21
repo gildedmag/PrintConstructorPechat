@@ -51,6 +51,7 @@ class ObjectOptions implements Equalable<ObjectOptions> {
                     this[property] = object[property];
                     if (property === "text") {
                         this[property] = this[property].split("\n").join("<br>");
+                        this[property] = escape(this[property]);
                     }
                 }
             }
@@ -69,8 +70,19 @@ class ObjectOptions implements Equalable<ObjectOptions> {
         let object = new ObjectOptions();
         for (let property of ObjectOptions.nativeOptions) {
             if (value[property]) object[property] = value[property];
+            if (property == 'fontFamily') {
+                setTimeout(() => ObjectOptions.renderFont(object), 100);
+                setTimeout(() => ObjectOptions.renderFont(object), 500);
+            } else if (property == 'text') {
+                object[property] = unescape(value[property]);
+            }
         }
         return object;
+    }
+
+    static renderFont(object: ObjectOptions) {
+        fabric.util.clearFabricFontCache();
+        Constructor.instance.getActiveSide().canvas.renderAll();
     }
 
     toObject(): {} {

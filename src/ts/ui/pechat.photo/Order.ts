@@ -228,6 +228,7 @@ class Order extends Trigger<Order> {
         }
 
         let body = Utils.toUrlParameters({
+            //json: encodeURIComponent(stateJson),
             json: stateJson,
             //animation: stateJson,
             price: this.getDiscountPricePerItem(),
@@ -316,7 +317,7 @@ class Order extends Trigger<Order> {
             method: post,
             headers: headers,
             body: Utils.toUrlParameters({
-                data_u: btoa(encodeURIComponent(Constructor.instance.getState())),
+                data_u: btoa(Constructor.instance.getState()),
                 category: this.model.category_id,
                 text_type: this.model.name,
                 quantity: this.quantity,

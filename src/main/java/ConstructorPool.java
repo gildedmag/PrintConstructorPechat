@@ -2,6 +2,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.logging.LogType;
 import org.openqa.selenium.logging.LoggingPreferences;
+import org.openqa.selenium.remote.CapabilityType;
 
 import java.util.logging.Level;
 
@@ -21,8 +22,8 @@ public class ConstructorPool {
         options.addArguments("--silent");
         //options.addArguments("--log-level=3");
         LoggingPreferences loggingPreferences = new LoggingPreferences();
-        loggingPreferences.enable(LogType.BROWSER, Level.OFF);
-        //options.setCapability(CapabilityType.LOGGING_PREFS, loggingPreferences);
+        loggingPreferences.enable(LogType.BROWSER, Level.ALL);
+        options.setCapability(CapabilityType.LOGGING_PREFS, loggingPreferences);
     }
 
     public void init() {
@@ -31,18 +32,22 @@ public class ConstructorPool {
             final String modelName = Settings.PRELOADED_MODELS.length == 0 ? null : Settings.PRELOADED_MODELS[j];
             final int index = i;
             new Thread(() -> {
-                ChromeDriver driver = new ChromeDriver(options);
-                driver.setLogLevel(Level.SEVERE);
-                Constructor constructor = new Constructor(driver);
-                if (modelName != null) constructor.loadModel(modelName);
-                constructor.setSize(Settings.DEFAULT_WIDTH, Settings.DEFAULT_HEIGHT);
-                constructor.setBackground(Settings.BACKGROUND);
-                constructor.setMode3D();
-                constructor.isBusy = false;
-                constructors[index] = constructor;
+                constructors[index] = create(modelName);
             }).start();
         }
         while (size() < Settings.POOL_SIZE) sleep(100);
+    }
+
+    public Constructor create(String modelName){
+        ChromeDriver driver = new ChromeDriver(options);
+        driver.setLogLevel(Level.SEVERE);
+        Constructor constructor = new Constructor(driver);
+        if (modelName != null) constructor.loadModel(modelName);
+        constructor.setSize(Settings.DEFAULT_WIDTH, Settings.DEFAULT_HEIGHT);
+        constructor.setBackground(Settings.BACKGROUND);
+        constructor.setMode3D();
+        constructor.isBusy = false;
+        return constructor;
     }
 
     public synchronized Constructor get() {

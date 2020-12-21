@@ -1,10 +1,12 @@
 import com.sun.net.httpserver.HttpServer;
+import org.openqa.selenium.chrome.ChromeDriver;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
 
 public class App {
 
@@ -30,7 +32,9 @@ public class App {
         quitEndpoint = new QuitEndpoint(this);
         executor.execute(this::listen);
         Utils.trace("init");
-        Utils.copyResource("renderer.html", Settings.CONSTRUCTOR_DIR + "/renderer.html");
+        //Utils.copyResource("renderer.html", Settings.CONSTRUCTOR_DIR + "/renderer.html");
+//        System.out.println(Utils.getJatPath() + "/renderer.html");
+//        Utils.copyResource("renderer.html",  "/" + Utils.getJatPath() + "/renderer.html");
         killChromeProcesses();
         constructorPool.init();
         Utils.trace("init");
