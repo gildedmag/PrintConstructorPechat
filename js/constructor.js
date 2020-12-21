@@ -180,7 +180,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "21.12.2020 06:36";
+    Version.version = "21.12.2020 10:03";
     return Version;
 }());
 var Trigger = (function () {
@@ -2625,7 +2625,7 @@ var Spinner = (function (_super) {
         _this.bar.style.animation = Spinner.animation;
         _this.bar.style.position = Constants.ABSOLUTE;
         var offset = Spinner.size / 2;
-        _this.bar.style.left = "50%";
+        _this.bar.style.left = "45%";
         _this.bar.style.top = "50%";
         _this.container.appendChild(_this.bar);
         _this.style = document.createElement(Constants.STYLE);
@@ -3201,7 +3201,6 @@ var Element2D = (function (_super) {
                         = this.object.lockMovementY
                             = locked;
         this.changed();
-        this.side.saveState();
     };
     Element2D.prototype.isLocked = function () {
         return this.object && this.object.lockScalingX;
@@ -3264,14 +3263,14 @@ var Element2D = (function (_super) {
         this.object.selectable = false;
         this.side.deselect();
         this.side.canvas.renderAll();
-        this.side.saveState();
+        this.changed();
     };
     Element2D.prototype.show = function () {
         this.object.selectable = true;
+        this.object.visible = true;
         this.side.deselect();
         this.side.canvas.renderAll();
-        this.object.visible = true;
-        this.side.saveState();
+        this.changed();
     };
     Element2D.prototype.toDataURL = function (size) {
         if (!size) {
@@ -4784,7 +4783,7 @@ var ConstructorUI = (function (_super) {
     };
     ConstructorUI.prototype.show2D = function () {
         Constructor.instance.setMode(Mode.Mode2D);
-        if (!this.c.getActiveSide() || this.c.getActiveSide().isEmpty()) {
+        if (!Constructor.instance.getActiveSide() || Constructor.instance.getActiveSide().isEmpty()) {
             ConstructorUI.instance.sidePanel.newElementPanel.show();
         }
         else {
@@ -5301,6 +5300,7 @@ var ToggleButton = (function (_super) {
                 action();
             }
         };
+        _this.update();
         return _this;
     }
     ToggleButton.prototype.getClassName = function () {
@@ -5779,15 +5779,15 @@ var LayersUIControl = (function (_super) {
         return _super.prototype.getClassName.call(this) + " layers vertical";
     };
     LayersUIControl.prototype.update = function () {
-        var layerControls = this.getLayerControls();
-        if (this.trigger.getLayers().length != layerControls.length) {
+        console.log('LayersUIControl#update');
+        if (this.trigger.getLayers().length != (this.children.length - 1)) {
             this.repopulate();
             return;
         }
         for (var from = 0; from < layerControls.length; from++) {
             var layer = layerControls[from];
             var element = this.trigger.getLayers()[from];
-            if (layer.trigger != element) {
+            if (layer.trigger.serialize() != element.serialize()) {
                 this.repopulate();
                 return;
             }
@@ -5803,8 +5803,12 @@ var LayersUIControl = (function (_super) {
         }
         return layerControls;
     };
+    LayersUIControl.prototype.clear = function () {
+        this.getElement().innerHTML = "";
+    };
     LayersUIControl.prototype.repopulate = function () {
         var _this = this;
+        console.log('repopulate');
         var scroll;
         try {
             scroll = this.container.parentElement.parentElement.scrollTop;

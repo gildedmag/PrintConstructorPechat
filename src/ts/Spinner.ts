@@ -23,7 +23,7 @@ class Spinner extends View<Spinner> {
         this.bar.style.animation = Spinner.animation;
         this.bar.style.position = Constants.ABSOLUTE;
         let offset = Spinner.size / 2;
-        this.bar.style.left = "50%";
+        this.bar.style.left = "45%";
         this.bar.style.top = "50%";
 
         this.container.appendChild(this.bar);

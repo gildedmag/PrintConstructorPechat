@@ -11,15 +11,16 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
     }
 
     update() {
-        let layerControls = this.getLayerControls()
-        if (this.trigger.getLayers().length != layerControls.length) {
+        console.log('LayersUIControl#update');
+        //let layerControls = this.getLayerControls()
+        if (this.trigger.getLayers().length != (this.children.length - 1)) {
             this.repopulate();
             return;
         }
         for (let from = 0; from < layerControls.length; from++) {
             let layer = layerControls[from] as LayerUIControl;
             let element = this.trigger.getLayers()[from];
-            if (layer.trigger != element) {
+            if (layer.trigger.serialize() != element.serialize()) {
                 this.repopulate();
                 return;
             }
@@ -37,7 +38,13 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
         return layerControls;
     }
 
+
+    clear() {
+        this.getElement().innerHTML = "";
+    }
+
     repopulate() {
+        console.log('repopulate');
         let scroll;
         try {
             scroll = this.container.parentElement.parentElement.scrollTop;

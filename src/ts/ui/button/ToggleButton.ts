@@ -49,6 +49,8 @@ class ToggleButton extends TriggeredUIControl<any> {
                 action();
             }
         };
+
+        this.update();
     }
 
     static of(trigger: Trigger<any>,

@@ -749,7 +749,7 @@ input[type="color"] {
         height: 100vh;
         display: grid;
         grid-template-columns: 42px 1fr;
-        grid-template-rows: auto 1fr auto auto 324px;
+        grid-template-rows: auto 1fr auto auto 384px;
         gap: 0;
         grid-template-areas:
             "topbar topbar"

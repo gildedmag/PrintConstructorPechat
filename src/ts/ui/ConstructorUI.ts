@@ -228,7 +228,7 @@ class ConstructorUI extends UIControl {
 
     show2D() {
         Constructor.instance.setMode(Mode.Mode2D);
-        if (!this.c.getActiveSide() || this.c.getActiveSide().isEmpty()) {
+        if (!Constructor.instance.getActiveSide() || Constructor.instance.getActiveSide().isEmpty()) {
             ConstructorUI.instance.sidePanel.newElementPanel.show();
         } else {
             ConstructorUI.instance.sidePanel.layersPanel.show();

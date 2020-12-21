@@ -479,7 +479,6 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
             = this.object.lockMovementY
             = locked;
         this.changed();
-        this.side.saveState();
     }
 
     isLocked(): boolean {
@@ -553,15 +552,15 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         this.object.selectable = false;
         this.side.deselect();
         this.side.canvas.renderAll();
-        this.side.saveState();
+        this.changed();
     }
 
     show() {
         this.object.selectable = true;
+        this.object.visible = true;
         this.side.deselect();
         this.side.canvas.renderAll();
-        this.object.visible = true;
-        this.side.saveState();
+        this.changed();
     }
 
     toDataURL(size?: number): String {
