@@ -11,21 +11,22 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
     }
 
     update() {
-        console.log('LayersUIControl#update');
-        //let layerControls = this.getLayerControls()
-        if (this.trigger.getLayers().length != (this.children.length - 1)) {
-            this.repopulate();
-            return;
-        }
-        for (let from = 0; from < layerControls.length; from++) {
-            let layer = layerControls[from] as LayerUIControl;
-            let element = this.trigger.getLayers()[from];
-            if (layer.trigger.serialize() != element.serialize()) {
-                this.repopulate();
-                return;
-            }
-        }
-        this.updateVisibility();
+        // if (this.trigger.getLayers().length != this.children.length) {
+        //     this.repopulate();
+        //     return;
+        // }
+        // //let layerControls = this.getLayerControls()
+        // let layerControls = this.children;
+        // for (let i = 0; i < layerControls.length; i++) {
+        //     let layer = layerControls[i] as LayerUIControl;
+        //     let element = this.trigger.getLayers()[i];
+        //     if (layer.trigger != element) {
+        //         this.repopulate();
+        //         return;
+        //     }
+        // }
+        // this.updateVisibility();
+        this.repopulate();
     }
 
     getLayerControls(): LayerUIControl[] {
@@ -62,6 +63,7 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
         }
 
         ConstructorUI.instance.order.changed();
+        this.updateVisibility();
     }
 
     // fixOrder() { //too buggy but can save resource if implemented with care!

@@ -782,7 +782,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         }
         if (type === ElementType.TEXT && element.object['text']) {
             let o: any = element.object;
-            o.text = o.text.split("<br>").join("\n");
+            o.text = unescape(o.text).split("<br>").join("\n");
         }
         element.setOptions(element.object);
         return element;
