@@ -48,8 +48,8 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                         data.append(key, value);
                     })
 
-                    //fetch('index.php?route=tool/upload', {
-                    fetch(ConstructorUI.instance.domain + 'index.php?route=tool/upload', {
+                    fetch('index.php?route=tool/upload', {
+                    //fetch(ConstructorUI.instance.domain + 'index.php?route=tool/upload', {
                         method: 'POST',
                         body: formData,
                         headers: {
@@ -61,11 +61,12 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                             console.log(json.files[0].file);
                             let width = image.object.width;
                             let height = image.object.height;
-                            image.object.setSrc(json.files[0].file, () => {
+                            let imagePath = (constructorConfiguration.imagesPath || 'image/') + json.files[0].path;
+                            image.object.setSrc(imagePath, () => {
                                 image.object.width = width;
                                 image.object.height = height;
                                 image.side.canvas.renderAll();
-                                console.log('image src replaced from local to:', json.files[0].file);
+                                console.log('image src replaced from local to:', imagePath);
                                 image.side.saveState();
                                 //Trigger.preventUpdate = false;
                             });

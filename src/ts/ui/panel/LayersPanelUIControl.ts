@@ -11,26 +11,26 @@ class LayersPanelUIControl extends TriggeredUIControl<Constructor> {
     }
 
     update() {
-        if (this.children.length != this.c.sides.length) {
+        if (this.children.length - 1 != this.c.sides.length) {
             this.clear();
             for (let i = 0; i < this.trigger.sides.length; i++) {
                 let side = this.trigger.sides[i];
                 this.append(new LayersUIControl(side));
             }
-        }
-        this.append(
-            new Row(
-                new ConditionalButton(
-                    () => Constructor.instance.getActiveSide().clear(),
-                    () => !Constructor.instance.getActiveSide() || !this.c.getActiveSide().isEmpty(),
-                    null,
-                    "Clear Side"
+            this.append(
+                new Row(
+                    new ConditionalButton(
+                        () => Constructor.instance.getActiveSide().clear(),
+                        () => !Constructor.instance.getActiveSide() || !this.c.getActiveSide().isEmpty(),
+                        null,
+                        "Clear Side"
+                    )
                 )
             )
-        )
+        }
     }
 
-    // updateVisibility() {
+// updateVisibility() {
     //     this.trigger.is2D() ? this.show() : this.hide();
     // }
 

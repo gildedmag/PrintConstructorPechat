@@ -43,7 +43,7 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
         return this.container;
     }
 
-    static getById(id: number): UIControl {
+    static getById(id: any): UIControl {
         return this.map[id];
     }
 

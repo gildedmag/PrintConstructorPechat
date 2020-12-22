@@ -245,7 +245,7 @@ class Preview extends View<Preview> {
                         Constructor.instance.preview.render();
                     }
                 } catch (e) {
-                    console.error("failed to update side", side.getIndex());
+                    console.error("failed to update side", side.getIndex(), e);
                 }
             }
             this.render();

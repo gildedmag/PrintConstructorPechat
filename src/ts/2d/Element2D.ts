@@ -756,30 +756,11 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
             delete object.filters;
         }
         //element.object = new type.nativeType();
+        // if (type === ElementType.IMAGE) {
+        //     let image: fabric.Image = element.object as fabric.Image;
+        //     image.crossOrigin = "Anonymous";
+        // }
         element.object.setOptions(object.toObject());
-        if (type === ElementType.IMAGE) {
-            let image: fabric.Image = element.object as fabric.Image;
-            //image.crossOrigin = "anonymous";
-            // image.setSrc(image.getSrc(), () => {
-            //     if (filters) {
-            //         element.filters = [];
-            //         for (let filterName of filters) {
-            //             let filter = Filter.get(filterName);
-            //             try {
-            //                 element.addFilter(filter, () => element.side.canvas.renderAll());
-            //             } catch (e) {
-            //                 console.error(e.message);
-            //             }
-            //         }
-            //     }
-            //     try {
-            //         element.side.canvas.requestRenderAll();
-            //         //Constructor.instance.preview.updateSideMaterials();
-            //     } catch (e) {
-            //         console.error(e.message);
-            //     }
-            // });
-        }
         if (type === ElementType.TEXT && element.object['text']) {
             let o: any = element.object;
             o.text = unescape(o.text).split("<br>").join("\n");

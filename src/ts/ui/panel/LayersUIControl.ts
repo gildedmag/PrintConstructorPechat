@@ -1,6 +1,8 @@
 /// <reference path="../TriggeredUIControl.ts" />
 class LayersUIControl extends TriggeredUIControl<Side2D> {
 
+    private isUpdating = false;
+
     getClassName(): string {
         return super.getClassName() + " layers vertical";
     }
@@ -11,22 +13,27 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
     }
 
     update() {
+        if (!this.isVisible() || this.isUpdating) {
+            return;
+        }
+        //console.log('checking children count', this.children.length);
         // if (this.trigger.getLayers().length != this.children.length) {
+        //     console.log(this.children.length);
+        //     console.log(this.trigger.getLayers().length);
         //     this.repopulate();
         //     return;
         // }
-        // //let layerControls = this.getLayerControls()
-        // let layerControls = this.children;
-        // for (let i = 0; i < layerControls.length; i++) {
-        //     let layer = layerControls[i] as LayerUIControl;
-        //     let element = this.trigger.getLayers()[i];
-        //     if (layer.trigger != element) {
-        //         this.repopulate();
-        //         return;
-        //     }
-        // }
-        // this.updateVisibility();
-        this.repopulate();
+        let layerControls = this.children;
+        let layers = this.trigger.getLayers();
+        for (let i = 0; i < layers.length; i++) {
+            let controlLayer = (layerControls[i] as LayerUIControl) || null;
+            let sideLayer = layers[i];
+            if (!controlLayer || controlLayer.trigger != sideLayer) {
+                this.repopulate();
+                return;
+            }
+        }
+        this.updateVisibility();
     }
 
     getLayerControls(): LayerUIControl[] {
@@ -45,25 +52,28 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
     }
 
     repopulate() {
-        console.log('repopulate');
+        this.isUpdating = true;
         let scroll;
         try {
             scroll = this.container.parentElement.parentElement.scrollTop;
-        } catch (e){
+        } catch (e) {
 
         }
 
         this.clear();
-        this.trigger.getLayers().forEach(layer => {
-            this.append(new LayerUIControl(layer, this));
-        });
 
-        if (scroll){
+        let layers = this.trigger.getLayers();
+        for (let i = 0; i < layers.length; i++) {
+            this.append(new LayerUIControl(layers[i], this));
+        }
+
+        if (scroll) {
             this.container.parentElement.parentElement.scrollTop = scroll;
         }
 
-        ConstructorUI.instance.order.changed();
+        //ConstructorUI.instance.order.changed();
         this.updateVisibility();
+        this.isUpdating = false;
     }
 
     // fixOrder() { //too buggy but can save resource if implemented with care!
@@ -89,7 +99,12 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
 
     updateVisibility() {
         if (this.isVisible() != this.trigger.isVisible()) {
-            this.setVisible(this.trigger.isVisible());
+            if (!this.isVisible()) {
+                this.show();
+                this.repopulate();
+            } else {
+                this.hide();
+            }
         }
     }
 
