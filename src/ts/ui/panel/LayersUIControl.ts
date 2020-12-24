@@ -25,6 +25,10 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
         // }
         let layerControls = this.children;
         let layers = this.trigger.getLayers();
+        if (layers.length != layerControls.length){
+            this.repopulate();
+            return;
+        }
         for (let i = 0; i < layers.length; i++) {
             let controlLayer = (layerControls[i] as LayerUIControl) || null;
             let sideLayer = layers[i];

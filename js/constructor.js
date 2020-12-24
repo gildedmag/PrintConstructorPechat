@@ -180,7 +180,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "22.12.2020 13:27";
+    Version.version = "24.12.2020 09:01";
     return Version;
 }());
 var Trigger = (function () {
@@ -5816,6 +5816,10 @@ var LayersUIControl = (function (_super) {
         }
         var layerControls = this.children;
         var layers = this.trigger.getLayers();
+        if (layers.length != layerControls.length) {
+            this.repopulate();
+            return;
+        }
         for (var i = 0; i < layers.length; i++) {
             var controlLayer = layerControls[i] || null;
             var sideLayer = layers[i];
