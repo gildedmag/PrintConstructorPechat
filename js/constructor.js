@@ -180,7 +180,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "24.12.2020 09:01";
+    Version.version = "13.01.2021 12:24";
     return Version;
 }());
 var Trigger = (function () {
@@ -2913,6 +2913,9 @@ var Element2D = (function (_super) {
             if (typeof value === Constants.STRING)
                 value = new Color(value);
             var color = value;
+            if (this.isText()) {
+                this.object.styles = {};
+            }
             this.object.fill = color.toRgba();
             this.object.dirty = true;
             this.side.canvas.renderAll();

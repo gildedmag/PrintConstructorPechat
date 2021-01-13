@@ -118,6 +118,9 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         if (this.type != ElementType.IMAGE) {
             if (typeof value === Constants.STRING) value = new Color(value);
             let color = <Color>value;
+            if (this.isText()){
+                this.object.styles = {};
+            }
             this.object.fill = color.toRgba();
             this.object.dirty = true;
             this.side.canvas.renderAll();
