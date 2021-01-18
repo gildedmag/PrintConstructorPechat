@@ -221,8 +221,8 @@ class Preview extends View<Preview> {
                 let map: THREE.Texture;
                 let side = Constructor.instance.sides[i];
                 if (!side || !side.canvas) continue;
-                let w = side.canvas.getWidth() / side.getZoom();
-                let h = side.canvas.getHeight() / side.getZoom();
+                let w = side.canvas.getWidth();// / side.getZoom();
+                let h = side.canvas.getHeight();// / side.getZoom();
                 let multiplier = Constructor.settings.previewTextureSize / Math.max(w, h);
                 try {
                     let src: string = side.canvas.toDataURL({format: Constants.PNG, multiplier: multiplier});

@@ -50,7 +50,7 @@ class Settings {
     /**
      * Maximum size of rendered 2d-side projected on 3d-surface
      */
-    previewTextureSize = 1024;
+    previewTextureSize = 4096;
     previewBackgroundColor = "#eeeeee";
     fitIntoMargins = false;
     localStorage = {
