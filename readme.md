@@ -179,5 +179,5 @@ npm install typedoc -g
 ### Running build script
 
 ```bash
-./build.bash
+{project dir}/scripts/build.bash
 ```
