@@ -16,7 +16,7 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
         text.value = '1';
         input.type = "file";
         input.name = "file";
-        input.accept = "image/jpeg, image/png";
+        input.accept = "image/jpeg, image/png, .heic";
         input.size = 24;
         input.hidden = true;
         form.append(input);
@@ -27,20 +27,34 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
             let files = target.files;
             if (FileReader && files && files.length) {
                 if (files.length > 1){
-                    new Popover("Error", "Please select one file of Jpeg or Png type!")
+                    new Popover("Error", "Please select one file of Jpeg or Png or Heic type!")
                     return;
                 } else {
-                    if (!files[0].name.endsWith('.jpg') && !files[0].name.endsWith('.jpeg') && !files[0].name.endsWith('.png')){
-                        new Popover("Error", "Please select Jpeg or Png image!")
+                    if (
+                        !files[0].name.toLowerCase().endsWith('.jpg')
+                        && !files[0].name.toLowerCase().endsWith('.jpeg')
+                        && !files[0].name.toLowerCase().endsWith('.png')
+                        && !files[0].name.toLowerCase().endsWith('.heic')
+                    ){
+                        new Popover("Error", "Please select Jpeg or Png or Heic image!")
                         return;
                     }
                 }
-                var reader = new FileReader();
-                reader.onload = function () {
-                    //Trigger.preventUpdate = true;
-                    let image = Constructor.instance.addImage(reader.result);
 
-                    let body = new URLSearchParams(new FormData(form));
+                var reader = new FileReader();
+
+                reader.onload =  async () => {
+                    //Trigger.preventUpdate = true;
+                    let image = null;
+
+                    if(files[0].name.toLowerCase().endsWith('.heic')){
+                        Constructor.instance.spinner.show();
+                        let b64 = await this.convertHeicToJpg(files[0]);
+                        image = Constructor.instance.addImage(b64);
+                        Constructor.instance.spinner.hide();
+                    }else{
+                        image = Constructor.instance.addImage(reader.result);
+                    }
 
                     const data = new URLSearchParams();
                     let formData = new FormData(form);
@@ -49,7 +63,6 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                     })
 
                     fetch('index.php?route=tool/upload', {
-                    //fetch(ConstructorUI.instance.domain + 'index.php?route=tool/upload', {
                         method: 'POST',
                         body: formData,
                         headers: {
@@ -57,8 +70,6 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                         }
                     }).then(response => {
                         response.json().then(json => {
-                            console.log(json);
-                            console.log(json.files[0].file);
                             let width = image.object.width;
                             let height = image.object.height;
                             let imagePath = (constructorConfiguration.imagesPath || 'image/') + json.files[0].path;
@@ -140,6 +151,27 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                 ),
             )
         );
+    }
+
+    async convertHeicToJpg(blob: Blob) {
+        return new Promise(async function (resolve, reject) {
+            try {
+                let blobJpg = await heic2any({blob: blob, toType: "image/jpg"});
+
+                let reader = new FileReader();
+                reader.readAsDataURL(blobJpg);
+                reader.onloadend = await function () {
+                    resolve(reader.result)
+                }
+                reader.onerror = await function (error) {
+                    new Popover("Error", "Failed to upload HEIC file!")
+                    console.log(error);
+                }
+            } catch (error) {
+                new Popover("Error", "Failed to upload HEIC file!")
+                console.log(error);
+            }
+        })
     }
 
 }

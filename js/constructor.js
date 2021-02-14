@@ -4284,8 +4284,10 @@ var LocalizedStrings = (function () {
         'Exit 3D-Preview': 'Выйти из просмотра',
         'Add Text': 'Добавить текст',
         'Error': 'Ошибка',
-        'Please select one file of Jpeg or Png type!': 'Пожалуйста, выберите один файл!',
-        'Please select Jpeg or Png image!': 'Пожалуйста, выберите файл изображения в формате Jpeg или Png!',
+        'Please select one file of Jpeg or Png or Heic type!': 'Пожалуйста, выберите один файл!',
+        'Please select Jpeg or Png or Heic image!': 'Пожалуйста, выберите файл изображения в формате .jpg, .png или .heic!',
+        'Failed to upload HEIC file!': 'Извините, ваш HEIC файл не может быть распознан нашей системой!',
+        'Uploading HEIC file will take some time!': 'Загрузка и обработка HEIC файла может занять некоторое время, пожалуйста подождите',
     };
     return LocalizedStrings;
 }());
@@ -6098,7 +6100,7 @@ var NewElementPanel = (function (_super) {
         text.value = '1';
         input.type = "file";
         input.name = "file";
-        input.accept = "image/jpeg, image/png";
+        input.accept = "image/jpeg, image/png, .heic";
         input.size = 24;
         input.hidden = true;
         form.append(input);
@@ -6109,47 +6111,66 @@ var NewElementPanel = (function (_super) {
             var files = target.files;
             if (FileReader && files && files.length) {
                 if (files.length > 1) {
-                    new Popover("Error", "Please select one file of Jpeg or Png type!");
+                    new Popover("Error", "Please select one file of Jpeg or Png or Heic type!");
                     return;
                 }
                 else {
-                    if (!files[0].name.endsWith('.jpg') && !files[0].name.endsWith('.jpeg') && !files[0].name.endsWith('.png')) {
-                        new Popover("Error", "Please select Jpeg or Png image!");
+                    if (!files[0].name.toLowerCase().endsWith('.jpg')
+                        && !files[0].name.toLowerCase().endsWith('.jpeg')
+                        && !files[0].name.toLowerCase().endsWith('.png')
+                        && !files[0].name.toLowerCase().endsWith('.heic')) {
+                        new Popover("Error", "Please select Jpeg or Png or Heic image!");
                         return;
                     }
                 }
                 var reader = new FileReader();
-                reader.onload = function () {
-                    var image = Constructor.instance.addImage(reader.result);
-                    var body = new URLSearchParams(new FormData(form));
-                    var data = new URLSearchParams();
-                    var formData = new FormData(form);
-                    formData.forEach(function (value, key) {
-                        data.append(key, value);
-                    });
-                    fetch('index.php?route=tool/upload', {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            accept: 'application/json, text/javascript, */*; q=0.01'
+                reader.onload = function () { return __awaiter(_this, void 0, void 0, function () {
+                    var image, b64, data, formData;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                image = null;
+                                if (!files[0].name.toLowerCase().endsWith('.heic')) return [3, 2];
+                                Constructor.instance.spinner.show();
+                                return [4, this.convertHeicToJpg(files[0])];
+                            case 1:
+                                b64 = _a.sent();
+                                image = Constructor.instance.addImage(b64);
+                                Constructor.instance.spinner.hide();
+                                return [3, 3];
+                            case 2:
+                                image = Constructor.instance.addImage(reader.result);
+                                _a.label = 3;
+                            case 3:
+                                data = new URLSearchParams();
+                                formData = new FormData(form);
+                                formData.forEach(function (value, key) {
+                                    data.append(key, value);
+                                });
+                                fetch('index.php?route=tool/upload', {
+                                    method: 'POST',
+                                    body: formData,
+                                    headers: {
+                                        accept: 'application/json, text/javascript, */*; q=0.01'
+                                    }
+                                }).then(function (response) {
+                                    response.json().then(function (json) {
+                                        var width = image.object.width;
+                                        var height = image.object.height;
+                                        var imagePath = (constructorConfiguration.imagesPath || 'image/') + json.files[0].path;
+                                        image.object.setSrc(imagePath, function () {
+                                            image.object.width = width;
+                                            image.object.height = height;
+                                            image.side.canvas.renderAll();
+                                            console.log('image src replaced from local to:', imagePath);
+                                            image.side.saveState();
+                                        });
+                                    });
+                                });
+                                return [2];
                         }
-                    }).then(function (response) {
-                        response.json().then(function (json) {
-                            console.log(json);
-                            console.log(json.files[0].file);
-                            var width = image.object.width;
-                            var height = image.object.height;
-                            var imagePath = (constructorConfiguration.imagesPath || 'image/') + json.files[0].path;
-                            image.object.setSrc(imagePath, function () {
-                                image.object.width = width;
-                                image.object.height = height;
-                                image.side.canvas.renderAll();
-                                console.log('image src replaced from local to:', imagePath);
-                                image.side.saveState();
-                            });
-                        });
                     });
-                };
+                }); };
                 reader.readAsDataURL(files[0]);
             }
         };
@@ -6176,6 +6197,48 @@ var NewElementPanel = (function (_super) {
     NewElementPanel.prototype.addButton = function (label, type, icon) {
         var _this = this;
         this.append(new Row(new Button(function () { return _this.c.addElement(type); }, icon, label)));
+    };
+    NewElementPanel.prototype.convertHeicToJpg = function (blob) {
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                return [2, new Promise(function (resolve, reject) {
+                        return __awaiter(this, void 0, void 0, function () {
+                            var blobJpg, reader_1, _a, _b, error_1;
+                            return __generator(this, function (_c) {
+                                switch (_c.label) {
+                                    case 0:
+                                        _c.trys.push([0, 4, , 5]);
+                                        return [4, heic2any({ blob: blob, toType: "image/jpg" })];
+                                    case 1:
+                                        blobJpg = _c.sent();
+                                        reader_1 = new FileReader();
+                                        reader_1.readAsDataURL(blobJpg);
+                                        _a = reader_1;
+                                        return [4, function () {
+                                                resolve(reader_1.result);
+                                            }];
+                                    case 2:
+                                        _a.onloadend = _c.sent();
+                                        _b = reader_1;
+                                        return [4, function (error) {
+                                                new Popover("Error", "Failed to upload HEIC file!");
+                                                console.log(error);
+                                            }];
+                                    case 3:
+                                        _b.onerror = _c.sent();
+                                        return [3, 5];
+                                    case 4:
+                                        error_1 = _c.sent();
+                                        new Popover("Error", "Failed to upload HEIC file!");
+                                        console.log(error_1);
+                                        return [3, 5];
+                                    case 5: return [2];
+                                }
+                            });
+                        });
+                    })];
+            });
+        });
     };
     return NewElementPanel;
 }(TriggeredUIControl));
