@@ -8,13 +8,15 @@ class FontFamilyPanel extends TriggeredUIControl<Constructor> {
 
     constructor() {
         super(Constructor.instance);
-        let fontFamilies = this.getFontFamilies();
-        for (let i = 0; i < fontFamilies.length; i++) {
-            let fontFamily = fontFamilies[i];
-            this.append(
-                new FontFamilyButton(fontFamily)
-            );
-        }
+        document.fonts.ready.then( () => {
+            for (let i = 0; i < constructorConfiguration.fonts.length; i++) {
+                let fontFamily = constructorConfiguration.fonts[i];
+                this.append(
+                    new FontFamilyButton(fontFamily)
+                );
+            }
+        });
+
     }
 
     show() {

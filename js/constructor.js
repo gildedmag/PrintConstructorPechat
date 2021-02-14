@@ -41,7 +41,7 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
     return function (d, b) {
@@ -2780,7 +2780,6 @@ var Utils = (function () {
         var url = Object.keys(data).map(function (k) {
             return encodeURIComponent(k) + '=' + encodeURIComponent(data[k]);
         }).join('&');
-        console.log(url);
         return url;
     };
     Utils.copyToClipboard = function (text) {
@@ -5733,11 +5732,12 @@ var FontFamilyPanel = (function (_super) {
     __extends(FontFamilyPanel, _super);
     function FontFamilyPanel() {
         var _this = _super.call(this, Constructor.instance) || this;
-        var fontFamilies = _this.getFontFamilies();
-        for (var i = 0; i < fontFamilies.length; i++) {
-            var fontFamily = fontFamilies[i];
-            _this.append(new FontFamilyButton(fontFamily));
-        }
+        document.fonts.ready.then(function () {
+            for (var i = 0; i < constructorConfiguration.fonts.length; i++) {
+                var fontFamily = constructorConfiguration.fonts[i];
+                _this.append(new FontFamilyButton(fontFamily));
+            }
+        });
         return _this;
     }
     FontFamilyPanel.prototype.getClassName = function () {
@@ -6580,9 +6580,7 @@ var Order = (function (_super) {
                 constructor_model_id: this.model.constructor_model_id
             })
         }).then(function (response) {
-            console.log(response);
             response.text().then(function (html) {
-                console.log(html);
                 _this.samplesHtml = html;
                 _this.changed();
             });
