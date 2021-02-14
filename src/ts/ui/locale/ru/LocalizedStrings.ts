@@ -45,6 +45,7 @@ class LocalizedStrings {
         'Real Product Photos': 'Примеры работ',
         'Page': 'Объекты',
         'Layers': 'Слои',
+        'Stickers': 'Стикеры',
         'Properties': 'Свойства объекта',
         'Fonts': 'Шрифты',
         'Filters': 'Фильтры',

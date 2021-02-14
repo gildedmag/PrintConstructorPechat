@@ -7,7 +7,7 @@ class SwitchButton extends TriggeredUIControl<View<any>> {
         return super.getClassName() + " button";
     }
 
-    constructor(view: View<any>, icon: Icon | string, visibility?: () => boolean) {
+    constructor(view: any, icon: Icon | string, visibility?: () => boolean) {
         super(view);
         this.visibility = visibility;
         this.container.innerHTML = icon;
@@ -33,6 +33,6 @@ class SwitchButton extends TriggeredUIControl<View<any>> {
         }
     }
 
-    
+
 
 }

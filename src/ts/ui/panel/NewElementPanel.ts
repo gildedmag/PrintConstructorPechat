@@ -116,7 +116,7 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
         );
         this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);
         this.addButton("Rectangle", ElementType.RECTANGLE, Icon.SQUARE);
-        this.addButton("Triangle", ElementType.TRIANGLE, Icon.CARET_UP);
+        this.addButton("Triangle", ElementType.TRIANGLE, Icon.PLAY);
         this.append(
             new Row(
                 new ConditionalButton(

@@ -21,7 +21,7 @@ class TriggeredLabelControl<T extends Trigger<any>> extends TriggeredUIControl<T
     }
 
     update() {
-        let value: object = null;
+        let value: string = null;
         try {
             value = this.translate(this.getter(this.control));
         } catch (e){}

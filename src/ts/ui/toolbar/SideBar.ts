@@ -21,6 +21,11 @@ class SideBar extends VerticalToolBarUIControl {
                 () => Constructor.instance.is2D()
             ).tooltip('Page'),
             this.createSwitch(
+                panel.stickersPanel,
+                Icon.SPLOTCH,
+                () => Constructor.instance.is2D()
+            ).tooltip('Stickers'),
+            this.createSwitch(
                 panel.layersPanel,
                 Icon.LAYER_GROUP,
                 () => Constructor.instance.is2D()
