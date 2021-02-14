@@ -70,8 +70,10 @@ class LocalizedStrings {
         'Exit 3D-Preview': 'Выйти из просмотра',
         'Add Text': 'Добавить текст',
         'Error': 'Ошибка',
-        'Please select one file of Jpeg or Png type!': 'Пожалуйста, выберите один файл!',
-        'Please select Jpeg or Png image!': 'Пожалуйста, выберите файл изображения в формате Jpeg или Png!',
+        'Please select one file of Jpeg or Png or Heic type!': 'Пожалуйста, выберите один файл!',
+        'Please select Jpeg or Png or Heic image!': 'Пожалуйста, выберите файл изображения в формате .jpg, .png или .heic!',
+        'Failed to upload HEIC file!': 'Извините, ваш HEIC файл не может быть распознан нашей системой!',
+        'Uploading HEIC file will take some time!': 'Загрузка и обработка HEIC файла может занять некоторое время, пожалуйста подождите',
 
     }
 
