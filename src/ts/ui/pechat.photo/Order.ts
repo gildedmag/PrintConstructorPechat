@@ -179,7 +179,6 @@ class Order extends Trigger<Order> {
     }
 
     updateSamples() {
-        //fetch(ConstructorUI.instance.domain + 'index.php?route=constructor/constructor/get_add_img', {
         fetch('index.php?route=constructor/constructor/get_add_img', {
             method: 'POST',
             headers: new Headers({'content-type': 'application/x-www-form-urlencoded'}),
@@ -187,9 +186,7 @@ class Order extends Trigger<Order> {
                 constructor_model_id: this.model.constructor_model_id
             })
         }).then(response => {
-            console.log(response);
             response.text().then(html => {
-                console.log(html);
                 this.samplesHtml = html;
                 this.changed();
             });

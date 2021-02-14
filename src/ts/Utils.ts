@@ -135,7 +135,6 @@ class Utils {
         let url = Object.keys(data).map(function (k) {
             return encodeURIComponent(k) + '=' + encodeURIComponent(data[k])
         }).join('&');
-        console.log(url);
         return url;
     }
 
