@@ -434,6 +434,7 @@ enum Icon {
     EXCLAMATION = '<i class="fa fa-exclamation"></i>',
     EXCLAMATION_CIRCLE = '<i class="fa fa-exclamation-circle"></i>',
     EXCLAMATION_TRIANGLE = '<i class="fa fa-exclamation-triangle"></i>',
+    TRIANGLE = '<i class="fa fa-triangle"></i>',
     EXPAND = '<i class="fa fa-expand"></i>',
     EXPAND_ALT = '<i class="fa fa-expand-alt"></i>',
     EXPAND_ARROWS_ALT = '<i class="fa fa-expand-arrows-alt"></i>',

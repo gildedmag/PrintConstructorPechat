@@ -1615,6 +1615,7 @@ var Icon;
     Icon["EXCLAMATION"] = "<i class=\"fa fa-exclamation\"></i>";
     Icon["EXCLAMATION_CIRCLE"] = "<i class=\"fa fa-exclamation-circle\"></i>";
     Icon["EXCLAMATION_TRIANGLE"] = "<i class=\"fa fa-exclamation-triangle\"></i>";
+    Icon["TRIANGLE"] = "<i class=\"fa fa-triangle\"></i>";
     Icon["EXPAND"] = "<i class=\"fa fa-expand\"></i>";
     Icon["EXPAND_ALT"] = "<i class=\"fa fa-expand-alt\"></i>";
     Icon["EXPAND_ARROWS_ALT"] = "<i class=\"fa fa-expand-arrows-alt\"></i>";
@@ -4259,6 +4260,7 @@ var LocalizedStrings = (function () {
         'Real Product Photos': 'Примеры работ',
         'Page': 'Объекты',
         'Layers': 'Слои',
+        'Stickers': 'Стикеры',
         'Properties': 'Свойства объекта',
         'Fonts': 'Шрифты',
         'Filters': 'Фильтры',
@@ -4348,7 +4350,13 @@ var UIControl = (function (_super) {
         return this;
     };
     UIControl.prototype.removeChild = function (index) {
-        return this.children.splice(index, 1)[0];
+        if (this.children[index]) {
+            var children = this.children.splice(index, 1)[0];
+            children.clear();
+            children.container.remove();
+            delete UIControl.map[children.id];
+            return children;
+        }
     };
     UIControl.prototype.moveChild = function (from, to) {
         var htmlElement = this.children[from].container;
@@ -5173,6 +5181,24 @@ var Spacer = (function (_super) {
     };
     return Spacer;
 }(UIControl));
+var StickerControl = (function (_super) {
+    __extends(StickerControl, _super);
+    function StickerControl(value) {
+        var _this = _super.call(this, "img") || this;
+        _this.container.src = (value || "");
+        _this.container.onclick = function () {
+            Constructor.instance.addImage(_this.container.src);
+        };
+        return _this;
+    }
+    StickerControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " button sticker";
+    };
+    StickerControl.prototype.setValue = function (value) {
+        this.container.src = value;
+    };
+    return StickerControl;
+}(UIControl));
 var TriggeredLabelControl = (function (_super) {
     __extends(TriggeredLabelControl, _super);
     function TriggeredLabelControl(trigger, getter) {
@@ -5286,6 +5312,7 @@ var FontFamilyButton = (function (_super) {
         });
         _this.container.onclick = function () {
             _this.c.getSelection().setFontFamily(fontFamily, true);
+            _this.c.getSelection().setColor(_this.c.getSelection().getColor().toHex());
         };
         return _this;
     }
@@ -5593,8 +5620,8 @@ var SelectControl = (function (_super) {
                 this.container.innerHTML = '';
                 for (var i = 0; i < this.values.length; i++) {
                     var option = document.createElement("option");
-                    option.value = i;
-                    option.innerText = this.values[i];
+                    option.value = this.values[i].value ? this.values[i].value : i;
+                    option.innerText = this.values[i].text ? this.values[i].text : this.values[i];
                     this.container.appendChild(option);
                 }
             }
@@ -6179,7 +6206,7 @@ var NewElementPanel = (function (_super) {
         _this.append(new Row(new Button(function () { return _this.c.addText(LocalizedStrings.translate('Text')); }, Icon.FONT, 'Add Text')));
         _this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);
         _this.addButton("Rectangle", ElementType.RECTANGLE, Icon.SQUARE);
-        _this.addButton("Triangle", ElementType.TRIANGLE, Icon.CARET_UP);
+        _this.addButton("Triangle", ElementType.TRIANGLE, Icon.PLAY);
         _this.append(new Row(new ConditionalButton(function () { return _this.c.getActiveSide().clear(); }, function () { return !_this.c.getActiveSide() || !_this.c.getActiveSide().isEmpty(); }, null, "Clear Side")));
         _this.update();
         return _this;
@@ -6358,6 +6385,7 @@ var SidePanel = (function (_super) {
     function SidePanel() {
         var _this = _super.call(this) || this;
         _this.layersPanel = new LayersPanelUIControl();
+        _this.stickersPanel = new StickersPanel();
         _this.selectionPanel = new SelectionPanel();
         _this.newElementPanel = new NewElementPanel();
         _this.fontFamilyPanel = new FontFamilyPanel();
@@ -6366,7 +6394,7 @@ var SidePanel = (function (_super) {
         _this.optionsPanel = new OptionsPanel();
         _this.filtersPanel = new FiltersPanel();
         _this.sharePanel = new ExportPanel();
-        _this.append(_this.newElementPanel, _this.layersPanel, _this.selectionPanel, _this.fontFamilyPanel, _this.modelsPanel, _this.samplesPanel, _this.optionsPanel, _this.filtersPanel, _this.sharePanel, new Container()
+        _this.append(_this.newElementPanel, _this.layersPanel, _this.stickersPanel, _this.selectionPanel, _this.fontFamilyPanel, _this.modelsPanel, _this.samplesPanel, _this.optionsPanel, _this.filtersPanel, _this.sharePanel, new Container()
             .addClass('sidepanel-freespace')
             .addClass('mobile'));
         _this.container.onclick = function (e) {
@@ -6381,6 +6409,81 @@ var SidePanel = (function (_super) {
     };
     return SidePanel;
 }(ToolBar));
+var StickersPanel = (function (_super) {
+    __extends(StickersPanel, _super);
+    function StickersPanel() {
+        var _this = _super.call(this, Constructor.instance) || this;
+        _this.stickers = {};
+        _this.loadCategories();
+        _this.update();
+        return _this;
+    }
+    StickersPanel.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " stickers-panel vertical";
+    };
+    StickersPanel.prototype.show = function () {
+        _super.prototype.show.call(this);
+    };
+    StickersPanel.prototype.loadCategories = function () {
+        var _this = this;
+        this.append(new Row(new Spacer(), new LabelControl("Stickers").addClass('bold'), new Spacer()));
+        if (constructorConfiguration.stickerCategories) {
+            var categories_1 = [];
+            for (var i = 0; i < constructorConfiguration.stickerCategories.length; i++) {
+                var category = constructorConfiguration.stickerCategories[i];
+                categories_1.push({
+                    value: category.id,
+                    text: category.name,
+                });
+            }
+            var flow = new FlowControl(2, true);
+            flow.append(new SelectControl(function (value) {
+                _this.loadStickers(+value);
+            }, function () { return +categories_1[0].value; }, null, null, null, function () { return categories_1; }));
+            this.append(flow);
+            this.loadStickers(+categories_1[0].value);
+        }
+    };
+    StickersPanel.prototype.loadStickers = function (category) {
+        var _this = this;
+        this.category = +category;
+        if (!this.stickers[category]) {
+            fetch("/index.php?route=constructor/constructor/getCliparts&category=" + category, {
+                method: 'GET',
+                headers: {
+                    accept: 'application/json, text/javascript, */*; q=0.01'
+                }
+            }).then(function (response) {
+                response.json().then(function (json) {
+                    var flow = new FlowControl(2, true);
+                    _this.removeChild(2);
+                    _this.stickers[category] = json.map(function (item) { return new StickerControl(item); });
+                    _this.stickers[category].map(function (sticker) { return flow.append(sticker); });
+                    _this.append(flow);
+                });
+            }).catch(function (error) {
+                console.log(error);
+                new Popover("Error");
+            });
+        }
+        else {
+            var flow_1 = new FlowControl(2, true);
+            this.removeChild(2);
+            this.stickers[category].map(function (sticker) { return flow_1.append(sticker); });
+            this.append(flow_1);
+        }
+    };
+    StickersPanel.prototype.showed = function () {
+        _super.prototype.showed.call(this);
+        this.update();
+    };
+    StickersPanel.prototype.updateVisibility = function () {
+        this.trigger.getMode() == Mode.Mode2D && this.trigger.hasTextSelection()
+            ? this.show()
+            : this.hide();
+    };
+    return StickersPanel;
+}(TriggeredUIControl));
 var __spreadArrays = (this && this.__spreadArrays) || function () {
     for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
     for (var r = Array(s), k = 0, i = 0; i < il; i++)
@@ -6916,7 +7019,7 @@ var SideBar = (function (_super) {
         var _this = _super.call(this) || this;
         _this.buttons = [];
         var panel = ConstructorUI.instance.sidePanel;
-        _this.append(_this.createSwitch(panel.modelsPanel, Icon.MUG_HOT).tooltip('Product Types'), _this.createSwitch(panel.newElementPanel, Icon.SHAPES, function () { return Constructor.instance.is2D(); }).tooltip('Page'), _this.createSwitch(panel.layersPanel, Icon.LAYER_GROUP, function () { return Constructor.instance.is2D(); }).tooltip('Layers'), _this.createSwitch(panel.selectionPanel, Icon.SLIDERS_H, function () { return Constructor.instance.hasSelection(); }).tooltip('Properties'), _this.createSwitch(panel.fontFamilyPanel, Icon.FONT, function () { return Constructor.instance.hasTextSelection(); }).tooltip('Fonts'), _this.createSwitch(panel.filtersPanel, Icon.TINT, function () { return Constructor.instance.hasImageSelection(); }).tooltip('Filters'), _this.createSwitch(panel.optionsPanel, Icon.CLIPBOARD_LIST, function () { return ConstructorUI.instance.order.model && ConstructorUI.instance.order.model.constructor_model_option && ConstructorUI.instance.order.model.constructor_model_option.length > 0; }).tooltip('Options'), _this.createSwitch(panel.samplesPanel, Icon.INFO_CIRCLE).tooltip('Product Info'), _this.createSwitch(panel.sharePanel, Icon.FILE_DOWNLOAD).tooltip('Export & Sharing'), new Spacer());
+        _this.append(_this.createSwitch(panel.modelsPanel, Icon.MUG_HOT).tooltip('Product Types'), _this.createSwitch(panel.newElementPanel, Icon.SHAPES, function () { return Constructor.instance.is2D(); }).tooltip('Page'), _this.createSwitch(panel.stickersPanel, Icon.SPLOTCH, function () { return Constructor.instance.is2D(); }).tooltip('Stickers'), _this.createSwitch(panel.layersPanel, Icon.LAYER_GROUP, function () { return Constructor.instance.is2D(); }).tooltip('Layers'), _this.createSwitch(panel.selectionPanel, Icon.SLIDERS_H, function () { return Constructor.instance.hasSelection(); }).tooltip('Properties'), _this.createSwitch(panel.fontFamilyPanel, Icon.FONT, function () { return Constructor.instance.hasTextSelection(); }).tooltip('Fonts'), _this.createSwitch(panel.filtersPanel, Icon.TINT, function () { return Constructor.instance.hasImageSelection(); }).tooltip('Filters'), _this.createSwitch(panel.optionsPanel, Icon.CLIPBOARD_LIST, function () { return ConstructorUI.instance.order.model && ConstructorUI.instance.order.model.constructor_model_option && ConstructorUI.instance.order.model.constructor_model_option.length > 0; }).tooltip('Options'), _this.createSwitch(panel.samplesPanel, Icon.INFO_CIRCLE).tooltip('Product Info'), _this.createSwitch(panel.sharePanel, Icon.FILE_DOWNLOAD).tooltip('Export & Sharing'), new Spacer());
         _this.hideOthers(!_this.c.getActiveSide() || _this.c.getActiveSide().isEmpty() ? panel.newElementPanel : panel.layersPanel);
         return _this;
     }

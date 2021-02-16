@@ -33,6 +33,6 @@ class SwitchButton extends TriggeredUIControl<View<any>> {
         }
     }
 
-    
+
 
 }

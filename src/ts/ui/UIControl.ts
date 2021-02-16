@@ -70,7 +70,13 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
     }
 
     removeChild(index: number) {
-        return this.children.splice(index, 1)[0];
+        if(this.children[index]){
+            let children = this.children.splice(index, 1)[0];
+            children.clear();
+            children.container.remove();
+            delete UIControl.map[children.id];
+            return children;
+        }
     }
 
     moveChild(from: number, to: number) {
