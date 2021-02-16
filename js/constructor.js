@@ -183,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "18.01.2021 15:14";
+    Version.version = "16.02.2021 12:52";
     return Version;
 }());
 var Trigger = (function () {
@@ -5303,12 +5303,14 @@ var FontFamilyButton = (function (_super) {
         var element = _this;
         var icon = new IconControl(Icon.CIRCLE);
         _this.icon = icon;
-        font.load(FontFamilyButton.charset)
+        font.load(FontFamilyButton.charset, 20000)
             .then(function () {
             element.append(new LabelControl(fontFamily)
                 .setFontFamily(fontFamily));
         })
             .catch(function (e) {
+            console.log("Can't load font", fontFamily);
+            console.log(e);
         });
         _this.container.onclick = function () {
             _this.c.getSelection().setFontFamily(fontFamily, true);
@@ -6455,7 +6457,7 @@ var StickersPanel = (function (_super) {
                 }
             }).then(function (response) {
                 response.json().then(function (json) {
-                    var flow = new FlowControl(2, true);
+                    var flow = new FlowControl(3, true);
                     _this.removeChild(2);
                     _this.stickers[category] = json.map(function (item) { return new StickerControl(item); });
                     _this.stickers[category].map(function (sticker) { return flow.append(sticker); });
@@ -6467,7 +6469,7 @@ var StickersPanel = (function (_super) {
             });
         }
         else {
-            var flow_1 = new FlowControl(2, true);
+            var flow_1 = new FlowControl(3, true);
             this.removeChild(2);
             this.stickers[category].map(function (sticker) { return flow_1.append(sticker); });
             this.append(flow_1);

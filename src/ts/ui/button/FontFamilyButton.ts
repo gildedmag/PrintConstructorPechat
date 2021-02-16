@@ -23,7 +23,7 @@ class FontFamilyButton extends TriggeredUIControl<Constructor> {
         let element = this;
         let icon = new IconControl(Icon.CIRCLE);
         this.icon = icon;
-        font.load(FontFamilyButton.charset)
+        font.load(FontFamilyButton.charset, 20000)
             .then(function () {
                 element.append(
                     new LabelControl(fontFamily)
@@ -31,7 +31,8 @@ class FontFamilyButton extends TriggeredUIControl<Constructor> {
                 );
             })
             .catch(function (e) {
-                //console.log(e.message);
+                console.log("Can't load font", fontFamily);
+                console.log(e);
             });
 
         this.container.onclick = () => {
