@@ -4350,7 +4350,13 @@ var UIControl = (function (_super) {
         return this;
     };
     UIControl.prototype.removeChild = function (index) {
-        return this.children.splice(index, 1)[0];
+        if (this.children[index]) {
+            var children = this.children.splice(index, 1)[0];
+            children.clear();
+            children.container.remove();
+            delete UIControl.map[children.id];
+            return children;
+        }
     };
     UIControl.prototype.moveChild = function (from, to) {
         var htmlElement = this.children[from].container;
@@ -5306,6 +5312,7 @@ var FontFamilyButton = (function (_super) {
         });
         _this.container.onclick = function () {
             _this.c.getSelection().setFontFamily(fontFamily, true);
+            _this.c.getSelection().setColor(_this.c.getSelection().getColor().toHex());
         };
         return _this;
     }
@@ -5613,8 +5620,8 @@ var SelectControl = (function (_super) {
                 this.container.innerHTML = '';
                 for (var i = 0; i < this.values.length; i++) {
                     var option = document.createElement("option");
-                    option.value = i;
-                    option.innerText = this.values[i];
+                    option.value = this.values[i].value ? this.values[i].value : i;
+                    option.innerText = this.values[i].text ? this.values[i].text : this.values[i];
                     this.container.appendChild(option);
                 }
             }
@@ -6421,23 +6428,25 @@ var StickersPanel = (function (_super) {
         var _this = this;
         this.append(new Row(new Spacer(), new LabelControl("Stickers").addClass('bold'), new Spacer()));
         if (constructorConfiguration.stickerCategories) {
-            var flow = new FlowControl(2, true);
-            var _loop_2 = function (i) {
-                var category = constructorConfiguration.stickerCategories[i];
-                flow.append(new Button(function () {
-                    _this.category = +category.id;
-                    _this.loadStickers(+category.id);
-                    _this.update();
-                }, null, category.name));
-            };
+            var categories_1 = [];
             for (var i = 0; i < constructorConfiguration.stickerCategories.length; i++) {
-                _loop_2(i);
+                var category = constructorConfiguration.stickerCategories[i];
+                categories_1.push({
+                    value: category.id,
+                    text: category.name,
+                });
             }
+            var flow = new FlowControl(2, true);
+            flow.append(new SelectControl(function (value) {
+                _this.loadStickers(+value);
+            }, function () { return +categories_1[0].value; }, null, null, null, function () { return categories_1; }));
             this.append(flow);
+            this.loadStickers(+categories_1[0].value);
         }
     };
     StickersPanel.prototype.loadStickers = function (category) {
         var _this = this;
+        this.category = +category;
         if (!this.stickers[category]) {
             fetch("/index.php?route=constructor/constructor/getCliparts&category=" + category, {
                 method: 'GET',
@@ -6447,12 +6456,10 @@ var StickersPanel = (function (_super) {
             }).then(function (response) {
                 response.json().then(function (json) {
                     var flow = new FlowControl(2, true);
-                    _this.clear();
-                    _this.loadCategories();
+                    _this.removeChild(2);
                     _this.stickers[category] = json.map(function (item) { return new StickerControl(item); });
                     _this.stickers[category].map(function (sticker) { return flow.append(sticker); });
                     _this.append(flow);
-                    flow = null;
                 });
             }).catch(function (error) {
                 console.log(error);
@@ -6461,8 +6468,7 @@ var StickersPanel = (function (_super) {
         }
         else {
             var flow_1 = new FlowControl(2, true);
-            this.clear();
-            this.loadCategories();
+            this.removeChild(2);
             this.stickers[category].map(function (sticker) { return flow_1.append(sticker); });
             this.append(flow_1);
         }
@@ -6979,7 +6985,7 @@ var Pager = (function (_super) {
         this.clear();
         this.append(new Spacer());
         if (Constructor.instance.is2D() && Constructor.instance.sides.length > 1) {
-            var _loop_3 = function (i) {
+            var _loop_2 = function (i) {
                 var side = this_2.c.sides[i];
                 this_2.append(new ToggleButton(function () {
                     Constructor.instance.setActiveSide(i);
@@ -6990,7 +6996,7 @@ var Pager = (function (_super) {
             };
             var this_2 = this;
             for (var i = 0; i < this.c.sides.length; i++) {
-                _loop_3(i);
+                _loop_2(i);
             }
         }
         this.append(new Spacer());

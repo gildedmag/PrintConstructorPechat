@@ -29,24 +29,35 @@ class StickersPanel extends TriggeredUIControl<Constructor> {
                 new Spacer(),
             ),
         );
-        if (constructorConfiguration.stickerCategories) {
-            let flow = new FlowControl(2, true);
-            for (let i = 0; i < constructorConfiguration.stickerCategories.length; i++) {
 
+        if (constructorConfiguration.stickerCategories) {
+            let categories = [];
+            for (let i = 0; i < constructorConfiguration.stickerCategories.length; i++) {
                 let category = constructorConfiguration.stickerCategories[i];
-                flow.append(
-                    new Button(() => {
-                        this.category = +category.id;
-                        this.loadStickers(+category.id);
-                        this.update();
-                    }, null, category.name)
-                )
+                categories.push({
+                    value: category.id,
+                    text: category.name,
+                });
             }
+
+            let flow = new FlowControl(2, true);
+            flow.append(new SelectControl(
+                 value => {
+                    this.loadStickers(+value);
+                },
+                () => +categories[0].value,
+                null,
+                null,
+                null,
+                () => categories
+            ))
             this.append(flow);
+            this.loadStickers(+categories[0].value);
         }
     }
 
     loadStickers(category: number) {
+        this.category = +category;
         if (!this.stickers[category]) {
             fetch(`/index.php?route=constructor/constructor/getCliparts&category=${category}`, {
                 method: 'GET',
@@ -56,13 +67,11 @@ class StickersPanel extends TriggeredUIControl<Constructor> {
             }).then(response => {
                 response.json().then(json => {
                     let flow = new FlowControl(2, true);
-
-                    this.clear();
-                    this.loadCategories();
+                    this.removeChild(2);
                     this.stickers[category] = json.map(item => new StickerControl(item));
                     this.stickers[category].map(sticker => flow.append(sticker));
                     this.append(flow);
-                    flow = null;
+
                 })
             }).catch(error => {
                 console.log(error);
@@ -70,8 +79,7 @@ class StickersPanel extends TriggeredUIControl<Constructor> {
             })
         } else {
             let flow = new FlowControl(2, true);
-            this.clear();
-            this.loadCategories();
+            this.removeChild(2);
             this.stickers[category].map(sticker => flow.append(sticker));
             this.append(flow);
         }

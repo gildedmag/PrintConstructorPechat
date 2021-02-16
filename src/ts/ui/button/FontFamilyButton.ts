@@ -36,6 +36,7 @@ class FontFamilyButton extends TriggeredUIControl<Constructor> {
 
         this.container.onclick = () => {
             this.c.getSelection().setFontFamily(fontFamily, true);
+            this.c.getSelection().setColor(this.c.getSelection().getColor().toHex());
             //console.log("font", fontFamily);
         }
     }

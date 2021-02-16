@@ -3,14 +3,14 @@ class SelectControl extends TriggeredUIControl<Constructor> {
 
     getter: () => any;
     setter: (any) => any;
-    values: string[] = [];
-    valuesGetter?: () => string[];
+    values: { value, text }[] | string[]  = [];
+    valuesGetter?: () => { value, text }[] | string[];
 
     getClassName(): string {
         return super.getClassName() + " select";
     }
 
-    constructor(setter: (any) => any, getter: () => any, min?: number, max?: number, step?: number, valuesGetter?: () => string[]) {
+    constructor(setter: (any) => any, getter: () => any, min?: number, max?: number, step?: number, valuesGetter?: () => { value, text }[] | string[]) {
         super(Constructor.instance, "select");
         if (valuesGetter){
             this.valuesGetter = valuesGetter;
@@ -46,8 +46,8 @@ class SelectControl extends TriggeredUIControl<Constructor> {
                 this.container.innerHTML = '';
                 for (let i = 0; i < this.values.length; i++) {
                     let option: HTMLOptionElement = document.createElement("option")
-                    option.value = i;
-                    option.innerText = this.values[i];
+                    option.value = this.values[i].value ? this.values[i].value : i;
+                    option.innerText = this.values[i].text  ? this.values[i].text : this.values[i];
                     this.container.appendChild(option);
                 }
             }
