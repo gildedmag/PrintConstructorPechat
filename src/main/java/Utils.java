@@ -50,16 +50,16 @@ public class Utils {
         return buffer.toByteArray();
     }
 
-    public static void copyResource(String source, String target) {
-        copyResource(source, target, false);
+    public static void copyResource(String source, String target, boolean overwrite) {
+        copyResource(source, target, false, overwrite);
     }
 
-    public static void copyResource(String source, String target, boolean setExecutable) {
+    public static void copyResource(String source, String target, boolean setExecutable, boolean overwrite) {
         Path path = Paths.get(target);
         File file = path.toFile();
-        if (!file.exists()) {
+        if (overwrite || !file.exists()) {
             try {
-                Files.copy(getStream(source), path, StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(getStream(source), path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

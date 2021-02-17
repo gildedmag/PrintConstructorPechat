@@ -22,6 +22,7 @@ public class App {
     Endpoint previewEndpoint;
     Endpoint animationEndpoint;
     Endpoint quitEndpoint;
+    Endpoint logsEndpoint;
 
     public App() {
         started = System.currentTimeMillis();
@@ -30,11 +31,12 @@ public class App {
         previewEndpoint = new PreviewEndpoint(this);
         animationEndpoint = new AnimationEndpoint(this);
         quitEndpoint = new QuitEndpoint(this);
+        logsEndpoint = new LogsEndpoint(this);
         executor.execute(this::listen);
         Utils.trace("init");
-        //Utils.copyResource("renderer.html", Settings.CONSTRUCTOR_DIR + "/renderer.html");
-//        System.out.println(Utils.getJatPath() + "/renderer.html");
-//        Utils.copyResource("renderer.html",  "/" + Utils.getJatPath() + "/renderer.html");
+        Utils.copyResource("renderer.html", Settings.CONSTRUCTOR_DIR + "/renderer.html", true);
+        System.out.println(Utils.getJatPath() + "/renderer.html");
+        //Utils.copyResource("renderer.html",  "/" + Utils.getJatPath() + "/renderer.html");
         killChromeProcesses();
         constructorPool.init();
         Utils.trace("init");
@@ -98,6 +100,7 @@ public class App {
             server.createContext("/animation", animationEndpoint);
             server.createContext("/quit", quitEndpoint);
             server.createContext("/exit", quitEndpoint);
+            server.createContext("/logs", logsEndpoint);
             server.setExecutor(executor);
             server.start();
         } catch (IOException e) {

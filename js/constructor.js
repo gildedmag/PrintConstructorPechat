@@ -41,7 +41,7 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
     return function (d, b) {
@@ -183,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "18.01.2021 15:14";
+    Version.version = "16.02.2021 12:52";
     return Version;
 }());
 var Trigger = (function () {
@@ -5988,7 +5988,7 @@ var LayerUIControl = (function (_super) {
             var fontFamily = this.trigger.getFontFamily();
             defs =
                 '<defs>' +
-                    '   <style type="text/css">@import url(\'' + '/catalog/view/theme/default/stylesheet/photobook/loaded_fonts.css\');</style>' +
+                    '   <style type="text/css">@import url(\'' + '/catalog/view/theme/pechatphoto/stylesheet/custom-fonts.css\');</style>' +
                     '</defs>';
         }
         var w = this.trigger.object.width * this.trigger.object.scaleX;

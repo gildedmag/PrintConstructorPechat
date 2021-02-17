@@ -40,7 +40,7 @@ public class ConstructorPool {
 
     public Constructor create(String modelName){
         ChromeDriver driver = new ChromeDriver(options);
-        driver.setLogLevel(Level.SEVERE);
+        driver.setLogLevel(Level.INFO);
         Constructor constructor = new Constructor(driver);
         if (modelName != null) constructor.loadModel(modelName);
         constructor.setSize(Settings.DEFAULT_WIDTH, Settings.DEFAULT_HEIGHT);

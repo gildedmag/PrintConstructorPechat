@@ -1,9 +1,18 @@
+import org.apache.commons.codec.binary.Base64;
 import org.openqa.selenium.Dimension;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.logging.LogEntries;
 import org.openqa.selenium.logging.LogEntry;
 import org.openqa.selenium.logging.LogType;
+import org.openqa.selenium.remote.Augmenter;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +46,33 @@ public class Constructor {
         driver.manage().timeouts().setScriptTimeout(5, TimeUnit.SECONDS);
         driver.executeScript("Constructor.settings.localStorage.enabled=false;");
         updateVersion();
+    }
+
+    public String captureScreen() {
+        try {
+            WebDriver augmentedDriver = new Augmenter().augment(driver);
+            File file = ((TakesScreenshot)augmentedDriver).getScreenshotAs(OutputType.FILE);
+            return file.getAbsolutePath();
+        }
+        catch(Exception e) {
+            return e.getMessage();
+        }
+    }
+
+    public String getLogs(){
+        StringBuilder logs = new StringBuilder();
+        for (String logType : this.driver.manage().logs().getAvailableLogTypes()) {
+            logs
+                    .append("<br><b>")
+                    .append(logType)
+                    .append("</b><br><br>");
+            for (LogEntry entry : this.driver.manage().logs().get(logType).getAll()) {
+                logs.append(entry)
+                        .append("<br>");
+            }
+        }
+        logs.append("<br><br>");
+        return logs.toString();
     }
 
     public void setSize(int width, int height) {
@@ -86,6 +122,10 @@ public class Constructor {
 
     public String getState() {
         return (String) driver.executeScript("return c.getState(true)");
+    }
+
+    public String getHtml() {
+        return (String) driver.executeScript("return document.documentElement.innerHTML");
     }
 
     public boolean loadModel(String modelName) {
