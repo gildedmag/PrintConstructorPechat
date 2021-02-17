@@ -30,5 +30,5 @@ DIR=${CONSTRUCTOR_REMOTE_RENDER_DIR}
 DEST="${CONSTRUCTOR_REMOTE_USER}@${CONSTRUCTOR_REMOTE_HOST}:${CONSTRUCTOR_REMOTE_RENDER_DIR}"
 rsync --update --progress build/render $DEST
 
-#ssh -l ${USER} ${HOST} "systemctl restart render"
-#ssh -l ${USER} ${HOST} "${DIR}render -v"
+ssh -l ${USER} ${HOST} "systemctl restart render"
+ssh -l ${USER} ${HOST} "${DIR}render -v"
