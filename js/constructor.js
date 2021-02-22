@@ -41,7 +41,7 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
     return function (d, b) {
@@ -947,6 +947,7 @@ var Constructor = (function (_super) {
         element.object.setOptions(Constructor.settings.elementDefaults[type.getNativeTypeName()]);
         element.randomizePosition();
         element.setColor(Color.random());
+        ConstructorUI.instance.order.changed();
         return element;
     };
     Constructor.prototype.addText = function (value) {
@@ -954,6 +955,7 @@ var Constructor = (function (_super) {
         if (value) {
             element.setText(value);
         }
+        ConstructorUI.instance.order.changed();
         return element;
     };
     Constructor.prototype.addImage = function (src, callback) {
@@ -972,6 +974,7 @@ var Constructor = (function (_super) {
             element.changed();
             callback && callback(element);
         });
+        ConstructorUI.instance.order.changed();
         return element;
     };
     Constructor.prototype.getModelName = function () {
@@ -986,6 +989,7 @@ var Constructor = (function (_super) {
     Constructor.prototype.remove = function () {
         if (this.getSelection()) {
             this.getActiveSide().remove(this.getSelection());
+            ConstructorUI.instance.order.changed();
         }
     };
     Constructor.prototype.copy = function () {
@@ -3937,6 +3941,7 @@ var Side2D = (function (_super) {
         this.deselect();
         this.canvas.renderAll();
         this.saveState();
+        ConstructorUI.instance.order.changed();
     };
     Side2D.prototype.getPointSize = function () {
         return 96 / 72 * this.getZoom();
@@ -6977,7 +6982,7 @@ var Pager = (function (_super) {
         }
         var sideNames = [];
         for (var i = 0; i < Constructor.instance.sides.length; i++) {
-            sideNames.push(Constructor.instance.sides[i].name);
+            sideNames.push(Constructor.instance.sides[i].name + ("(" + Constructor.instance.sides[i].price + ")"));
         }
         if (this.sideNames == sideNames) {
             return;
@@ -6992,7 +6997,7 @@ var Pager = (function (_super) {
                     _this.index = i;
                 }, function () {
                     return Constructor.instance.getActiveSide().getIndex() === i;
-                }, null, null, null, side.getName()));
+                }, null, null, null, side.getName() + ((+side.price > 0) ? "(" + (side.price + LocalizedStrings.translate('$')) + ")" : '')));
             };
             var this_2 = this;
             for (var i = 0; i < this.c.sides.length; i++) {

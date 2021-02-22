@@ -222,6 +222,7 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         this.deselect();
         this.canvas.renderAll();
         this.saveState();
+        ConstructorUI.instance.order.changed();
     }
 
     getPointSize(): number {

@@ -21,7 +21,7 @@ class Pager extends TriggeredUIControl<Constructor> {
         }
         let sideNames = [];
         for (let i = 0; i < Constructor.instance.sides.length; i++){
-            sideNames.push(Constructor.instance.sides[i].name);
+                sideNames.push(Constructor.instance.sides[i].name + `(${Constructor.instance.sides[i].price})`);
         }
         if (this.sideNames == sideNames){
             return;
@@ -45,7 +45,7 @@ class Pager extends TriggeredUIControl<Constructor> {
                         null,
                         null,
                         null,
-                        side.getName()
+                        side.getName() + ((+side.price > 0) ? `(${side.price + LocalizedStrings.translate('$')})` : '')
                     )
                 );
             }
