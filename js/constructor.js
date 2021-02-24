@@ -3991,6 +3991,7 @@ var Side2D = (function (_super) {
         this.canvas.clear();
         this.canvas.add(this.horizontalGuide);
         this.canvas.add(this.verticalGuide);
+        ConstructorUI.instance.order.changed();
         this.saveState();
     };
     Side2D.prototype.removeElements = function () {
