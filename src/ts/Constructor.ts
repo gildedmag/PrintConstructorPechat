@@ -363,7 +363,7 @@ class Constructor extends View<Constructor> {
         element.object.setOptions(Constructor.settings.elementDefaults[type.getNativeTypeName()]);
         element.randomizePosition();
         element.setColor(Color.random());
-        ConstructorUI.instance.order.changed();
+        // TODO: need to calculate price
         return element;
     }
 
@@ -372,7 +372,7 @@ class Constructor extends View<Constructor> {
         if (value){
             element.setText(value);
         }
-        ConstructorUI.instance.order.changed();
+        // TODO: need to calculate price
         return element;
     }
 
@@ -391,7 +391,7 @@ class Constructor extends View<Constructor> {
             element.changed();
             callback && callback(element)
         });
-        ConstructorUI.instance.order.changed();
+        // TODO: need to calculate price
         return element;
     }
 
@@ -413,7 +413,8 @@ class Constructor extends View<Constructor> {
     remove() {
         if (this.getSelection()) {
             this.getActiveSide().remove(this.getSelection());
-            ConstructorUI.instance.order.changed();
+            // TODO: need to calculate price
+            this.changed();
         }
     }
 

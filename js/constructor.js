@@ -947,7 +947,7 @@ var Constructor = (function (_super) {
         element.object.setOptions(Constructor.settings.elementDefaults[type.getNativeTypeName()]);
         element.randomizePosition();
         element.setColor(Color.random());
-        ConstructorUI.instance.order.changed();
+        this.changed();
         return element;
     };
     Constructor.prototype.addText = function (value) {
@@ -955,7 +955,7 @@ var Constructor = (function (_super) {
         if (value) {
             element.setText(value);
         }
-        ConstructorUI.instance.order.changed();
+        this.changed();
         return element;
     };
     Constructor.prototype.addImage = function (src, callback) {
@@ -974,7 +974,7 @@ var Constructor = (function (_super) {
             element.changed();
             callback && callback(element);
         });
-        ConstructorUI.instance.order.changed();
+        this.changed();
         return element;
     };
     Constructor.prototype.getModelName = function () {
@@ -989,7 +989,7 @@ var Constructor = (function (_super) {
     Constructor.prototype.remove = function () {
         if (this.getSelection()) {
             this.getActiveSide().remove(this.getSelection());
-            ConstructorUI.instance.order.changed();
+            this.changed();
         }
     };
     Constructor.prototype.copy = function () {
@@ -3941,7 +3941,7 @@ var Side2D = (function (_super) {
         this.deselect();
         this.canvas.renderAll();
         this.saveState();
-        ConstructorUI.instance.order.changed();
+        this.changed();
     };
     Side2D.prototype.getPointSize = function () {
         return 96 / 72 * this.getZoom();
@@ -3991,7 +3991,7 @@ var Side2D = (function (_super) {
         this.canvas.clear();
         this.canvas.add(this.horizontalGuide);
         this.canvas.add(this.verticalGuide);
-        ConstructorUI.instance.order.changed();
+        this.changed();
         this.saveState();
     };
     Side2D.prototype.removeElements = function () {
@@ -6461,7 +6461,7 @@ var StickersPanel = (function (_super) {
                 }
             }).then(function (response) {
                 response.json().then(function (json) {
-                    var flow = new FlowControl(2, true);
+                    var flow = new FlowControl(4, true);
                     _this.removeChild(2);
                     _this.stickers[category] = json.map(function (item) { return new StickerControl(item); });
                     _this.stickers[category].map(function (sticker) { return flow.append(sticker); });
@@ -6473,7 +6473,7 @@ var StickersPanel = (function (_super) {
             });
         }
         else {
-            var flow_1 = new FlowControl(2, true);
+            var flow_1 = new FlowControl(4, true);
             this.removeChild(2);
             this.stickers[category].map(function (sticker) { return flow_1.append(sticker); });
             this.append(flow_1);
