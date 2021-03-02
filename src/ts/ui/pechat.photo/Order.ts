@@ -1,6 +1,6 @@
 import ConstructorModelOption = pechat.ConstructorModelOption;
 
-class Order extends Trigger<Order> {
+class Order extends Trigger<Constructor> {
 
     static max = 999;
 
