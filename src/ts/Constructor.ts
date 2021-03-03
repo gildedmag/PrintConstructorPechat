@@ -46,7 +46,13 @@ class Constructor extends View<Constructor> {
 
     static onReadyHandler = () => true;
     static onReady(handler: () => any){
-        Constructor.onReadyHandler = handler();
+        Constructor.onReadyHandler = handler;
+    }
+
+    //Additional update event handling
+    static onUpdateHandlers: [() => any] = [];
+    static onUpdate(handler: () => any){
+        Constructor.onUpdateHandlers.push(handler);
     }
 
     /**
@@ -90,6 +96,7 @@ class Constructor extends View<Constructor> {
             this.addSide(width, height);
         }
         this.preview.hide();
+        console.log(Constructor.onReadyHandler);
         Constructor.onReadyHandler && Constructor.onReadyHandler();
         this.background = this.container.style.background;
         this.container.style.background = null;
@@ -363,6 +370,7 @@ class Constructor extends View<Constructor> {
         element.object.setOptions(Constructor.settings.elementDefaults[type.getNativeTypeName()]);
         element.randomizePosition();
         element.setColor(Color.random());
+        this.changed();
         return element;
     }
 
@@ -390,6 +398,12 @@ class Constructor extends View<Constructor> {
             callback && callback(element)
         });
         return element;
+    }
+
+
+    changed() {
+        super.changed();
+        Constructor.onUpdateHandlers.forEach(handler => handler());
     }
 
     getModelName(): string {

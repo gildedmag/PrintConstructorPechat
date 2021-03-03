@@ -38,9 +38,12 @@ var Associated = (function () {
     return Associated;
 }());
 var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
     return function (d, b) {
         extendStatics(d, b);
         function __() { this.constructor = d; }
@@ -180,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "02.03.2021 13:32";
+    Version.version = "03.03.2021 12:44";
     return Version;
 }());
 var Trigger = (function () {
@@ -737,6 +740,7 @@ var Constructor = (function (_super) {
             _this.addSide(width, height);
         }
         _this.preview.hide();
+        console.log(Constructor.onReadyHandler);
         Constructor.onReadyHandler && Constructor.onReadyHandler();
         _this.background = _this.container.style.background;
         _this.container.style.background = null;
@@ -751,7 +755,10 @@ var Constructor = (function (_super) {
         return _this;
     }
     Constructor.onReady = function (handler) {
-        Constructor.onReadyHandler = handler();
+        Constructor.onReadyHandler = handler;
+    };
+    Constructor.onUpdate = function (handler) {
+        Constructor.onUpdateHandlers.push(handler);
     };
     Constructor.prototype.loadModel = function (modelName, callback, error) {
         Utils.logMethodName();
@@ -944,6 +951,7 @@ var Constructor = (function (_super) {
         element.object.setOptions(Constructor.settings.elementDefaults[type.getNativeTypeName()]);
         element.randomizePosition();
         element.setColor(Color.random());
+        this.changed();
         return element;
     };
     Constructor.prototype.addText = function (value) {
@@ -970,6 +978,10 @@ var Constructor = (function (_super) {
             callback && callback(element);
         });
         return element;
+    };
+    Constructor.prototype.changed = function () {
+        _super.prototype.changed.call(this);
+        Constructor.onUpdateHandlers.forEach(function (handler) { return handler(); });
     };
     Constructor.prototype.getModelName = function () {
         return this.preview.modelName;
@@ -1103,6 +1115,7 @@ var Constructor = (function (_super) {
     Constructor.settings = new Settings();
     Constructor.zoomStep = 0.1;
     Constructor.onReadyHandler = function () { return true; };
+    Constructor.onUpdateHandlers = [];
     return Constructor;
 }(View));
 var ConstructorState = (function () {
@@ -5019,10 +5032,11 @@ var Divider = (function (_super) {
     return Divider;
 }(UIControl));
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -5033,8 +5047,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
         while (_) try {
-            if (f = 1, y && (t = y[op[0] & 2 ? "return" : op[0] ? "throw" : "next"]) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [0, t.value];
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
                 case 0: case 1: t = op; break;
                 case 4: _.label++; return { value: op[1], done: false };
@@ -5625,20 +5639,6 @@ var SelectControl = (function (_super) {
     };
     return SelectControl;
 }(TriggeredUIControl));
-var SelectionColorControl = (function (_super) {
-    __extends(SelectionColorControl, _super);
-    function SelectionColorControl(label, setter, getter, max, step) {
-        var _this = _super.call(this) || this;
-        _this.append(new Row(new LabelControl(label), new Spacer(), new ColorControl(setter, getter)));
-        return _this;
-    }
-    SelectionColorControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " property-control color";
-    };
-    SelectionColorControl.prototype.update = function () {
-    };
-    return SelectionColorControl;
-}(UIControl));
 var SelectPropertyControl = (function (_super) {
     __extends(SelectPropertyControl, _super);
     function SelectPropertyControl(label, setter, getter, min, max, step) {
@@ -5665,6 +5665,20 @@ var SelectRangePropertyControl = (function (_super) {
         return _super.prototype.getClassName.call(this) + " property-control";
     };
     return SelectRangePropertyControl;
+}(UIControl));
+var SelectionColorControl = (function (_super) {
+    __extends(SelectionColorControl, _super);
+    function SelectionColorControl(label, setter, getter, max, step) {
+        var _this = _super.call(this) || this;
+        _this.append(new Row(new LabelControl(label), new Spacer(), new ColorControl(setter, getter)));
+        return _this;
+    }
+    SelectionColorControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " property-control color";
+    };
+    SelectionColorControl.prototype.update = function () {
+    };
+    return SelectionColorControl;
 }(UIControl));
 var TogglePropertyControl = (function (_super) {
     __extends(TogglePropertyControl, _super);
@@ -5807,104 +5821,6 @@ var FontFamilyPanel = (function (_super) {
         return list;
     };
     return FontFamilyPanel;
-}(TriggeredUIControl));
-var LayersPanelUIControl = (function (_super) {
-    __extends(LayersPanelUIControl, _super);
-    function LayersPanelUIControl() {
-        var _this = _super.call(this, Constructor.instance) || this;
-        _this.update();
-        return _this;
-    }
-    LayersPanelUIControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " layers-panel";
-    };
-    LayersPanelUIControl.prototype.update = function () {
-        var _this = this;
-        if (this.children.length - 1 != this.c.sides.length) {
-            this.clear();
-            for (var i = 0; i < this.trigger.sides.length; i++) {
-                var side = this.trigger.sides[i];
-                this.append(new LayersUIControl(side));
-            }
-            this.append(new Row(new ConditionalButton(function () { return Constructor.instance.getActiveSide().clear(); }, function () { return !Constructor.instance.getActiveSide() || !_this.c.getActiveSide().isEmpty(); }, null, "Clear Side")));
-        }
-    };
-    return LayersPanelUIControl;
-}(TriggeredUIControl));
-var LayersUIControl = (function (_super) {
-    __extends(LayersUIControl, _super);
-    function LayersUIControl(side) {
-        var _this = _super.call(this, side) || this;
-        _this.isUpdating = false;
-        _this.update();
-        return _this;
-    }
-    LayersUIControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " layers vertical";
-    };
-    LayersUIControl.prototype.update = function () {
-        if (!this.isVisible() || this.isUpdating) {
-            return;
-        }
-        var layerControls = this.children;
-        var layers = this.trigger.getLayers();
-        if (layers.length != layerControls.length) {
-            this.repopulate();
-            return;
-        }
-        for (var i = 0; i < layers.length; i++) {
-            var controlLayer = layerControls[i] || null;
-            var sideLayer = layers[i];
-            if (!controlLayer || controlLayer.trigger != sideLayer) {
-                this.repopulate();
-                return;
-            }
-        }
-        this.updateVisibility();
-    };
-    LayersUIControl.prototype.getLayerControls = function () {
-        var layerControls = [];
-        for (var i = 0; i < this.children.length; i++) {
-            if (this.children[i] instanceof LayerUIControl) {
-                layerControls.push(this.children[i]);
-            }
-        }
-        return layerControls;
-    };
-    LayersUIControl.prototype.clear = function () {
-        this.getElement().innerHTML = "";
-    };
-    LayersUIControl.prototype.repopulate = function () {
-        this.isUpdating = true;
-        var scroll;
-        try {
-            scroll = this.container.parentElement.parentElement.scrollTop;
-        }
-        catch (e) {
-        }
-        this.clear();
-        var layers = this.trigger.getLayers();
-        for (var i = 0; i < layers.length; i++) {
-            this.append(new LayerUIControl(layers[i], this));
-        }
-        if (scroll) {
-            this.container.parentElement.parentElement.scrollTop = scroll;
-        }
-        this.updateVisibility();
-        this.isUpdating = false;
-    };
-    LayersUIControl.prototype.updateVisibility = function () {
-        if (this.isVisible() != this.trigger.isVisible()) {
-            if (!this.isVisible()) {
-                this.show();
-                this.repopulate();
-            }
-            else {
-                this.hide();
-            }
-        }
-    };
-    return LayersUIControl;
 }(TriggeredUIControl));
 var LayerUIControl = (function (_super) {
     __extends(LayerUIControl, _super);
@@ -6110,6 +6026,104 @@ var LayerUIControl = (function (_super) {
     LayerUIControl.dragTo = 0;
     LayerUIControl.touchStart = 0;
     return LayerUIControl;
+}(TriggeredUIControl));
+var LayersPanelUIControl = (function (_super) {
+    __extends(LayersPanelUIControl, _super);
+    function LayersPanelUIControl() {
+        var _this = _super.call(this, Constructor.instance) || this;
+        _this.update();
+        return _this;
+    }
+    LayersPanelUIControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " layers-panel";
+    };
+    LayersPanelUIControl.prototype.update = function () {
+        var _this = this;
+        if (this.children.length - 1 != this.c.sides.length) {
+            this.clear();
+            for (var i = 0; i < this.trigger.sides.length; i++) {
+                var side = this.trigger.sides[i];
+                this.append(new LayersUIControl(side));
+            }
+            this.append(new Row(new ConditionalButton(function () { return Constructor.instance.getActiveSide().clear(); }, function () { return !Constructor.instance.getActiveSide() || !_this.c.getActiveSide().isEmpty(); }, null, "Clear Side")));
+        }
+    };
+    return LayersPanelUIControl;
+}(TriggeredUIControl));
+var LayersUIControl = (function (_super) {
+    __extends(LayersUIControl, _super);
+    function LayersUIControl(side) {
+        var _this = _super.call(this, side) || this;
+        _this.isUpdating = false;
+        _this.update();
+        return _this;
+    }
+    LayersUIControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " layers vertical";
+    };
+    LayersUIControl.prototype.update = function () {
+        if (!this.isVisible() || this.isUpdating) {
+            return;
+        }
+        var layerControls = this.children;
+        var layers = this.trigger.getLayers();
+        if (layers.length != layerControls.length) {
+            this.repopulate();
+            return;
+        }
+        for (var i = 0; i < layers.length; i++) {
+            var controlLayer = layerControls[i] || null;
+            var sideLayer = layers[i];
+            if (!controlLayer || controlLayer.trigger != sideLayer) {
+                this.repopulate();
+                return;
+            }
+        }
+        this.updateVisibility();
+    };
+    LayersUIControl.prototype.getLayerControls = function () {
+        var layerControls = [];
+        for (var i = 0; i < this.children.length; i++) {
+            if (this.children[i] instanceof LayerUIControl) {
+                layerControls.push(this.children[i]);
+            }
+        }
+        return layerControls;
+    };
+    LayersUIControl.prototype.clear = function () {
+        this.getElement().innerHTML = "";
+    };
+    LayersUIControl.prototype.repopulate = function () {
+        this.isUpdating = true;
+        var scroll;
+        try {
+            scroll = this.container.parentElement.parentElement.scrollTop;
+        }
+        catch (e) {
+        }
+        this.clear();
+        var layers = this.trigger.getLayers();
+        for (var i = 0; i < layers.length; i++) {
+            this.append(new LayerUIControl(layers[i], this));
+        }
+        if (scroll) {
+            this.container.parentElement.parentElement.scrollTop = scroll;
+        }
+        this.updateVisibility();
+        this.isUpdating = false;
+    };
+    LayersUIControl.prototype.updateVisibility = function () {
+        if (this.isVisible() != this.trigger.isVisible()) {
+            if (!this.isVisible()) {
+                this.show();
+                this.repopulate();
+            }
+            else {
+                this.hide();
+            }
+        }
+    };
+    return LayersUIControl;
 }(TriggeredUIControl));
 var NewElementPanel = (function (_super) {
     __extends(NewElementPanel, _super);
@@ -6480,6 +6494,13 @@ var StickersPanel = (function (_super) {
     };
     return StickersPanel;
 }(TriggeredUIControl));
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
 var OptionButton = (function (_super) {
     __extends(OptionButton, _super);
     function OptionButton(value, parent) {
@@ -6520,11 +6541,12 @@ var OptionButton = (function (_super) {
         return _super.prototype.getClassName.call(this) + " ";
     };
     OptionButton.prototype.select = function () {
+        var _a;
         var fillsArray;
         var order = ConstructorUI.instance.order;
         if (this.value.zalivka) {
             fillsArray = this.value.zalivka.split(',').map(function (s) { return parseInt(s); });
-            (_a = Constructor.instance.preview).setFills.apply(_a, [null].concat(fillsArray));
+            (_a = Constructor.instance.preview).setFills.apply(_a, __spreadArrays([null], fillsArray));
         }
         if (order.hasOption(this.value)) {
             ConstructorUI.instance.order.removeSelectedOption(this.value);
@@ -6537,17 +6559,16 @@ var OptionButton = (function (_super) {
         if (this.value.zalivka) {
             this.setFillsAsync(fillsArray);
         }
-        var _a;
     };
     OptionButton.prototype.setFillsAsync = function (fillsArray) {
+        var _a;
         var _this = this;
         if (Constructor.instance.preview.isLoaded) {
-            (_a = Constructor.instance.preview).setFills.apply(_a, [this.value.constructor_value].concat(fillsArray));
+            (_a = Constructor.instance.preview).setFills.apply(_a, __spreadArrays([this.value.constructor_value], fillsArray));
         }
         else {
             setTimeout(function () { return _this.setFillsAsync(fillsArray); }, 100);
         }
-        var _a;
     };
     OptionButton.prototype.isSelected = function () {
         return ConstructorUI.instance.order.hasOption(this.value);
