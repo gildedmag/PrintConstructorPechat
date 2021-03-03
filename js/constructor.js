@@ -183,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "03.03.2021 12:44";
+    Version.version = "03.03.2021 12:47";
     return Version;
 }());
 var Trigger = (function () {
@@ -6606,6 +6606,7 @@ var Order = (function (_super) {
         _this.discountPricePerItem = 0;
         _this.samplesHtml = '';
         _this.changed();
+        Constructor.onUpdate(function () { return ConstructorUI.instance.order.changed(); });
         return _this;
     }
     Order.prototype.hasDiscount = function () {
