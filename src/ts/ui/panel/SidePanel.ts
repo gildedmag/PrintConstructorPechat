@@ -6,7 +6,7 @@ class SidePanel extends ToolBar {
     newElementPanel: NewElementPanel;
     selectionPanel: SelectionPanel;
     fontFamilyPanel: FontFamilyPanel;
-    modelsPanel: ModelsPanel;
+    modelsPanel: ModelsPanel = new ModelsPanel();   //TODO: initialize all panels same way
     samplesPanel: SamplesPanel;
     optionsPanel: OptionsPanel;
     filtersPanel: FiltersPanel;
@@ -24,7 +24,6 @@ class SidePanel extends ToolBar {
         this.selectionPanel = new SelectionPanel();
         this.newElementPanel = new NewElementPanel();
         this.fontFamilyPanel = new FontFamilyPanel();
-        this.modelsPanel = new ModelsPanel();
         this.samplesPanel = new SamplesPanel();
         this.optionsPanel = new OptionsPanel();
         this.filtersPanel = new FiltersPanel();

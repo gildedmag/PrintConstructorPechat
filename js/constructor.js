@@ -183,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "03.03.2021 12:47";
+    Version.version = "03.03.2021 16:12";
     return Version;
 }());
 var Trigger = (function () {
@@ -4844,6 +4844,7 @@ var ConstructorUI = (function (_super) {
         }
         else {
             ConstructorUI.instance.sidePanel.layersPanel.show();
+            ConstructorUI.instance.sidePanel.layersPanel.update(true);
         }
     };
     ConstructorUI.prototype.createSides = function (printareas) {
@@ -6037,9 +6038,10 @@ var LayersPanelUIControl = (function (_super) {
     LayersPanelUIControl.prototype.getClassName = function () {
         return _super.prototype.getClassName.call(this) + " layers-panel";
     };
-    LayersPanelUIControl.prototype.update = function () {
+    LayersPanelUIControl.prototype.update = function (force) {
         var _this = this;
-        if (this.children.length - 1 != this.c.sides.length) {
+        if (force === void 0) { force = false; }
+        if (force || this.children.length - 1 != this.c.sides.length) {
             this.clear();
             for (var i = 0; i < this.trigger.sides.length; i++) {
                 var side = this.trigger.sides[i];
@@ -6047,6 +6049,9 @@ var LayersPanelUIControl = (function (_super) {
             }
             this.append(new Row(new ConditionalButton(function () { return Constructor.instance.getActiveSide().clear(); }, function () { return !Constructor.instance.getActiveSide() || !_this.c.getActiveSide().isEmpty(); }, null, "Clear Side")));
         }
+    };
+    LayersPanelUIControl.prototype.updateVisibility = function () {
+        this.trigger.is2D() ? this.show() : this.hide();
     };
     return LayersPanelUIControl;
 }(TriggeredUIControl));
@@ -6394,12 +6399,12 @@ var SidePanel = (function (_super) {
     __extends(SidePanel, _super);
     function SidePanel() {
         var _this = _super.call(this) || this;
+        _this.modelsPanel = new ModelsPanel();
         _this.layersPanel = new LayersPanelUIControl();
         _this.stickersPanel = new StickersPanel();
         _this.selectionPanel = new SelectionPanel();
         _this.newElementPanel = new NewElementPanel();
         _this.fontFamilyPanel = new FontFamilyPanel();
-        _this.modelsPanel = new ModelsPanel();
         _this.samplesPanel = new SamplesPanel();
         _this.optionsPanel = new OptionsPanel();
         _this.filtersPanel = new FiltersPanel();

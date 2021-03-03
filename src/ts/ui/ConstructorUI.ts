@@ -232,6 +232,7 @@ class ConstructorUI extends UIControl {
             ConstructorUI.instance.sidePanel.newElementPanel.show();
         } else {
             ConstructorUI.instance.sidePanel.layersPanel.show();
+            ConstructorUI.instance.sidePanel.layersPanel.update(true);
         }
     }
 
