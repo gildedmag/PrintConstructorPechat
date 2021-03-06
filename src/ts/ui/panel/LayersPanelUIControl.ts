@@ -10,8 +10,8 @@ class LayersPanelUIControl extends TriggeredUIControl<Constructor> {
         this.update()
     }
 
-    update() {
-        if (this.children.length - 1 != this.c.sides.length) {
+    update(force: boolean = false) {
+        if (force || this.children.length - 1 != this.c.sides.length) {
             this.clear();
             for (let i = 0; i < this.trigger.sides.length; i++) {
                 let side = this.trigger.sides[i];
@@ -30,8 +30,8 @@ class LayersPanelUIControl extends TriggeredUIControl<Constructor> {
         }
     }
 
-// updateVisibility() {
-    //     this.trigger.is2D() ? this.show() : this.hide();
-    // }
+    updateVisibility() {
+        this.trigger.is2D() ? this.show() : this.hide();
+    }
 
 }

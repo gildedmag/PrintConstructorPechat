@@ -1,6 +1,6 @@
 import ConstructorModelOption = pechat.ConstructorModelOption;
 
-class Order extends Trigger<Order> {
+class Order extends Trigger<Constructor> {
 
     static max = 999;
 
@@ -13,6 +13,7 @@ class Order extends Trigger<Order> {
     constructor() {
         super();
         this.changed();
+        Constructor.onUpdate(() => ConstructorUI.instance.order.changed());
     }
 
     hasDiscount(): boolean {
