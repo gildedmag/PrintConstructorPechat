@@ -109,7 +109,6 @@ class StickersPanel extends TriggeredUIControl<Constructor> {
         image.onload = () => {
             image.removeAttribute("data-src")
         }
-        //image.removeAttribute("data-src")
     }
 
     showed() {
