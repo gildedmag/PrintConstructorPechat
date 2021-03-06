@@ -4,6 +4,7 @@ class StickersPanel extends TriggeredUIControl<Constructor> {
     flow: FlowControl;
     category: number;
     stickers = {};
+    observer: IntersectionObserver;
 
     getClassName(): string {
         return super.getClassName() + " stickers-panel vertical";
@@ -13,6 +14,19 @@ class StickersPanel extends TriggeredUIControl<Constructor> {
         super(Constructor.instance);
         this.loadCategories();
         this.update();
+        const config = {
+            rootMargin: '0px 0px 50px 0px',
+            threshold: 0
+        };
+
+        this.observer = new IntersectionObserver((entries, self) => {
+            entries.forEach(entry => {
+                if(entry.isIntersecting) {
+                    this.loadLazyImage(entry.target as HTMLImageElement);
+                    self.unobserve(entry.target);
+                }
+            });
+        }, config);
     }
 
     show() {
@@ -72,6 +86,10 @@ class StickersPanel extends TriggeredUIControl<Constructor> {
                     this.stickers[category].map(sticker => flow.append(sticker));
                     this.append(flow);
 
+                    const imgs = document.querySelectorAll('[data-src]');
+                    imgs.forEach(img => {
+                        this.observer.observe(img);
+                    });
                 })
             }).catch(error => {
                 console.log(error);
@@ -84,6 +102,13 @@ class StickersPanel extends TriggeredUIControl<Constructor> {
             this.append(flow);
         }
 
+    }
+
+    loadLazyImage(image: HTMLImageElement){
+        image.src = image.getAttribute("data-src");
+        image.onload = () => {
+            image.removeAttribute("data-src")
+        }
     }
 
     showed() {
