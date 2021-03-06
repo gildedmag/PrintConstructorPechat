@@ -5196,7 +5196,7 @@ var StickerControl = (function (_super) {
     __extends(StickerControl, _super);
     function StickerControl(value) {
         var _this = _super.call(this, "img") || this;
-        _this.container.src = (value || "");
+        _this.container.setAttribute("data-src", value || "");
         _this.container.onclick = function () {
             Constructor.instance.addImage(_this.container.src);
         };
@@ -6431,6 +6431,18 @@ var StickersPanel = (function (_super) {
         _this.stickers = {};
         _this.loadCategories();
         _this.update();
+        var config = {
+            rootMargin: '0px 0px 50px 0px',
+            threshold: 0
+        };
+        _this.observer = new IntersectionObserver(function (entries, self) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    _this.loadLazyImage(entry.target);
+                    self.unobserve(entry.target);
+                }
+            });
+        }, config);
         return _this;
     }
     StickersPanel.prototype.getClassName = function () {
@@ -6475,6 +6487,10 @@ var StickersPanel = (function (_super) {
                     _this.stickers[category] = json.map(function (item) { return new StickerControl(item); });
                     _this.stickers[category].map(function (sticker) { return flow.append(sticker); });
                     _this.append(flow);
+                    var imgs = document.querySelectorAll('[data-src]');
+                    imgs.forEach(function (img) {
+                        _this.observer.observe(img);
+                    });
                 });
             }).catch(function (error) {
                 console.log(error);
@@ -6487,6 +6503,12 @@ var StickersPanel = (function (_super) {
             this.stickers[category].map(function (sticker) { return flow_1.append(sticker); });
             this.append(flow_1);
         }
+    };
+    StickersPanel.prototype.loadLazyImage = function (image) {
+        image.src = image.getAttribute("data-src");
+        image.onload = function () {
+            image.removeAttribute("data-src");
+        };
     };
     StickersPanel.prototype.showed = function () {
         _super.prototype.showed.call(this);
