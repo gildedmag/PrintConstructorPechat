@@ -41,7 +41,7 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
     return function (d, b) {
@@ -4909,6 +4909,7 @@ var ConstructorUI = (function (_super) {
             }
         });
         ConstructorUI.instance.order.changed();
+        ConstructorUI.instance.sidePanel.layersPanel.update(true);
     };
     ConstructorUI.prototype.bindDelKey = function () {
         document.addEventListener("keydown", function (e) {
@@ -6470,7 +6471,7 @@ var StickersPanel = (function (_super) {
                 }
             }).then(function (response) {
                 response.json().then(function (json) {
-                    var flow = new FlowControl(2, true);
+                    var flow = new FlowControl(4, true);
                     _this.removeChild(2);
                     _this.stickers[category] = json.map(function (item) { return new StickerControl(item); });
                     _this.stickers[category].map(function (sticker) { return flow.append(sticker); });
@@ -6482,7 +6483,7 @@ var StickersPanel = (function (_super) {
             });
         }
         else {
-            var flow_1 = new FlowControl(2, true);
+            var flow_1 = new FlowControl(4, true);
             this.removeChild(2);
             this.stickers[category].map(function (sticker) { return flow_1.append(sticker); });
             this.append(flow_1);
