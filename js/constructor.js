@@ -4909,6 +4909,7 @@ var ConstructorUI = (function (_super) {
             }
         });
         ConstructorUI.instance.order.changed();
+        ConstructorUI.instance.sidePanel.layersPanel.update(true);
     };
     ConstructorUI.prototype.bindDelKey = function () {
         document.addEventListener("keydown", function (e) {

@@ -312,6 +312,7 @@ class ConstructorUI extends UIControl {
 
 
         ConstructorUI.instance.order.changed();
+        ConstructorUI.instance.sidePanel.layersPanel.update(true);
     }
 
     bindDelKey() {
