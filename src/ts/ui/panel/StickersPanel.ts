@@ -80,7 +80,7 @@ class StickersPanel extends TriggeredUIControl<Constructor> {
                 }
             }).then(response => {
                 response.json().then(json => {
-                    let flow = new FlowControl(4, true);
+                    let flow = new FlowControl(2, true);
                     this.removeChild(2);
                     this.stickers[category] = json.map(item => new StickerControl(item));
                     this.stickers[category].map(sticker => flow.append(sticker));
@@ -96,7 +96,7 @@ class StickersPanel extends TriggeredUIControl<Constructor> {
                 new Popover("Error")
             })
         } else {
-            let flow = new FlowControl(4, true);
+            let flow = new FlowControl(2, true);
             this.removeChild(2);
             this.stickers[category].map(sticker => flow.append(sticker));
             this.append(flow);

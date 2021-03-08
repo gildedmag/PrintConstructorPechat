@@ -183,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "03.03.2021 16:12";
+    Version.version = "06.03.2021 12:41";
     return Version;
 }());
 var Trigger = (function () {
@@ -3616,11 +3616,13 @@ var ImageType;
 var ObjectOptions = (function () {
     function ObjectOptions(element) {
         if (element) {
-            var object = element.object.toJSON();
+            var extraProperties = ['lockScalingX', 'lockScalingY', 'lockRotation', 'lockMovementX', 'lockMovementY'];
+            var object = element.object.toJSON(extraProperties);
+            console.log(object);
             var excludedOptions = ObjectOptions.excludedNativeOptions[element.object.type];
             for (var _i = 0, _a = ObjectOptions.nativeOptions; _i < _a.length; _i++) {
                 var property = _a[_i];
-                if (object[property] && (!excludedOptions || !excludedOptions[property])) {
+                if (object[property] !== undefined && (!excludedOptions || !excludedOptions[property])) {
                     this[property] = object[property];
                     if (property === "text") {
                         this[property] = this[property].split("\n").join("<br>");
@@ -3644,7 +3646,7 @@ var ObjectOptions = (function () {
         var object = new ObjectOptions();
         for (var _i = 0, _a = ObjectOptions.nativeOptions; _i < _a.length; _i++) {
             var property = _a[_i];
-            if (value[property])
+            if (value[property] !== undefined)
                 object[property] = value[property];
             if (property == 'fontFamily') {
                 setTimeout(function () { return ObjectOptions.renderFont(object); }, 100);
@@ -3664,7 +3666,7 @@ var ObjectOptions = (function () {
         var options = {};
         for (var _i = 0, _a = ObjectOptions.nativeOptions; _i < _a.length; _i++) {
             var property = _a[_i];
-            if (this[property])
+            if (this[property] !== undefined)
                 options[property] = this[property];
         }
         if (this.filters)
@@ -3718,7 +3720,13 @@ var ObjectOptions = (function () {
         "top",
         "transformMatrix",
         "type",
-        "width"
+        "width",
+        "visible",
+        "lockScalingX",
+        "lockScalingY",
+        "lockRotation",
+        "lockMovementX",
+        "lockMovementY"
     ];
     ObjectOptions.excludedNativeOptions = {
         "image": [
@@ -3981,10 +3989,12 @@ var Side2D = (function (_super) {
         return new Side2DState(this);
     };
     Side2D.prototype.deserialize = function (state) {
+        console.log('deserialize');
         var side = new Side2D(Constructor.instance.getElement(), state.width, state.height, state.roundCorners);
         if (state.objects) {
             var json = '{"objects":' + JSON.stringify(state.objects) + '}';
             var objects = Side2DStateObjects.parse(json);
+            console.log(json);
             side.setState(objects);
         }
         return side;
@@ -4060,6 +4070,7 @@ var Side2D = (function (_super) {
             this.addImageFromObjectOptions(objectOptions, function () { return _this.addNextObject(objectsBuffer); });
         }
         else {
+            console.log(objectOptions.toObject());
             var element_2 = Element2D.prototype.deserialize(objectOptions);
             this.add(element_2);
             element_2.object.dirty = true;
@@ -4073,9 +4084,11 @@ var Side2D = (function (_super) {
         return Constructor.settings.localStorage.keyPrefix + this.getIndex();
     };
     Side2D.prototype.saveToLocalStorage = function (state) {
+        console.log('saveToLocalStorage');
         if (!this.history.isLocked()) {
             Utils.logMethodName();
             var json = JSON.stringify(state);
+            console.log(json);
             if (json.length < 1e5) {
                 localStorage.setItem(this.getLocalStorageKey(), json);
             }
@@ -4085,6 +4098,7 @@ var Side2D = (function (_super) {
         }
     };
     Side2D.prototype.loadFromLocalStorage = function () {
+        console.log("loadFromLocalStorage");
         if (Constructor.settings.localStorage.enabled && !Constructor.instance.isExplicitlyLoaded) {
             Utils.logMethodName();
             var key = this.getLocalStorageKey();
@@ -6483,7 +6497,7 @@ var StickersPanel = (function (_super) {
                 }
             }).then(function (response) {
                 response.json().then(function (json) {
-                    var flow = new FlowControl(4, true);
+                    var flow = new FlowControl(2, true);
                     _this.removeChild(2);
                     _this.stickers[category] = json.map(function (item) { return new StickerControl(item); });
                     _this.stickers[category].map(function (sticker) { return flow.append(sticker); });
@@ -6499,7 +6513,7 @@ var StickersPanel = (function (_super) {
             });
         }
         else {
-            var flow_1 = new FlowControl(4, true);
+            var flow_1 = new FlowControl(2, true);
             this.removeChild(2);
             this.stickers[category].map(function (sticker) { return flow_1.append(sticker); });
             this.append(flow_1);
@@ -6889,6 +6903,7 @@ var Order = (function (_super) {
         }
         var headers = new Headers({ 'content-type': 'application/x-www-form-urlencoded' });
         var post = 'POST';
+        console.log(JSON.parse(Constructor.instance.getState()));
         fetch('index.php?route=constructor/constructor/get_url_post', {
             method: post,
             headers: headers,

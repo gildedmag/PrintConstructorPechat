@@ -30,7 +30,13 @@ class ObjectOptions implements Equalable<ObjectOptions> {
         "top",
         "transformMatrix",
         "type",
-        "width"
+        "width",
+        "visible",
+        "lockScalingX",
+        "lockScalingY",
+        "lockRotation",
+        "lockMovementX",
+        "lockMovementY"
     ];
 
     static excludedNativeOptions = {
@@ -44,10 +50,11 @@ class ObjectOptions implements Equalable<ObjectOptions> {
 
     constructor(element?: Element2D) {
         if (element) {
-            let object = element.object.toJSON();
+            let extraProperties = ['lockScalingX', 'lockScalingY', 'lockRotation', 'lockMovementX', 'lockMovementY'];
+            let object = element.object.toJSON(extraProperties);
             let excludedOptions = ObjectOptions.excludedNativeOptions[element.object.type];
             for (let property of ObjectOptions.nativeOptions) {
-                if (object[property] && (!excludedOptions || !excludedOptions[property])) {
+                if (object[property] !== undefined && (!excludedOptions || !excludedOptions[property])) {
                     this[property] = object[property];
                     if (property === "text") {
                         this[property] = this[property].split("\n").join("<br>");
@@ -69,7 +76,7 @@ class ObjectOptions implements Equalable<ObjectOptions> {
     static fromObject(value: object): ObjectOptions {
         let object = new ObjectOptions();
         for (let property of ObjectOptions.nativeOptions) {
-            if (value[property]) object[property] = value[property];
+            if (value[property] !== undefined) object[property] = value[property];
             if (property == 'fontFamily') {
                 setTimeout(() => ObjectOptions.renderFont(object), 100);
                 setTimeout(() => ObjectOptions.renderFont(object), 500);
@@ -88,7 +95,7 @@ class ObjectOptions implements Equalable<ObjectOptions> {
     toObject(): {} {
         let options = {} as any;
         for (let property of ObjectOptions.nativeOptions) {
-            if (this[property]) options[property] = this[property];
+            if (this[property] !== undefined) options[property] = this[property];
         }
         if (this.filters) options.filters = this.filters;
         return options
