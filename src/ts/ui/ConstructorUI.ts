@@ -37,6 +37,7 @@ class ConstructorUI extends UIControl {
     static onReadyHandler = () => true;
 
     static onReady(handler: () => any) {
+        console.log("onReady");
         Constructor.onReadyHandler = handler();
     }
 
@@ -135,7 +136,7 @@ class ConstructorUI extends UIControl {
         });
 
         Constructor.onReadyHandler && Constructor.onReadyHandler();
-
+        ConstructorUI.instance.sidePanel.layersPanel.update(true);
     }
 
     public static init() {

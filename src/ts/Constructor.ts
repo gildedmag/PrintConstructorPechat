@@ -96,7 +96,6 @@ class Constructor extends View<Constructor> {
             this.addSide(width, height);
         }
         this.preview.hide();
-        console.log(Constructor.onReadyHandler);
         Constructor.onReadyHandler && Constructor.onReadyHandler();
         this.background = this.container.style.background;
         this.container.style.background = null;

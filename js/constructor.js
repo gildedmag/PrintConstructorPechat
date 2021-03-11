@@ -235,7 +235,7 @@ var Trigger = (function () {
             }
             var action = _this.actions[key];
             try {
-                setTimeout(function () { return action(_this); }, 0);
+                setTimeout(function () { return action(_this); }, 100);
             }
             catch (e) {
                 console.log(e.message);
@@ -740,7 +740,6 @@ var Constructor = (function (_super) {
             _this.addSide(width, height);
         }
         _this.preview.hide();
-        console.log(Constructor.onReadyHandler);
         Constructor.onReadyHandler && Constructor.onReadyHandler();
         _this.background = _this.container.style.background;
         _this.container.style.background = null;
@@ -3618,7 +3617,6 @@ var ObjectOptions = (function () {
         if (element) {
             var extraProperties = ['lockScalingX', 'lockScalingY', 'lockRotation', 'lockMovementX', 'lockMovementY'];
             var object = element.object.toJSON(extraProperties);
-            console.log(object);
             var excludedOptions = ObjectOptions.excludedNativeOptions[element.object.type];
             for (var _i = 0, _a = ObjectOptions.nativeOptions; _i < _a.length; _i++) {
                 var property = _a[_i];
@@ -3989,12 +3987,10 @@ var Side2D = (function (_super) {
         return new Side2DState(this);
     };
     Side2D.prototype.deserialize = function (state) {
-        console.log('deserialize');
         var side = new Side2D(Constructor.instance.getElement(), state.width, state.height, state.roundCorners);
         if (state.objects) {
             var json = '{"objects":' + JSON.stringify(state.objects) + '}';
             var objects = Side2DStateObjects.parse(json);
-            console.log(json);
             side.setState(objects);
         }
         return side;
@@ -4070,7 +4066,6 @@ var Side2D = (function (_super) {
             this.addImageFromObjectOptions(objectOptions, function () { return _this.addNextObject(objectsBuffer); });
         }
         else {
-            console.log(objectOptions.toObject());
             var element_2 = Element2D.prototype.deserialize(objectOptions);
             this.add(element_2);
             element_2.object.dirty = true;
@@ -4084,11 +4079,9 @@ var Side2D = (function (_super) {
         return Constructor.settings.localStorage.keyPrefix + this.getIndex();
     };
     Side2D.prototype.saveToLocalStorage = function (state) {
-        console.log('saveToLocalStorage');
         if (!this.history.isLocked()) {
             Utils.logMethodName();
             var json = JSON.stringify(state);
-            console.log(json);
             if (json.length < 1e5) {
                 localStorage.setItem(this.getLocalStorageKey(), json);
             }
@@ -4098,7 +4091,6 @@ var Side2D = (function (_super) {
         }
     };
     Side2D.prototype.loadFromLocalStorage = function () {
-        console.log("loadFromLocalStorage");
         if (Constructor.settings.localStorage.enabled && !Constructor.instance.isExplicitlyLoaded) {
             Utils.logMethodName();
             var key = this.getLocalStorageKey();
@@ -4768,12 +4760,14 @@ var ConstructorUI = (function (_super) {
             }, 0);
         });
         Constructor.onReadyHandler && Constructor.onReadyHandler();
+        ConstructorUI.instance.sidePanel.layersPanel.update(true);
         return _this;
     }
     ConstructorUI.prototype.getClassName = function () {
         return "constructor-ui-container";
     };
     ConstructorUI.onReady = function (handler) {
+        console.log("onReady");
         Constructor.onReadyHandler = handler();
     };
     ConstructorUI.init = function () {
@@ -6903,7 +6897,6 @@ var Order = (function (_super) {
         }
         var headers = new Headers({ 'content-type': 'application/x-www-form-urlencoded' });
         var post = 'POST';
-        console.log(JSON.parse(Constructor.instance.getState()));
         fetch('index.php?route=constructor/constructor/get_url_post', {
             method: post,
             headers: headers,
