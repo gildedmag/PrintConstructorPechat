@@ -34,4 +34,10 @@ class LayersPanelUIControl extends TriggeredUIControl<Constructor> {
         this.trigger.is2D() ? this.show() : this.hide();
     }
 
+
+    show() {
+        super.show();
+        this.update();
+    }
+
 }

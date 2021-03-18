@@ -24,7 +24,7 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
         //     return;
         // }
         let layerControls = this.children;
-        let layers = this.trigger.getLayers();
+        let layers: Element2D[] = this.trigger.getLayers();
         if (layers.length != layerControls.length){
             this.repopulate();
             return;
@@ -32,7 +32,7 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
         for (let i = 0; i < layers.length; i++) {
             let controlLayer = (layerControls[i] as LayerUIControl) || null;
             let sideLayer = layers[i];
-            if (!controlLayer || controlLayer.trigger != sideLayer) {
+            if (!controlLayer || controlLayer.trigger.hash != sideLayer.hash) {
                 this.repopulate();
                 return;
             }
@@ -65,6 +65,7 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
         }
 
         this.clear();
+        this.children = [];
 
         let layers = this.trigger.getLayers();
         for (let i = 0; i < layers.length; i++) {
@@ -105,7 +106,7 @@ class LayersUIControl extends TriggeredUIControl<Side2D> {
         if (this.isVisible() != this.trigger.isVisible()) {
             if (!this.isVisible()) {
                 this.show();
-                this.repopulate();
+                //this.repopulate();
             } else {
                 this.hide();
             }

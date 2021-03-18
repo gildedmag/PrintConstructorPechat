@@ -11,6 +11,8 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         rotatingPointOffset: 8 * window.devicePixelRatio * 2
     };
 
+    hash: number = Math.random()
+
     type: ElementType;
 
     /** @hidden */

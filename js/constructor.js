@@ -41,7 +41,7 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
     return function (d, b) {
@@ -183,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "06.03.2021 12:41";
+    Version.version = "18.03.2021 15:07";
     return Version;
 }());
 var Trigger = (function () {
@@ -235,7 +235,7 @@ var Trigger = (function () {
             }
             var action = _this.actions[key];
             try {
-                setTimeout(function () { return action(_this); }, 100);
+                setTimeout(function () { return action(_this); }, 0);
             }
             catch (e) {
                 console.log(e.message);
@@ -1022,6 +1022,7 @@ var Constructor = (function (_super) {
         if (selection) {
             selection.clone(function (element) {
                 _this.getActiveSide().add(element);
+                _this.getActiveSide().saveState();
                 element.randomizePosition();
                 return _this.getActiveSide().select(element);
             });
@@ -1149,7 +1150,6 @@ var HistoryList = (function () {
         this.locked = true;
     };
     HistoryList.prototype.unlock = function () {
-        console.log('HISTORY UNLOCKED');
         this.locked = false;
     };
     HistoryList.prototype.current = function () {
@@ -2844,6 +2844,7 @@ var Element2D = (function (_super) {
     __extends(Element2D, _super);
     function Element2D(type, side) {
         var _this = _super.call(this) || this;
+        _this.hash = Math.random();
         _this.type = type;
         _this.side = side;
         if (type === ElementType.IMAGE) {
@@ -4852,7 +4853,6 @@ var ConstructorUI = (function (_super) {
         }
         else {
             ConstructorUI.instance.sidePanel.layersPanel.show();
-            ConstructorUI.instance.sidePanel.layersPanel.update(true);
         }
     };
     ConstructorUI.prototype.createSides = function (printareas) {
@@ -6062,6 +6062,10 @@ var LayersPanelUIControl = (function (_super) {
     LayersPanelUIControl.prototype.updateVisibility = function () {
         this.trigger.is2D() ? this.show() : this.hide();
     };
+    LayersPanelUIControl.prototype.show = function () {
+        _super.prototype.show.call(this);
+        this.update();
+    };
     return LayersPanelUIControl;
 }(TriggeredUIControl));
 var LayersUIControl = (function (_super) {
@@ -6088,7 +6092,7 @@ var LayersUIControl = (function (_super) {
         for (var i = 0; i < layers.length; i++) {
             var controlLayer = layerControls[i] || null;
             var sideLayer = layers[i];
-            if (!controlLayer || controlLayer.trigger != sideLayer) {
+            if (!controlLayer || controlLayer.trigger.hash != sideLayer.hash) {
                 this.repopulate();
                 return;
             }
@@ -6116,6 +6120,7 @@ var LayersUIControl = (function (_super) {
         catch (e) {
         }
         this.clear();
+        this.children = [];
         var layers = this.trigger.getLayers();
         for (var i = 0; i < layers.length; i++) {
             this.append(new LayerUIControl(layers[i], this));
@@ -6130,7 +6135,6 @@ var LayersUIControl = (function (_super) {
         if (this.isVisible() != this.trigger.isVisible()) {
             if (!this.isVisible()) {
                 this.show();
-                this.repopulate();
             }
             else {
                 this.hide();

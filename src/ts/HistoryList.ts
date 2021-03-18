@@ -18,7 +18,7 @@ class HistoryList<T extends Equalable<T>> {
     }
 
     unlock() {
-        console.log('HISTORY UNLOCKED');
+        //console.log('HISTORY UNLOCKED');
         this.locked = false;
     }
 

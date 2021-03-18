@@ -468,6 +468,7 @@ class Constructor extends View<Constructor> {
         if (selection) {
             selection.clone(element => {
                 this.getActiveSide().add(element);
+                this.getActiveSide().saveState();
                 element.randomizePosition();
                 return this.getActiveSide().select(element);
             });
