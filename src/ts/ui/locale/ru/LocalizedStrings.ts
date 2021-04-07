@@ -82,9 +82,18 @@ class LocalizedStrings {
         if (key == '$' && ConstructorUI.instance.currencySymbol){
             return ConstructorUI.instance.currencySymbol;
         }
+
+        if (constructorConfiguration
+            && constructorConfiguration.languageItems
+            && constructorConfiguration.languageItems[key]
+        ) {
+            return constructorConfiguration.languageItems[key];
+        }
+
         if (this.translation[key]) {
             return this.translation[key];
         }
+        
         return key;
     }
 

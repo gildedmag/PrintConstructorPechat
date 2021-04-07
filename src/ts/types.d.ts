@@ -10,6 +10,7 @@ declare var constructorConfiguration: {
     selectedOptions: object,
     stickerCategories: [{ id: number, name: string }],
     fonts: [any],
+    languageItems: object
 }
 
 declare var clipboardData: any;

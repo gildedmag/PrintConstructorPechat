@@ -183,7 +183,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "05.04.2021 13:08";
+    Version.version = "07.04.2021 12:01";
     return Version;
 }());
 var Trigger = (function () {
@@ -4226,6 +4226,11 @@ var LocalizedStrings = (function () {
     LocalizedStrings.translate = function (key) {
         if (key == '$' && ConstructorUI.instance.currencySymbol) {
             return ConstructorUI.instance.currencySymbol;
+        }
+        if (constructorConfiguration
+            && constructorConfiguration.languageItems
+            && constructorConfiguration.languageItems[key]) {
+            return constructorConfiguration.languageItems[key];
         }
         if (this.translation[key]) {
             return this.translation[key];
