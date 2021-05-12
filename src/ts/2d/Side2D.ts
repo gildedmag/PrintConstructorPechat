@@ -61,6 +61,9 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
             this.hideGuides();
             this.saveState();
         });
+        this.canvas.on(Constants.TEXT_EDITING_ENTERED, () => {
+            Constructor.onTextEditingEnteredHandler();
+        });
         this.canvas.on(Constants.SELECTION_CLEARED, () => {
             //Constructor.instance.onDeselectHandler(this.selection);
             this.selection = null;

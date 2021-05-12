@@ -151,6 +151,8 @@ var Constants;
     Constants["SELECTION_CREATED"] = "selection:created";
     Constants["SELECTION_UPDATED"] = "selection:updated";
     Constants["MOUSE_UP"] = "mouse:up";
+    Constants["TEXT_EDITING_ENTERED"] = "text:editing:entered";
+    Constants["EDITING_ENTERED"] = "editing:entered";
     Constants["AFTER_RENDER"] = "after:render";
     Constants["PROGRESS"] = "progress";
     Constants["LOAD"] = "load";
@@ -183,7 +185,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "07.04.2021 12:01";
+    Version.version = "12.05.2021 17:15";
     return Version;
 }());
 var Trigger = (function () {
@@ -534,8 +536,10 @@ var Preview = (function (_super) {
             var _loop_1 = function (i) {
                 var map;
                 var side = Constructor.instance.sides[i];
-                if (!side || !side.canvas)
+                if (!side || !side.canvas) {
+                    Constructor.instance.preview.sides[i].visible = false;
                     return "continue";
+                }
                 var w = side.canvas.getWidth();
                 var h = side.canvas.getHeight();
                 var multiplier = Constructor.settings.previewTextureSize / Math.max(w, h);
@@ -554,6 +558,7 @@ var Preview = (function (_super) {
                         side.transparent = true;
                         side.needsUpdate = true;
                         side.userData = true;
+                        side.visible = true;
                         Constructor.instance.preview.render();
                     };
                 }
@@ -758,6 +763,9 @@ var Constructor = (function (_super) {
     };
     Constructor.onUpdate = function (handler) {
         Constructor.onUpdateHandlers.push(handler);
+    };
+    Constructor.onTextEditingEntered = function (handler) {
+        Constructor.onTextEditingEnteredHandler = handler;
     };
     Constructor.prototype.loadModel = function (modelName, callback, error) {
         Utils.logMethodName();
@@ -1110,6 +1118,8 @@ var Constructor = (function (_super) {
     };
     Constructor.prototype.redo = function () {
         this.getActiveSide().redo();
+    };
+    Constructor.onTextEditingEnteredHandler = function () {
     };
     Constructor.version = Version.version;
     Constructor.settings = new Settings();
@@ -3811,6 +3821,9 @@ var Side2D = (function (_super) {
             _this.hideGuides();
             _this.saveState();
         });
+        _this.canvas.on(Constants.TEXT_EDITING_ENTERED, function () {
+            Constructor.onTextEditingEnteredHandler();
+        });
         _this.canvas.on(Constants.SELECTION_CLEARED, function () {
             _this.selection = null;
             _this.changed();
@@ -4749,6 +4762,7 @@ var ConstructorUI = (function (_super) {
         _this.append(_this.constructorControl, _this.toolBar, _this.sidePanel, _this.sideBar, _this.topBar, _this.bottomBar, _this.addToCartPopover, _this.pagerBar, _this.pagerBarMobile);
         host.appendChild(_this.container);
         _this.bindDelKey();
+        _this.bindDoubleClick();
         window.addEventListener("load", function () {
             setTimeout(function () {
                 window.scrollTo(0, 0);
@@ -4928,7 +4942,7 @@ var ConstructorUI = (function (_super) {
         document.addEventListener("keydown", function (e) {
             if (e.keyCode == 46 && (!Popover.instance || !Popover.instance.isVisible())) {
                 var selection = Constructor.instance.getSelection();
-                if (selection && !selection.isEditing()) {
+                if (selection && !selection.isEditing() && document.activeElement == document.body) {
                     selection.remove();
                 }
             }
@@ -4936,6 +4950,14 @@ var ConstructorUI = (function (_super) {
                 Popover.instance.hide();
             }
         }, false);
+    };
+    ConstructorUI.prototype.bindDoubleClick = function () {
+        Constructor.onTextEditingEntered(function () {
+            console.log("onTextEditingEntered");
+            setTimeout(function () {
+                ConstructorUI.instance.sidePanel.selectionPanel.show();
+            }, 100);
+        });
     };
     ConstructorUI.prototype.getCategoryOptions = function (categoryId, callback) {
         var url = 'index.php?route=product/category/category&category_id=' + categoryId;
@@ -5787,9 +5809,11 @@ var FontFamilyPanel = (function (_super) {
     function FontFamilyPanel() {
         var _this = _super.call(this, Constructor.instance) || this;
         document.fonts.ready.then(function () {
-            for (var i = 0; i < constructorConfiguration.fonts.length; i++) {
-                var fontFamily = constructorConfiguration.fonts[i];
-                _this.append(new FontFamilyButton(fontFamily));
+            if (constructorConfiguration.fonts) {
+                for (var i = 0; i < constructorConfiguration.fonts.length; i++) {
+                    var fontFamily = constructorConfiguration.fonts[i];
+                    _this.append(new FontFamilyButton(fontFamily));
+                }
             }
         });
         return _this;
@@ -6394,7 +6418,7 @@ var SelectionPanel = (function (_super) {
             this.append(new SelectionColorControl("Color", function (value) { return _this.c.getSelection().setColor(value); }, function () { return _this.c.getSelection().getColor().toHex(); }));
         }
         if (this.c.hasTextSelection()) {
-            this.append(new SelectRangePropertyControl("Font Size", function (value) { return _this.c.getSelection().setFontSize(value); }, function () { return _this.c.getSelection().getFontSize(); }, 32, 124, 8), new SelectRangePropertyControl("Letter Spacing", function (value) { return _this.c.getSelection().setLetterSpacing(value); }, function () { return _this.c.getSelection().getLetterSpacing(); }, -200, 2000, 50), new SelectRangePropertyControl("Line Height", function (value) { return _this.c.getSelection().setLineHeight(value); }, function () { return _this.c.getSelection().getLineHeight(); }, 0.5, 3, 0.25), new Row(new LabelControl("Font Family"), new Spacer(), new Button(function () { return ConstructorUI.instance.sidePanel.fontFamilyPanel.show(); }, null, this.c.getSelection().getFontFamily())), new Row(new LabelControl("Font"), new Spacer(), this.textPropertyToggleButton("Bold"), this.textPropertyToggleButton("Italic"), this.textPropertyToggleButton("Underline"), this.textPropertyToggleButton("Linethrough")), new Row(new LabelControl("Alignment"), new Spacer(), this.textAlignmentButton(TextAlignment.LEFT, Icon.ALIGN_LEFT), this.textAlignmentButton(TextAlignment.CENTER, Icon.ALIGN_CENTER), this.textAlignmentButton(TextAlignment.RIGHT, Icon.ALIGN_RIGHT), this.textAlignmentButton(TextAlignment.JUSTIFY, Icon.ALIGN_JUSTIFY)));
+            this.append(new Row(new LabelControl("Text"), new Spacer(), new TextInputControl(function (value) { return _this.c.getSelection().setText(value); }, function () { return _this.c.getSelection().getText(); })), new SelectRangePropertyControl("Font Size", function (value) { return _this.c.getSelection().setFontSize(value); }, function () { return _this.c.getSelection().getFontSize(); }, 32, 124, 8), new SelectRangePropertyControl("Letter Spacing", function (value) { return _this.c.getSelection().setLetterSpacing(value); }, function () { return _this.c.getSelection().getLetterSpacing(); }, -200, 2000, 50), new SelectRangePropertyControl("Line Height", function (value) { return _this.c.getSelection().setLineHeight(value); }, function () { return _this.c.getSelection().getLineHeight(); }, 0.5, 3, 0.25), new Row(new LabelControl("Font Family"), new Spacer(), new Button(function () { return ConstructorUI.instance.sidePanel.fontFamilyPanel.show(); }, null, this.c.getSelection().getFontFamily())), new Row(new LabelControl("Font"), new Spacer(), this.textPropertyToggleButton("Bold"), this.textPropertyToggleButton("Italic"), this.textPropertyToggleButton("Underline"), this.textPropertyToggleButton("Linethrough")), new Row(new LabelControl("Alignment"), new Spacer(), this.textAlignmentButton(TextAlignment.LEFT, Icon.ALIGN_LEFT), this.textAlignmentButton(TextAlignment.CENTER, Icon.ALIGN_CENTER), this.textAlignmentButton(TextAlignment.RIGHT, Icon.ALIGN_RIGHT), this.textAlignmentButton(TextAlignment.JUSTIFY, Icon.ALIGN_JUSTIFY)));
         }
     };
     SelectionPanel.prototype.updateVisibility = function () {
@@ -7154,4 +7178,18 @@ var TopBar = (function (_super) {
     };
     return TopBar;
 }(TriggeredToolBar));
+var TextInputControl = (function (_super) {
+    __extends(TextInputControl, _super);
+    function TextInputControl(setter, getter, trigger) {
+        var _this = _super.call(this, 'text', setter, getter, null, null, null, trigger) || this;
+        _this.container.oninput = function (e) {
+            _this.setter(_this.container.value);
+        };
+        return _this;
+    }
+    TextInputControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " text-input";
+    };
+    return TextInputControl;
+}(InputControl));
 //# sourceMappingURL=constructor.js.map

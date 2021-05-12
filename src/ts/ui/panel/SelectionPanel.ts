@@ -46,6 +46,14 @@ class SelectionPanel extends TriggeredUIControl<Constructor> {
         }
         if (this.c.hasTextSelection()) {
             this.append(
+                new Row(
+                    new LabelControl("Text"),
+                    new Spacer(),
+                    new TextInputControl(
+                        value => this.c.getSelection().setText(value),
+                        () => this.c.getSelection().getText()
+                    )
+                ),
                 new SelectRangePropertyControl(
                     "Font Size",
                     value => this.c.getSelection().setFontSize(value),

@@ -220,7 +220,10 @@ class Preview extends View<Preview> {
             for (let i = 0; i < this.sides.length; i++) {
                 let map: THREE.Texture;
                 let side = Constructor.instance.sides[i];
-                if (!side || !side.canvas) continue;
+                if (!side || !side.canvas) {
+                    Constructor.instance.preview.sides[i].visible = false;
+                    continue;
+                }
                 let w = side.canvas.getWidth();// / side.getZoom();
                 let h = side.canvas.getHeight();// / side.getZoom();
                 let multiplier = Constructor.settings.previewTextureSize / Math.max(w, h);
@@ -242,6 +245,7 @@ class Preview extends View<Preview> {
                         side.transparent = true;
                         side.needsUpdate = true;
                         side.userData = true;
+                        side.visible = true;
                         Constructor.instance.preview.render();
                     }
                 } catch (e) {

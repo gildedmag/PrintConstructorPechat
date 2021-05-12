@@ -28,6 +28,9 @@ class Constructor extends View<Constructor> {
     onElementModificationHandler: () => void = () => {
     };
 
+    static onTextEditingEnteredHandler: () => void = () => {
+    };
+
     /** @hidden */
     clipboard: Element2D;
 
@@ -53,6 +56,10 @@ class Constructor extends View<Constructor> {
     static onUpdateHandlers: [() => any] = [];
     static onUpdate(handler: () => any){
         Constructor.onUpdateHandlers.push(handler);
+    }
+
+    static onTextEditingEntered(handler: () => any){
+        Constructor.onTextEditingEnteredHandler = handler;
     }
 
     /**

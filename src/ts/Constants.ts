@@ -40,6 +40,8 @@ enum Constants {
     SELECTION_CREATED = "selection:created",
     SELECTION_UPDATED = "selection:updated",
     MOUSE_UP = "mouse:up",
+    TEXT_EDITING_ENTERED = "text:editing:entered",
+    EDITING_ENTERED = "editing:entered",
     AFTER_RENDER = "after:render",
     PROGRESS = "progress",
     LOAD = "load",

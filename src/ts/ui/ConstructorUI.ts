@@ -116,6 +116,7 @@ class ConstructorUI extends UIControl {
 
         host.appendChild(this.container);
         this.bindDelKey();
+        this.bindDoubleClick();
 
         window.addEventListener("load", function () {
             setTimeout(function () {
@@ -319,13 +320,33 @@ class ConstructorUI extends UIControl {
         document.addEventListener("keydown", e => {
             if (e.keyCode == 46 && (!Popover.instance || !Popover.instance.isVisible())) {
                 let selection = Constructor.instance.getSelection();
-                if (selection && !selection.isEditing()) {
+                if (selection && !selection.isEditing() && document.activeElement == document.body) {
                     selection.remove();
                 }
             } else if (e.keyCode == 27) {
                 Popover.instance.hide();
             }
         }, false);
+    }
+
+    bindDoubleClick() {
+        Constructor.onTextEditingEntered(() => {
+            console.log("onTextEditingEntered");
+            setTimeout(() => {
+                ConstructorUI.instance.sidePanel.selectionPanel.show();
+            }, 100);
+        })
+        // Constructor.instance.onSelect()
+        // Constructor.instance.container.addEventListener("dblclick", e => {
+        //     console.log(e);
+        //     setTimeout(() => {
+        //         console.log("dblclk");
+        //         let selection = Constructor.instance.getSelection();
+        //             ConstructorUI.instance.sidePanel.selectionPanel.show();
+        //         if (selection && !selection.isEditing() && Constructor.instance.is2D()) {
+        //         }
+        //     }, 100);
+        // }, false);
     }
 
 
