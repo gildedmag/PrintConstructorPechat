@@ -41,7 +41,7 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
     return function (d, b) {
@@ -185,7 +185,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "17.05.2021 13:29";
+    Version.version = "18.05.2021 18:23";
     return Version;
 }());
 var Trigger = (function () {
@@ -4757,15 +4757,16 @@ var ConstructorUI = (function (_super) {
     __extends(ConstructorUI, _super);
     function ConstructorUI() {
         var _this = _super.call(this) || this;
-        _this.dist = 0;
-        _this.startX = 0;
-        _this.startY = 0;
-        _this.x0 = 0;
-        _this.y0 = 0;
-        _this.scrollX = 0;
-        _this.scrollY = 0;
-        _this.zoom = 1;
-        _this.unlockSelectionAfterTouchEnd = false;
+        _this.touchDist = 0;
+        _this.touchStartX = 0;
+        _this.touchStartY = 0;
+        _this.touchCenterX = 0;
+        _this.touchCenterY = 0;
+        _this.touchX0 = 0;
+        _this.touchY0 = 0;
+        _this.touchScrollX = 0;
+        _this.touchScrollY = 0;
+        _this.touchZoom = 1;
         ConstructorUI.instance = _this;
         try {
             _this.currencySymbol = (constructorConfiguration && constructorConfiguration.currencySymbol) ? constructorConfiguration.currencySymbol : _this.translate('$');
@@ -4801,11 +4802,7 @@ var ConstructorUI = (function (_super) {
             .addClass('pager-toolbar-mobile')
             .addClass('mobile')
             .tooltip('Side');
-        _this.append(_this.constructorControl, _this.topBar);
-        Constructor.instance.addElement(ElementType.CIRCLE);
-        Constructor.instance.addElement(ElementType.RECTANGLE);
-        Constructor.instance.addElement(ElementType.TRIANGLE);
-        Constructor.instance.addElement(ElementType.TEXT);
+        _this.append(_this.constructorControl, _this.toolBar, _this.sidePanel, _this.sideBar, _this.topBar, _this.bottomBar, _this.addToCartPopover, _this.pagerBar, _this.pagerBarMobile);
         host.appendChild(_this.container);
         _this.bindDelKey();
         _this.bindDoubleClick();
@@ -4822,56 +4819,62 @@ var ConstructorUI = (function (_super) {
         });
         setTimeout(function () {
             window.scrollTo(0, 0);
-        }, 0);
+        }, 100);
         Constructor.onReadyHandler && Constructor.onReadyHandler();
         ConstructorUI.instance.sidePanel.layersPanel.update(true);
         window.addEventListener("touchstart", function (e) {
-            document.getElementsByClassName("toolbar top")[0].innerText = "touchstart";
             if (e.touches.length === 2) {
                 Constructor.instance.addClass("notransition");
                 e.preventDefault();
                 var side = Constructor.instance.getActiveSide();
                 side.freeze();
-                _this.zoom = Constructor.instance.getZoom();
-                _this.dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                _this.startX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
-                _this.startY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
-                _this.x0 = e.touches[0].pageX;
-                _this.y0 = e.touches[0].pageY;
-                scrollX = side.container.scrollLeft;
-                scrollY = side.container.scrollTop;
+                _this.touchZoom = Constructor.instance.getZoom();
+                _this.touchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                _this.touchStartX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
+                _this.touchStartY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
+                _this.touchX0 = e.touches[0].pageX;
+                _this.touchY0 = e.touches[0].pageY;
+                _this.touchScrollX = side.container.scrollLeft;
+                _this.touchScrollY = side.container.scrollTop;
+                _this.touchCenterX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
+                _this.touchCenterY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
             }
         });
-        _this.toggleClass("collapsed");
         window.addEventListener("touchmove", function (e) {
             if (e.touches.length === 2) {
                 e.preventDefault();
                 var side = Constructor.instance.getActiveSide();
                 side.deselect();
                 var d = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                if (Math.abs(_this.dist - d) > 1) {
-                    var z = _this.zoom * (1 - ((_this.dist - d) / 1000));
+                if (Math.abs(_this.touchDist - d) > 1) {
+                    var z = _this.touchZoom * (1 - ((_this.touchDist - d) / 1000));
                     if (z >= 0.8) {
                         side.setZoom(z);
-                        var page = Constructor.instance.getActiveSide().getElement();
-                        if (page.clientWidth != page.scrollWidth || page.clientHeight != page.scrollHeight) {
+                        var page = Constructor.instance.getActiveSide().container;
+                        if (page.clientWidth < page.scrollWidth) {
+                            var dx = (_this.touchScrollX + _this.touchCenterX) * page.scrollWidth;
+                            side.container.scrollLeft = _this.touchScrollX * dx;
+                        }
+                        if (page.clientHeight < page.scrollHeight) {
+                            var dy = (_this.touchScrollY + _this.touchCenterY) * page.scrollHeight;
+                            side.container.scrollTop = _this.touchScrollY * dy;
                         }
                     }
                 }
                 else {
-                    side.container.scrollLeft = scrollX + _this.x0 - e.touches[0].pageX;
-                    side.container.scrollTop = scrollY + _this.y0 - e.touches[0].pageY;
+                    side.container.scrollLeft = _this.touchScrollX + _this.touchX0 - e.touches[0].pageX;
+                    side.container.scrollTop = _this.touchScrollY + _this.touchY0 - e.touches[0].pageY;
                 }
             }
         });
         window.addEventListener("touchend", function (e) {
-            document.getElementsByClassName("toolbar top")[0].innerText = "touchend";
             Constructor.instance.removeClass("notransition");
             Constructor.instance.getActiveSide().unfreeze();
         });
-        var dateUTC = ConstructorUI.fetchHeader(location.origin + "/render/js/constructor.js", 'Last-Modified');
-        var date = new Date(dateUTC);
-        document.getElementsByClassName("toolbar top")[0].innerText = (date.getHours() + ":" + date.getMinutes());
+        window.addEventListener("touchcancel", function (e) {
+            Constructor.instance.removeClass("notransition");
+            Constructor.instance.getActiveSide().unfreeze();
+        });
         return _this;
     }
     ConstructorUI.prototype.getClassName = function () {
@@ -4880,21 +4883,6 @@ var ConstructorUI = (function (_super) {
     ConstructorUI.onReady = function (handler) {
         console.log("onReady");
         Constructor.onReadyHandler = handler();
-    };
-    ConstructorUI.fetchHeader = function (url, wch) {
-        try {
-            var req = new XMLHttpRequest();
-            req.open("HEAD", url, false);
-            req.send(null);
-            if (req.status == 200) {
-                return req.getResponseHeader(wch);
-            }
-            else
-                return false;
-        }
-        catch (er) {
-            return er.message;
-        }
     };
     ConstructorUI.init = function () {
         document.addEventListener("DOMContentLoaded", function () {

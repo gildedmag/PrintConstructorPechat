@@ -29,15 +29,16 @@ class ConstructorUI extends UIControl {
     static instance: ConstructorUI;
     static test = ConstructorUI.init();
 
-    dist = 0;
-    startX = 0;
-    startY = 0;
-    x0 = 0;
-    y0 = 0;
-    scrollX = 0;
-    scrollY = 0;
-    zoom = 1;
-    unlockSelectionAfterTouchEnd = false;
+    touchDist = 0;
+    touchStartX = 0;
+    touchStartY = 0;
+    touchCenterX = 0;
+    touchCenterY = 0;
+    touchX0 = 0;
+    touchY0 = 0;
+    touchScrollX = 0;
+    touchScrollY = 0;
+    touchZoom = 1;
 
 
     getClassName(): string {
@@ -114,20 +115,15 @@ class ConstructorUI extends UIControl {
 
         this.append(
             this.constructorControl,
-            // this.toolBar,
-            // this.sidePanel,
-            // this.sideBar,
+            this.toolBar,
+            this.sidePanel,
+            this.sideBar,
             this.topBar,
-            //this.bottomBar,
-            // this.addToCartPopover,
-            // this.pagerBar,
-            // this.pagerBarMobile,
+            this.bottomBar,
+            this.addToCartPopover,
+            this.pagerBar,
+            this.pagerBarMobile,
         );
-
-        Constructor.instance.addElement(ElementType.CIRCLE)
-        Constructor.instance.addElement(ElementType.RECTANGLE)
-        Constructor.instance.addElement(ElementType.TRIANGLE)
-        Constructor.instance.addElement(ElementType.TEXT)
 
         host.appendChild(this.container);
         this.bindDelKey();
@@ -145,50 +141,34 @@ class ConstructorUI extends UIControl {
                 window.scrollTo(0, 0);
             }, 0);
         });
-        //window.addEventListener("load", function () {
-
 
         setTimeout(function () {
             window.scrollTo(0, 0);
-        }, 0);
-        //});
+        }, 100);
 
         Constructor.onReadyHandler && Constructor.onReadyHandler();
         ConstructorUI.instance.sidePanel.layersPanel.update(true);
 
         window.addEventListener("touchstart", e => {
-            document.getElementsByClassName("toolbar top")[0].innerText = "touchstart";
-            //document.getElementById("console").innerText = "123456";
-            //Constructor.instance.getElement().addEventListener("touchstart", e => {
             if (e.touches.length === 2) {
-
                 Constructor.instance.addClass("notransition");
                 e.preventDefault();
-
-                //Constructor.instance.getActiveSide().lock();
                 let side = Constructor.instance.getActiveSide();
-                // if (side.selection != null && !side.selection.isLocked()){
-                //     this.unlockSelectionAfterTouchEnd = true;
-                //     side.selection.setLocked(true);
-                //     side.selection.object.editable = false;
-                // }
-                //side.deselect();
                 side.freeze();
-                this.zoom = Constructor.instance.getZoom();
-                this.dist = Math.hypot(
+                this.touchZoom = Constructor.instance.getZoom();
+                this.touchDist = Math.hypot(
                     e.touches[0].pageX - e.touches[1].pageX,
                     e.touches[0].pageY - e.touches[1].pageY);
-                this.startX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
-                this.startY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
-                this.x0 = e.touches[0].pageX;
-                this.y0 = e.touches[0].pageY;
-                scrollX = side.container.scrollLeft;
-                scrollY = side.container.scrollTop;
-                //document.getElementById("console").innerText = dist;
+                this.touchStartX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
+                this.touchStartY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
+                this.touchX0 = e.touches[0].pageX;
+                this.touchY0 = e.touches[0].pageY;
+                this.touchScrollX = side.container.scrollLeft;
+                this.touchScrollY = side.container.scrollTop;
+                this.touchCenterX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
+                this.touchCenterY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
             }
         });
-
-        this.toggleClass("collapsed");
 
         window.addEventListener("touchmove", e => {
             if (e.touches.length === 2) {
@@ -198,57 +178,36 @@ class ConstructorUI extends UIControl {
                 var d = Math.hypot(
                     e.touches[0].pageX - e.touches[1].pageX,
                     e.touches[0].pageY - e.touches[1].pageY);
-                if (Math.abs(this.dist - d) > 1) {
-                    //document.getElementById("console").innerText = "zoom " + (dist - d);
-                    //Constructor.instance.toggleClass("notransition");
-                    let z = this.zoom * (1 - ((this.dist - d) / 1000))
+                if (Math.abs(this.touchDist - d) > 1) {
+                    let z = this.touchZoom * (1 - ((this.touchDist - d) / 1000))
                     if (z >= 0.8) {
-                        //document.getElementsByClassName("toolbar top")[0].innerText = z;
                         side.setZoom(z);
-                        //Constructor.instance.toggleClass("notransition");
-                        let page = Constructor.instance.getActiveSide().getElement();
-                        if (page.clientWidth != page.scrollWidth || page.clientHeight != page.scrollHeight) {
-
+                        let page = Constructor.instance.getActiveSide().container;
+                        if (page.clientWidth < page.scrollWidth) {
+                            let dx = (this.touchScrollX + this.touchCenterX) * page.scrollWidth;
+                            side.container.scrollLeft = this.touchScrollX * dx;
+                        }
+                        if (page.clientHeight < page.scrollHeight) {
+                            let dy = (this.touchScrollY + this.touchCenterY) * page.scrollHeight;
+                            side.container.scrollTop = this.touchScrollY * dy;
                         }
                     }
                 } else {
-                    // centerX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
-                    // centerY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
-                    side.container.scrollLeft = scrollX + this.x0 - e.touches[0].pageX;
-                    side.container.scrollTop = scrollY + this.y0 - e.touches[0].pageY;
-                    //document.getElementById("console").innerText = "pan " + (dist - d);
+                    side.container.scrollLeft = this.touchScrollX + this.touchX0 - e.touches[0].pageX;
+                    side.container.scrollTop = this.touchScrollY + this.touchY0 - e.touches[0].pageY;
                 }
             }
         });
 
         window.addEventListener("touchend", e => {
-            document.getElementsByClassName("toolbar top")[0].innerText = "touchend";
             Constructor.instance.removeClass("notransition");
             Constructor.instance.getActiveSide().unfreeze();
-            // if (this.unlockSelectionAfterTouchEnd){
-            //     this.unlockSelectionAfterTouchEnd = false;
-            //     Constructor.instance.getSelection().setLocked(false);
-            // }
         });
 
-
-
-        let dateUTC = ConstructorUI.fetchHeader(location.origin + "/render/js/constructor.js", 'Last-Modified');
-        let date = new Date(dateUTC);
-        document.getElementsByClassName("toolbar top")[0].innerText = (date.getHours() + ":" + date.getMinutes());
-    }
-
-    static fetchHeader(url, wch) {
-        try {
-            var req = new XMLHttpRequest();
-            req.open("HEAD", url, false);
-            req.send(null);
-            if (req.status == 200) {
-                return req.getResponseHeader(wch);
-            } else return false;
-        } catch (er) {
-            return er.message;
-        }
+        window.addEventListener("touchcancel", e => {
+            Constructor.instance.removeClass("notransition");
+            Constructor.instance.getActiveSide().unfreeze();
+        });
     }
 
     public static init() {
