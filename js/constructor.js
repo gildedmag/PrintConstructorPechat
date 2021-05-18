@@ -185,7 +185,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "18.05.2021 18:23";
+    Version.version = "18.05.2021 20:33";
     return Version;
 }());
 var Trigger = (function () {
@@ -4767,6 +4767,7 @@ var ConstructorUI = (function (_super) {
         _this.touchScrollX = 0;
         _this.touchScrollY = 0;
         _this.touchZoom = 1;
+        _this.touchPan = false;
         ConstructorUI.instance = _this;
         try {
             _this.currencySymbol = (constructorConfiguration && constructorConfiguration.currencySymbol) ? constructorConfiguration.currencySymbol : _this.translate('$');
@@ -4824,6 +4825,7 @@ var ConstructorUI = (function (_super) {
         ConstructorUI.instance.sidePanel.layersPanel.update(true);
         window.addEventListener("touchstart", function (e) {
             if (e.touches.length === 2) {
+                console.log("touchstart");
                 Constructor.instance.addClass("notransition");
                 e.preventDefault();
                 var side = Constructor.instance.getActiveSide();
@@ -4838,17 +4840,24 @@ var ConstructorUI = (function (_super) {
                 _this.touchScrollY = side.container.scrollTop;
                 _this.touchCenterX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
                 _this.touchCenterY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
+                _this.touchPan = false;
             }
         });
         window.addEventListener("touchmove", function (e) {
             if (e.touches.length === 2) {
+                console.log("touchmove");
                 e.preventDefault();
                 var side = Constructor.instance.getActiveSide();
                 side.deselect();
                 var d = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                if (Math.abs(_this.touchDist - d) > 1) {
-                    var z = _this.touchZoom * (1 - ((_this.touchDist - d) / 1000));
-                    if (z >= 0.8) {
+                if (!_this.touchPan) {
+                    if (Math.abs(_this.touchDist - d) <= 1) {
+                        _this.touchPan = true;
+                    }
+                }
+                if (!_this.touchPan) {
+                    var z = _this.touchZoom * (1 - ((_this.touchDist - d) / 400));
+                    if (z >= 0.3) {
                         side.setZoom(z);
                         var page = Constructor.instance.getActiveSide().container;
                         if (page.clientWidth < page.scrollWidth) {

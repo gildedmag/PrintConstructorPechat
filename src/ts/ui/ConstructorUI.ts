@@ -39,6 +39,7 @@ class ConstructorUI extends UIControl {
     touchScrollX = 0;
     touchScrollY = 0;
     touchZoom = 1;
+    touchPan = false;
 
 
     getClassName(): string {
@@ -151,6 +152,7 @@ class ConstructorUI extends UIControl {
 
         window.addEventListener("touchstart", e => {
             if (e.touches.length === 2) {
+                console.log("touchstart");
                 Constructor.instance.addClass("notransition");
                 e.preventDefault();
                 let side = Constructor.instance.getActiveSide();
@@ -167,20 +169,27 @@ class ConstructorUI extends UIControl {
                 this.touchScrollY = side.container.scrollTop;
                 this.touchCenterX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
                 this.touchCenterY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
+                this.touchPan = false;
             }
         });
 
         window.addEventListener("touchmove", e => {
             if (e.touches.length === 2) {
+                console.log("touchmove");
                 e.preventDefault();
                 let side = Constructor.instance.getActiveSide();
                 side.deselect();
-                var d = Math.hypot(
+                let d = Math.hypot(
                     e.touches[0].pageX - e.touches[1].pageX,
                     e.touches[0].pageY - e.touches[1].pageY);
-                if (Math.abs(this.touchDist - d) > 1) {
-                    let z = this.touchZoom * (1 - ((this.touchDist - d) / 1000))
-                    if (z >= 0.8) {
+                if (!this.touchPan){
+                    if (Math.abs(this.touchDist - d) <= 1) {
+                        this.touchPan = true;
+                    }
+                }
+                if (!this.touchPan) {
+                    let z = this.touchZoom * (1 - ((this.touchDist - d) / 400))
+                    if (z >= 0.3) {
                         side.setZoom(z);
                         let page = Constructor.instance.getActiveSide().container;
                         if (page.clientWidth < page.scrollWidth) {
