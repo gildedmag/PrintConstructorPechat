@@ -490,6 +490,19 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         return this.object && this.object.lockScalingX;
     }
 
+    setFrozen(frozen: boolean) {
+        this.object.lockScalingX
+            = this.object.lockScalingY
+            = this.object.lockRotation
+            = this.object.lockMovementX
+            = this.object.lockMovementY
+            //= this.object.editable
+            = frozen;
+        if (frozen && this.isEditing()){
+            this.object.exitEditing();
+        }
+    }
+
     toFront() {
         this.side.canvas.bringToFront(this.object);
         Utils.arrayMoveToEnd(this.side.elements, this.getIndex());

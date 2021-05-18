@@ -257,6 +257,18 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
         this.canvas.renderAll();
     }
 
+    freeze() {
+        this.elements.forEach(element => {
+            element.setFrozen(true);
+        });
+    }
+
+    unfreeze(){
+        this.elements.forEach(element => {
+            element.setFrozen(false);
+        });
+    }
+
     hideGuides() {
         this.horizontalGuide.hide();
         this.verticalGuide.hide();
@@ -448,6 +460,20 @@ class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2
             } as any);
         }
         return this.canvas.toDataURL({format: Constants.PNG, multiplier: multiplier});
+    }
+
+    public lock(){
+        this.getLayers().forEach(element => {
+            element.object.selectable = false;
+        });
+        this.canvas.renderAll();
+    }
+
+    public unlock(){
+        this.getLayers().forEach(element => {
+            element.object.selectable = true;
+        });
+        this.canvas.renderAll();
     }
 
     public getTotalPrice(): number {

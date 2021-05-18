@@ -185,7 +185,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "12.05.2021 17:15";
+    Version.version = "17.05.2021 13:29";
     return Version;
 }());
 var Trigger = (function () {
@@ -3265,6 +3265,17 @@ var Element2D = (function (_super) {
     Element2D.prototype.isLocked = function () {
         return this.object && this.object.lockScalingX;
     };
+    Element2D.prototype.setFrozen = function (frozen) {
+        this.object.lockScalingX
+            = this.object.lockScalingY
+                = this.object.lockRotation
+                    = this.object.lockMovementX
+                        = this.object.lockMovementY
+                            = frozen;
+        if (frozen && this.isEditing()) {
+            this.object.exitEditing();
+        }
+    };
     Element2D.prototype.toFront = function () {
         this.side.canvas.bringToFront(this.object);
         Utils.arrayMoveToEnd(this.side.elements, this.getIndex());
@@ -3992,6 +4003,16 @@ var Side2D = (function (_super) {
         this.canvas.discardActiveObject();
         this.canvas.renderAll();
     };
+    Side2D.prototype.freeze = function () {
+        this.elements.forEach(function (element) {
+            element.setFrozen(true);
+        });
+    };
+    Side2D.prototype.unfreeze = function () {
+        this.elements.forEach(function (element) {
+            element.setFrozen(false);
+        });
+    };
     Side2D.prototype.hideGuides = function () {
         this.horizontalGuide.hide();
         this.verticalGuide.hide();
@@ -4171,6 +4192,18 @@ var Side2D = (function (_super) {
             });
         }
         return this.canvas.toDataURL({ format: Constants.PNG, multiplier: multiplier });
+    };
+    Side2D.prototype.lock = function () {
+        this.getLayers().forEach(function (element) {
+            element.object.selectable = false;
+        });
+        this.canvas.renderAll();
+    };
+    Side2D.prototype.unlock = function () {
+        this.getLayers().forEach(function (element) {
+            element.object.selectable = true;
+        });
+        this.canvas.renderAll();
     };
     Side2D.prototype.getTotalPrice = function () {
         return this.isEmpty() ? 0 : this.price;
@@ -4724,6 +4757,15 @@ var ConstructorUI = (function (_super) {
     __extends(ConstructorUI, _super);
     function ConstructorUI() {
         var _this = _super.call(this) || this;
+        _this.dist = 0;
+        _this.startX = 0;
+        _this.startY = 0;
+        _this.x0 = 0;
+        _this.y0 = 0;
+        _this.scrollX = 0;
+        _this.scrollY = 0;
+        _this.zoom = 1;
+        _this.unlockSelectionAfterTouchEnd = false;
         ConstructorUI.instance = _this;
         try {
             _this.currencySymbol = (constructorConfiguration && constructorConfiguration.currencySymbol) ? constructorConfiguration.currencySymbol : _this.translate('$');
@@ -4759,7 +4801,11 @@ var ConstructorUI = (function (_super) {
             .addClass('pager-toolbar-mobile')
             .addClass('mobile')
             .tooltip('Side');
-        _this.append(_this.constructorControl, _this.toolBar, _this.sidePanel, _this.sideBar, _this.topBar, _this.bottomBar, _this.addToCartPopover, _this.pagerBar, _this.pagerBarMobile);
+        _this.append(_this.constructorControl, _this.topBar);
+        Constructor.instance.addElement(ElementType.CIRCLE);
+        Constructor.instance.addElement(ElementType.RECTANGLE);
+        Constructor.instance.addElement(ElementType.TRIANGLE);
+        Constructor.instance.addElement(ElementType.TEXT);
         host.appendChild(_this.container);
         _this.bindDelKey();
         _this.bindDoubleClick();
@@ -4774,13 +4820,58 @@ var ConstructorUI = (function (_super) {
                 window.scrollTo(0, 0);
             }, 0);
         });
-        window.addEventListener("touchstart", function () {
-            setTimeout(function () {
-                window.scrollTo(0, 0);
-            }, 0);
-        });
+        setTimeout(function () {
+            window.scrollTo(0, 0);
+        }, 0);
         Constructor.onReadyHandler && Constructor.onReadyHandler();
         ConstructorUI.instance.sidePanel.layersPanel.update(true);
+        window.addEventListener("touchstart", function (e) {
+            document.getElementsByClassName("toolbar top")[0].innerText = "touchstart";
+            if (e.touches.length === 2) {
+                Constructor.instance.addClass("notransition");
+                e.preventDefault();
+                var side = Constructor.instance.getActiveSide();
+                side.freeze();
+                _this.zoom = Constructor.instance.getZoom();
+                _this.dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                _this.startX = (e.touches[0].pageX + e.touches[1].pageX) / 2;
+                _this.startY = (e.touches[0].pageY + e.touches[1].pageY) / 2;
+                _this.x0 = e.touches[0].pageX;
+                _this.y0 = e.touches[0].pageY;
+                scrollX = side.container.scrollLeft;
+                scrollY = side.container.scrollTop;
+            }
+        });
+        _this.toggleClass("collapsed");
+        window.addEventListener("touchmove", function (e) {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                var side = Constructor.instance.getActiveSide();
+                side.deselect();
+                var d = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                if (Math.abs(_this.dist - d) > 1) {
+                    var z = _this.zoom * (1 - ((_this.dist - d) / 1000));
+                    if (z >= 0.8) {
+                        side.setZoom(z);
+                        var page = Constructor.instance.getActiveSide().getElement();
+                        if (page.clientWidth != page.scrollWidth || page.clientHeight != page.scrollHeight) {
+                        }
+                    }
+                }
+                else {
+                    side.container.scrollLeft = scrollX + _this.x0 - e.touches[0].pageX;
+                    side.container.scrollTop = scrollY + _this.y0 - e.touches[0].pageY;
+                }
+            }
+        });
+        window.addEventListener("touchend", function (e) {
+            document.getElementsByClassName("toolbar top")[0].innerText = "touchend";
+            Constructor.instance.removeClass("notransition");
+            Constructor.instance.getActiveSide().unfreeze();
+        });
+        var dateUTC = ConstructorUI.fetchHeader(location.origin + "/render/js/constructor.js", 'Last-Modified');
+        var date = new Date(dateUTC);
+        document.getElementsByClassName("toolbar top")[0].innerText = (date.getHours() + ":" + date.getMinutes());
         return _this;
     }
     ConstructorUI.prototype.getClassName = function () {
@@ -4789,6 +4880,21 @@ var ConstructorUI = (function (_super) {
     ConstructorUI.onReady = function (handler) {
         console.log("onReady");
         Constructor.onReadyHandler = handler();
+    };
+    ConstructorUI.fetchHeader = function (url, wch) {
+        try {
+            var req = new XMLHttpRequest();
+            req.open("HEAD", url, false);
+            req.send(null);
+            if (req.status == 200) {
+                return req.getResponseHeader(wch);
+            }
+            else
+                return false;
+        }
+        catch (er) {
+            return er.message;
+        }
     };
     ConstructorUI.init = function () {
         document.addEventListener("DOMContentLoaded", function () {
@@ -5717,6 +5823,20 @@ var SelectionColorControl = (function (_super) {
     };
     return SelectionColorControl;
 }(UIControl));
+var TextInputControl = (function (_super) {
+    __extends(TextInputControl, _super);
+    function TextInputControl(setter, getter, trigger) {
+        var _this = _super.call(this, 'text', setter, getter, null, null, null, trigger) || this;
+        _this.container.oninput = function (e) {
+            _this.setter(_this.container.value);
+        };
+        return _this;
+    }
+    TextInputControl.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " text-input";
+    };
+    return TextInputControl;
+}(InputControl));
 var TogglePropertyControl = (function (_super) {
     __extends(TogglePropertyControl, _super);
     function TogglePropertyControl(icons, label, setter, getter) {
@@ -7178,18 +7298,4 @@ var TopBar = (function (_super) {
     };
     return TopBar;
 }(TriggeredToolBar));
-var TextInputControl = (function (_super) {
-    __extends(TextInputControl, _super);
-    function TextInputControl(setter, getter, trigger) {
-        var _this = _super.call(this, 'text', setter, getter, null, null, null, trigger) || this;
-        _this.container.oninput = function (e) {
-            _this.setter(_this.container.value);
-        };
-        return _this;
-    }
-    TextInputControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " text-input";
-    };
-    return TextInputControl;
-}(InputControl));
 //# sourceMappingURL=constructor.js.map
