@@ -41,7 +41,7 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
     return function (d, b) {
@@ -185,7 +185,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "18.05.2021 20:33";
+    Version.version = "26.05.2021 17:34";
     return Version;
 }());
 var Trigger = (function () {
@@ -1123,7 +1123,7 @@ var Constructor = (function (_super) {
     };
     Constructor.version = Version.version;
     Constructor.settings = new Settings();
-    Constructor.zoomStep = 0.1;
+    Constructor.zoomStep = 0.5;
     Constructor.onReadyHandler = function () { return true; };
     Constructor.onUpdateHandlers = [];
     return Constructor;
@@ -3886,13 +3886,34 @@ var Side2D = (function (_super) {
         var dh = this.container.clientHeight - canvasContainer.clientHeight;
         this.setRoundCorners();
     };
-    Side2D.prototype.setZoom = function (value) {
+    Side2D.prototype.setZoom = function (value, cx, cy, checkZoom) {
+        if (cx === void 0) { cx = 0; }
+        if (cy === void 0) { cy = 0; }
+        if (checkZoom === void 0) { checkZoom = true; }
         if (value >= Side2D.maxZoom && value <= Side2D.minZoom)
             return;
         this.canvas.setZoom(value);
         this.canvas.setWidth(this.width * value);
         this.canvas.setHeight(this.height * value);
         this.canvas.renderAll();
+        var canvasContainer = this.canvasElement.parentElement;
+        var dh = this.container.clientHeight - canvasContainer.clientHeight;
+        if (dh < 0) {
+            console.log("dh < 0");
+            canvasContainer.style.top = "5px";
+            canvasContainer.style.transform = "translateY(0%)";
+        }
+        else {
+            console.log("dh > 0");
+            canvasContainer.style.top = "50%";
+            canvasContainer.style.transform = "translateY(-50%)";
+        }
+        if (cx) {
+            canvasContainer.scrollLeft = canvasContainer.scrollWidth * cx;
+        }
+        if (cy) {
+            canvasContainer.scrollTop = canvasContainer.scrollHeight * cx;
+        }
         this.setRoundCorners();
     };
     Side2D.prototype.getZoom = function () {
@@ -4856,17 +4877,28 @@ var ConstructorUI = (function (_super) {
                     }
                 }
                 if (!_this.touchPan) {
-                    var z = _this.touchZoom * (1 - ((_this.touchDist - d) / 400));
+                    var z = _this.touchZoom * (1 - ((_this.touchDist - d) / 200));
                     if (z >= 0.3) {
                         side.setZoom(z);
                         var page = Constructor.instance.getActiveSide().container;
                         if (page.clientWidth < page.scrollWidth) {
-                            var dx = (_this.touchScrollX + _this.touchCenterX) * page.scrollWidth;
-                            side.container.scrollLeft = _this.touchScrollX * dx;
+                            console.log("touchCenterX = " + _this.touchCenterX);
+                            var offsetX = _this.container.offsetLeft;
+                            console.log("offsetX = " + offsetX);
+                            var percentX = (_this.touchCenterX - offsetX) / _this.container.offsetWidth;
+                            console.log("percentX = " + percentX);
+                            var maxScrollX = page.scrollWidth - page.clientWidth;
+                            console.log("maxScrollX = " + maxScrollX);
+                            var scrollX_1 = _this.touchScrollX + maxScrollX * percentX;
+                            console.log("scrollX = " + scrollX_1);
+                            side.container.scrollLeft = scrollX_1;
                         }
                         if (page.clientHeight < page.scrollHeight) {
-                            var dy = (_this.touchScrollY + _this.touchCenterY) * page.scrollHeight;
-                            side.container.scrollTop = _this.touchScrollY * dy;
+                            var offsetY = _this.container.offsetTop;
+                            var percentY = (_this.touchCenterY - offsetY) / _this.container.offsetHeight;
+                            var maxScrollY = page.scrollHeight - page.clientHeight;
+                            var scrollY_1 = _this.touchScrollX + maxScrollY * percentY;
+                            side.container.scrollTop = scrollY_1;
                         }
                     }
                 }

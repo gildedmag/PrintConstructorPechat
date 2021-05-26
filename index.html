@@ -57,6 +57,10 @@
 <script>
     window.addEventListener("load", function () {
         //ConstructorUI.instance.loadCategory(window.constructorConfiguration.categoryId);
+        for (let i = 0; i < 5; i++) {
+            Constructor.instance.addElement(ElementType.TEXT)
+            Constructor.instance.zoomIn()
+        }
     });
 </script>
 

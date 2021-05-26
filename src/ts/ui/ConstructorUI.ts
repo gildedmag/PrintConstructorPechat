@@ -188,17 +188,28 @@ class ConstructorUI extends UIControl {
                     }
                 }
                 if (!this.touchPan) {
-                    let z = this.touchZoom * (1 - ((this.touchDist - d) / 400))
+                    let z = this.touchZoom * (1 - ((this.touchDist - d) / 200))
                     if (z >= 0.3) {
                         side.setZoom(z);
                         let page = Constructor.instance.getActiveSide().container;
                         if (page.clientWidth < page.scrollWidth) {
-                            let dx = (this.touchScrollX + this.touchCenterX) * page.scrollWidth;
-                            side.container.scrollLeft = this.touchScrollX * dx;
+                            console.log("touchCenterX = " + this.touchCenterX);
+                            let offsetX = this.container.offsetLeft;
+                            console.log("offsetX = " + offsetX);
+                            let percentX = (this.touchCenterX - offsetX) / this.container.offsetWidth;
+                            console.log("percentX = " + percentX);
+                            let maxScrollX = page.scrollWidth - page.clientWidth;
+                            console.log("maxScrollX = " + maxScrollX);
+                            let scrollX = this.touchScrollX + maxScrollX * percentX;
+                            console.log("scrollX = " + scrollX);
+                            side.container.scrollLeft = scrollX;
                         }
                         if (page.clientHeight < page.scrollHeight) {
-                            let dy = (this.touchScrollY + this.touchCenterY) * page.scrollHeight;
-                            side.container.scrollTop = this.touchScrollY * dy;
+                            let offsetY = this.container.offsetTop;
+                            let percentY = (this.touchCenterY - offsetY) / this.container.offsetHeight;
+                            let maxScrollY = page.scrollHeight - page.clientHeight;
+                            let scrollY = this.touchScrollX + maxScrollY * percentY;
+                            side.container.scrollTop = scrollY;
                         }
                     }
                 } else {
