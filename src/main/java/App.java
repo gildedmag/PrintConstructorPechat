@@ -40,7 +40,20 @@ public class App {
         killChromeProcesses();
         constructorPool.init();
         Utils.trace("init");
+        schedulePoolRefresh(Settings.CLEAN_INTERVAL_HOURS);
         //Runtime.getRuntime().addShutdownHook(new Thread(this::exit));
+    }
+
+    private void schedulePoolRefresh(int intervalHours){
+        try {
+            Thread.sleep((long) intervalHours * 60 * 60 * 1000);
+            constructorPool.clean();
+            killChromeProcesses();
+            constructorPool.init();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        schedulePoolRefresh(intervalHours);
     }
 
     public void exit() {

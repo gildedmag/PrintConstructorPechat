@@ -13,6 +13,7 @@ public class Settings {
     public static String WEB_DIR;
     public static String BACKGROUND;
     public static int DEFAULT_FRAMES;
+    public static int CLEAN_INTERVAL_HOURS;
     public static int PORT;
     public static int POOL_SIZE;
     public static int DEFAULT_WIDTH;
@@ -36,6 +37,7 @@ public class Settings {
         WEB_DIR = properties.getProperty("web_dir", "");
         DRIVER_PATH = properties.getProperty("driver_path", App.jarPath + "/chromedriver");
         BACKGROUND = properties.getProperty("background", "#eeeeee");
+        CLEAN_INTERVAL_HOURS = parseInt(properties.getProperty("background", ""), 24);
         PORT = parseInt("port", 2018);
         POOL_SIZE = parseInt("pool_size", 8);
         DOMAINS = parseArray("domains");

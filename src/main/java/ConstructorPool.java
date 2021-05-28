@@ -38,6 +38,17 @@ public class ConstructorPool {
         while (size() < Settings.POOL_SIZE) sleep(100);
     }
 
+    public void clean() {
+        for (Constructor constructor : constructors) {
+            try {
+                constructor.driver.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        constructors = new Constructor[Settings.POOL_SIZE];
+    }
+
     public Constructor create(String modelName){
         ChromeDriver driver = new ChromeDriver(options);
         driver.setLogLevel(Level.INFO);
