@@ -6,6 +6,8 @@ public class StatusEndpoint extends Endpoint {
         super(app);
     }
 
+    Runtime runtime = Runtime.getRuntime();
+
     private static final String html = Utils.readResource("status.html");
 
     @Override
@@ -37,13 +39,17 @@ public class StatusEndpoint extends Endpoint {
         return html
                 .replaceFirst(Constructor.$, Version.getVersion())
                 .replaceFirst(Constructor.$, getUptime())
+                .replaceFirst(Constructor.$, Utils.totalMemory())
+                .replaceFirst(Constructor.$, Utils.freeMemory())
+                .replaceFirst(Constructor.$, Utils.usedMemory())
+                .replaceFirst(Constructor.$, Utils.maxMemory())
                 .replaceFirst(Constructor.$, rows.toString());
     }
 
     private String toSeconds(long millis) {
         double seconds = Math.round(millis / 100);
         seconds /= 10;
-        return String.valueOf(seconds) + " s";
+        return seconds + " s";
     }
 
     private String getUptime() {
@@ -54,7 +60,8 @@ public class StatusEndpoint extends Endpoint {
         StringBuilder uptime = new StringBuilder();
         if (days > 0) uptime.append(days).append(" d ");
         if (hours > 0) uptime.append(hours % 24).append(" h ");
-        uptime.append(minutes % 60).append(" m");
+        uptime.append(minutes % 60).append(" m ");
+        uptime.append(seconds % 60).append(" s");
         return uptime.toString();
     }
 

@@ -8,6 +8,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+
 public class App {
 
     public static final String jarPath = new File(App.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile().getAbsolutePath();
@@ -34,6 +36,9 @@ public class App {
         logsEndpoint = new LogsEndpoint(this);
         executor.execute(this::listen);
         Utils.trace("init");
+        if (isEmpty(Settings.CONSTRUCTOR_DIR)){
+            throw new RuntimeException("CONSTRUCTOR_DIR is empty!");
+        }
         Utils.copyResource("renderer.html", Settings.CONSTRUCTOR_DIR + "/renderer.html", true);
         System.out.println(Utils.getJatPath() + "/renderer.html");
         //Utils.copyResource("renderer.html",  "/" + Utils.getJatPath() + "/renderer.html");

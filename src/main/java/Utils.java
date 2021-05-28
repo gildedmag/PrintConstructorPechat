@@ -1,7 +1,4 @@
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.nio.file.Files;
@@ -17,6 +14,9 @@ public class Utils {
 
     private static Map<String, Long> times = new HashMap<>();
     private static final Pattern MODEL_PATTERN = Pattern.compile("\"model\"\\s?:\\s?\"([^\'^\"]{1,50})\"");
+    private static final int MB = 1024 * 1024;
+    private static final String _MB = " MB";
+    private static Runtime runtime = Runtime.getRuntime();
 
     public static String getJatPath() {
         return new File(".").getAbsolutePath();
@@ -126,6 +126,22 @@ public class Utils {
         Matcher matcher = MODEL_PATTERN.matcher(json);
         if (matcher.find()) return matcher.group(1);
         return null;
+    }
+
+    public static String totalMemory(){
+        return runtime.totalMemory() / MB + " MB";
+    }
+
+    public static String freeMemory(){
+        return runtime.freeMemory() / MB + " MB";
+    }
+
+    public static String usedMemory(){
+        return (runtime.totalMemory() - runtime.freeMemory()) / MB + " MB";
+    }
+
+    public static String maxMemory(){
+        return runtime.maxMemory() / MB + " MB";
     }
 
 }

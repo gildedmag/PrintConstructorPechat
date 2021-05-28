@@ -1,5 +1,8 @@
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 import static org.apache.http.util.TextUtils.isEmpty;
@@ -28,10 +31,30 @@ public class Settings {
     static {
         properties = new Properties();
 
+        System.out.println("App.jarPath = " + App.jarPath);
+
         try (FileInputStream is = new FileInputStream(App.jarPath + PATH)) {
             properties.load(is);
         } catch (IOException e) {
             System.err.println("File " + App.jarPath + PATH + " not found");
+            try {
+                Path parentDir = Paths.get(App.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+                parentDir = parentDir.getParent().getParent();
+                System.err.println("Searching insinde " + parentDir);
+                Files.find(parentDir,
+                        6,
+                        (filePath, fileAttr) -> fileAttr.isRegularFile() && filePath.endsWith(PATH.substring(1)))
+                        .findFirst().ifPresent(path -> {
+                    System.out.println("loading properties from: " + path.toString());
+                    try (FileInputStream is = new FileInputStream(path.toFile())) {
+                        properties.load(is);
+                    } catch (IOException e1) {
+                        throw new RuntimeException("failed to load properties.");
+                    }
+                });
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
         }
         CONSTRUCTOR_DIR = properties.getProperty("constructor_dir", "");
         WEB_DIR = properties.getProperty("web_dir", "");
