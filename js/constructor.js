@@ -185,7 +185,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "26.05.2021 17:34";
+    Version.version = "26.05.2021 18:28";
     return Version;
 }());
 var Trigger = (function () {
@@ -4878,19 +4878,14 @@ var ConstructorUI = (function (_super) {
                 }
                 if (!_this.touchPan) {
                     var z = _this.touchZoom * (1 - ((_this.touchDist - d) / 200));
-                    if (z >= 0.3) {
+                    if (z >= 0.1) {
                         side.setZoom(z);
                         var page = Constructor.instance.getActiveSide().container;
                         if (page.clientWidth < page.scrollWidth) {
-                            console.log("touchCenterX = " + _this.touchCenterX);
                             var offsetX = _this.container.offsetLeft;
-                            console.log("offsetX = " + offsetX);
                             var percentX = (_this.touchCenterX - offsetX) / _this.container.offsetWidth;
-                            console.log("percentX = " + percentX);
                             var maxScrollX = page.scrollWidth - page.clientWidth;
-                            console.log("maxScrollX = " + maxScrollX);
                             var scrollX_1 = _this.touchScrollX + maxScrollX * percentX;
-                            console.log("scrollX = " + scrollX_1);
                             side.container.scrollLeft = scrollX_1;
                         }
                         if (page.clientHeight < page.scrollHeight) {
