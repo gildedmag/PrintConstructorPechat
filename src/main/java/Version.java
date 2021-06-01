@@ -1,6 +1,6 @@
 public class Version {
 
-    private final static String version = "28.05.2021 12:33";
+    private final static String version = "01.06.2021 11:32";
 
     public static String getVersion(){
         return version;
