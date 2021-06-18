@@ -10,7 +10,8 @@ declare var constructorConfiguration: {
     selectedOptions: object,
     stickerCategories: [{ id: number, name: string }],
     fonts: [any],
-    languageItems: object
+    languageItems: object,
+    onFileChooserRequest: () => {}
 }
 
 declare var clipboardData: any;

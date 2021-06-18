@@ -41,7 +41,7 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
     return function (d, b) {
@@ -6403,7 +6403,7 @@ var NewElementPanel = (function (_super) {
             }
         };
         _this.container.appendChild(form);
-        _this.append(new Row(new Button(function () { return input.click(); }, Icon.IMAGE, "Image")));
+        _this.append(new Row(new Button(function () { return _this.openFileChooser(input); }, Icon.IMAGE, "Image")));
         _this.append(new Row(new Button(function () { return _this.c.addText(LocalizedStrings.translate('Text')); }, Icon.FONT, 'Add Text')));
         _this.addButton("Circle", ElementType.CIRCLE, Icon.CIRCLE);
         _this.addButton("Rectangle", ElementType.RECTANGLE, Icon.SQUARE);
@@ -6414,6 +6414,14 @@ var NewElementPanel = (function (_super) {
     }
     NewElementPanel.prototype.getClassName = function () {
         return _super.prototype.getClassName.call(this) + " vertical";
+    };
+    NewElementPanel.prototype.openFileChooser = function (input) {
+        if (constructorConfiguration.onFileChooserRequest) {
+            constructorConfiguration.onFileChooserRequest.call(this);
+        }
+        else {
+            input.click();
+        }
     };
     NewElementPanel.prototype.show = function () {
         _super.prototype.show.call(this);

@@ -98,7 +98,7 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
         this.append(
             new Row(
                 new Button(
-                    () => input.click(),
+                    () => this.openFileChooser(input),
                     Icon.IMAGE,
                     "Image"
                 )
@@ -130,6 +130,14 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
 
 
         this.update();
+    }
+
+    openFileChooser(input){
+        if(constructorConfiguration.onFileChooserRequest){
+            constructorConfiguration.onFileChooserRequest.call(this);
+        }else{
+            input.click();
+        }
     }
 
     show() {
