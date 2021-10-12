@@ -104,6 +104,15 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         this.side.canvas.renderAll();
     }
 
+    setPositionAtCenterOfViewport(){
+        // set position of the element when adding new object to canvas
+        let bound = this.side.canvas.clipPath.getBoundingRect();
+        this.object.set({
+            top: (bound.top + bound.height / 2) - this.object.height / 2,
+            left: (bound.left + bound.width / 2) - this.object.width / 2,
+        });
+    }
+
     /** @hidden */
     offset() {
         this.object.left = this.object.left + Constructor.settings.duplicateOffset;
@@ -590,23 +599,23 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         return this.object.toDataURL({multiplier: multiplier});
     }
 
-    clone(callback: (Element2D) => any) {
+    clone(callback?: (Element2D) => any): Element2D {
         let objectOptions: ObjectOptions = this.serialize();
-
+        let element
         if (objectOptions.type === 'image') {
             let object = objectOptions.toObject();
             (fabric.Image as any).fromObject(object, image => {
                 if (image === null) {
                     return
                 }
-                let element = new Element2D(ElementType.IMAGE);
+                element = new Element2D(ElementType.IMAGE);
                 element.side = this;
                 element.object = image;
                 element.setOptions(element.object);
                 callback(element);
             });
         } else {
-            let element = Element2D.prototype.deserialize(objectOptions);
+            element = Element2D.prototype.deserialize(objectOptions);
             callback && callback(element);
             element.object.dirty = true;
         }
@@ -618,6 +627,7 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
         //
         // let element = new Element2D(this.type, this.side);
         // element.object = object;
+        return element;
     }
 
     remove() {

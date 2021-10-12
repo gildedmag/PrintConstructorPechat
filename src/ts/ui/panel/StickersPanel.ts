@@ -111,6 +111,14 @@ class StickersPanel extends TriggeredUIControl<Constructor> {
         }
     }
 
+
+    test() {
+        const imgs = document.querySelectorAll('[data-src]');
+        imgs.forEach(img => {
+            this.observer.observe(img);
+        });
+    }
+
     showed() {
         super.showed();
         this.update();

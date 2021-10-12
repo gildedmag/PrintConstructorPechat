@@ -118,16 +118,22 @@ class Preview extends View<Preview> {
         this.isLoaded = false;
         Constructor.instance.spinner.show();
         this.modelName = modelName;
-        Preview.objectLoader.manager.onError = () => {
-            Constructor.instance.spinner.hide();
-            error && error("Failed to load model: " + modelName);
-        };
-        Preview.objectLoader.load(Constructor.settings.urls.models + this.modelName + Constructor.settings.fileExtensions.model, object => {
-            this.setScene(object as THREE.Scene);
-            Constructor.instance.spinner.hide();
+        if(!Constructor.instance.is2dEditorMode()){
+            Preview.objectLoader.manager.onError = () => {
+                Constructor.instance.spinner.hide();
+                error && error("Failed to load model: " + modelName);
+            };
+            Preview.objectLoader.load(Constructor.settings.urls.models + this.modelName + Constructor.settings.fileExtensions.model, object => {
+                this.setScene(object as THREE.Scene);
+                Constructor.instance.spinner.hide();
+                this.isLoaded = true;
+                if (callback) callback();
+            });
+        }else{
             this.isLoaded = true;
-            if (callback) callback();
-        });
+            Constructor.instance.spinner.hide();
+        }
+
     }
 
     private setupScene() {

@@ -1,5 +1,5 @@
 /// <reference path="./Side2DState.ts" />
-class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side2DState>, Equalable<Side2D> {
+class Side2D1 extends View<Side2D> implements Indexed, Serializable<Side2D, Side2DState>, Equalable<Side2D> {
 
     static maxZoom: number = 10;
     static minZoom: number = 0.001;
@@ -9,7 +9,6 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
     elements: Element2D[] = [];
     selection: Element2D;
     canvasElement: HTMLCanvasElement;
-    mainContainer: HTMLElement;
 
     name: string;
     price: number = 0;
@@ -34,12 +33,6 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
     needsHistoryUpdate;
     id: number
 
-    /** product image for 2d constructor **/
-    productPicture: string;
-
-    /** clipping mask **/
-    mask: string;
-
     /**
      *
      * @param {HTMLElement} htmlElement
@@ -48,20 +41,17 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
      * @param {number} roundCorners round corners in percents
      * @param name
      * @param price
-     * @param productPicture
      */
-    constructor(htmlElement: HTMLElement, width: number, height: number, roundCorners?: number, name?: string, price?: number, productPicture?: string, mask?: string) {
+    constructor(htmlElement: HTMLElement, width: number, height: number, roundCorners?: number, name?: string, price?: number) {
         super(htmlElement);
         this.id = Math.random() * 1e18;
         this.history = new HistoryList();
         this.width = width;
         this.height = height;
         this.name = name;
-        this.price = price || 0;
-        this.productPicture = productPicture;
-        this.mask = mask;
+        this.price = parseInt(price) || 0;
         this.canvasElement = document.createElement(Constants.CANVAS);
-        this.initializeContainer(width, height, productPicture);
+        this.container.appendChild(this.canvasElement);
         this.canvas = new fabric.Canvas(this.canvasElement, null);
         this.canvasElement.style.background = Constructor.instance.background;
         this.canvas.setWidth(width);
@@ -97,7 +87,6 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
         this.verticalGuide = new VerticalGuide(width);
         this.canvas.add(this.horizontalGuide);
         this.canvas.add(this.verticalGuide);
-        this.canvas.controlsAboveOverlay = true;
         this.setZoom(1);
         this.hideGuides();
         this.hide();
@@ -105,77 +94,6 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
         this.roundCorners = roundCorners;
         if (roundCorners) this.setRoundCorners();
         this.canvasElement.style.border = Constants.LINE_STYLE_PREFIX + Color.GRAY.toHex();
-        this.createWorkingArea();
-    }
-
-    private initializeContainer(width: number, height: number, productPicture: string) {
-        if(Constructor.instance.is2dEditorMode()){
-            // create container for 2d products
-            this.mainContainer = document.createElement(Constants.DIV);
-            this.mainContainer.className = "side-container";
-            this.mainContainer.style.width = `${width}px`;
-            this.mainContainer.style.height = `${height}px`;
-
-            // create background image
-            let background = new Image();
-            background.src = productPicture;
-
-            // add product photo to container
-            this.mainContainer.appendChild(background);
-
-            // add canvas to container
-            this.mainContainer.appendChild(this.canvasElement);
-
-            // add main container to view
-            this.container.appendChild(this.mainContainer);
-
-            this.canvasElement.parentElement.style.top = '0%';
-            this.canvasElement.parentElement.style.left = '0%';
-        }else{
-            this.container.appendChild(this.canvasElement);
-
-        }
-    }
-
-    private createWorkingArea() {
-       if(!Constructor.instance.is2dEditorMode()){
-           return;
-       }
-        let canvas = new fabric.Canvas(null);
-        canvas.setWidth(this.canvas.getWidth())
-        canvas.setHeight(this.canvas.getHeight())
-        canvas.setZoom(this.canvas.getZoom())
-        canvas.loadFromJSON(this.mask,  () => {
-            canvas.renderAll();
-
-            let mask = canvas.getObjects()[0];
-            mask.dirty = true;
-            mask.absolutePositioned = true;
-            if(!this.canvas.clipPath){
-                this.canvas.clipPath = mask;
-            }
-            this.canvas.renderAll();
-
-            mask.clone(function (clone) {
-                canvas.add(clone.set({
-                    top: clone.top - 1,
-                    left: clone.left - 1,
-                    selectable: false,
-                    fill: 'transparent',
-                    hoverCursor: 'default',
-                    strokeDashArray: [5, 5],
-                    strokeWidth: 3,
-                    id: Constants.OBJECT_2D_BORDER,
-                    strokeUniform: true
-                }));
-            });
-
-            let border = canvas.getObjects()[1];
-            border.set({
-                strokeUniform: true
-            })
-            this.canvas.add(border);
-        });
     }
 
     getName() {
@@ -206,55 +124,55 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
 
     setZoom(value: number, cx: number = 0, cy: number = 0, checkZoom: boolean = true) {
         if (value >= Side2D.maxZoom && value <= Side2D.minZoom) return;
-        let canvasContainer = this.canvasElement.parentElement;
-
         this.canvas.setZoom(value);
         this.canvas.setWidth(this.width * value);
         this.canvas.setHeight(this.height * value);
         this.canvas.renderAll();
 
-        if(Constructor.instance.is2dEditorMode()) {
 
-            this.mainContainer.style.width = `${this.width * value}px`
-            this.mainContainer.style.height = `${this.height * value}px`
+        let canvasContainer = this.canvasElement.parentElement;
+        // let dw = this.container.clientWidth - canvasContainer.clientWidth;
+        // let dh = this.container.clientHeight - canvasContainer.clientHeight;
 
-            let dh = this.container.clientHeight - this.mainContainer.clientHeight;
-            if (dh < 0) {
-                this.mainContainer.style.top = "5px";
-                this.mainContainer.style.transform = "translateY(0%)";
-            } else {
-                this.mainContainer.style.top = "50%";
-                this.mainContainer.style.transform = "translateY(-50%)";
-            }
+        //let translate = -50 +
+        //console.log(dw);
+        //canvasContainer.style.top = top;
 
-            if (cx) {
-                canvasContainer.scrollLeft = canvasContainer.scrollWidth * cx;
-                this.mainContainer.scrollLeft = canvasContainer.scrollWidth * cx;
-            }
-            if (cy) {
-                canvasContainer.scrollTop = canvasContainer.scrollHeight * cx;
-                this.mainContainer.scrollTop = canvasContainer.scrollHeight * cx;
-            }
-        }else{
+        //canvasContainer.style.height = this.height * 2 + "px";
 
-            let dh = this.container.clientHeight - canvasContainer.clientHeight;
-            if (dh < 0) {
-                canvasContainer.style.top = "5px";
-                canvasContainer.style.transform = "translateY(0%)";
-            } else {
-                canvasContainer.style.top = "50%";
-                canvasContainer.style.transform = "translateY(-50%)";
-            }
+        //canvasContainer.style.top = canvasContainer.clientHeight / 2 + "px";
 
-            if (cx){
-                canvasContainer.scrollLeft = canvasContainer.scrollWidth * cx;
-            }
-            if (cy){
-                canvasContainer.scrollTop = canvasContainer.scrollHeight * cx;
-            }
+        let dh = this.container.clientHeight - canvasContainer.clientHeight;
+        if (dh < 0) {
+            console.log("dh < 0");
+            //canvasContainer.style.transition = "unset";
+            //canvasContainer.style.transform = "translateY(" + dh + "px)";
+            //canvasContainer.style.margin = "unset";
+            canvasContainer.style.top = "5px";
+            canvasContainer.style.transform = "translateY(0%)";
+        } else {
+            console.log("dh > 0");
+            //canvasContainer.style.transform = "";
+            //canvasContainer.style.margin = "auto";
+            canvasContainer.style.top = "50%";
+            canvasContainer.style.transform = "translateY(-50%)";
+            // canvasContainer.style.transition = ".4s";
+        }
+
+        if (cx){
+            canvasContainer.scrollLeft = canvasContainer.scrollWidth * cx;
+        }
+        if (cy){
+            canvasContainer.scrollTop = canvasContainer.scrollHeight * cx;
         }
 
         this.setRoundCorners();
+
+        // if (checkZoom){
+        //     setTimeout(() => {
+        //         this.setZoom(value, cx, cy, false);
+        //     }, 200);
+        // }
     }
 
     getZoom(): number {
@@ -284,7 +202,7 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
     }
 
     getElement() {
-        return  this.mainContainer ? this.mainContainer : this.canvas.getElement().parentElement;
+        return this.canvas.getElement().parentElement;
     }
 
     getIndex(): number {
@@ -328,12 +246,6 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
     addElement(type: ElementType): Element2D {
         Utils.logMethodName();
         return this.add(new Element2D(type, this));
-    }
-
-    setProductColor(color: string){
-        let image: ChildNode = this.mainContainer.childNodes[0];
-        // @ts-ignore
-        image.style.backgroundColor = color;
     }
 
     getLayers(): Element2D[] {
@@ -411,8 +323,7 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
     }
 
     deserialize(state: Side2DState): Side2D {
-        if(Constructor.instance.is2dEditorMode()){}
-        let side = new Side2D(Constructor.instance.getElement(), state.width, state.height, state.roundCorners, null, null, state.productPicture, state.mask);
+        let side = new Side2D(Constructor.instance.getElement(), state.width, state.height, state.roundCorners);
         if (state.objects) {
             let json = '{"objects":' + JSON.stringify(state.objects) + '}'; //TODO: make it look not like a hack!
             let objects = Side2DStateObjects.parse(json);
@@ -431,7 +342,6 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
         this.canvas.clear();
         this.canvas.add(this.horizontalGuide);
         this.canvas.add(this.verticalGuide);
-        this.createWorkingArea();
         this.saveState();
     }
 
@@ -564,68 +474,9 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
         if (state) this.setState(state);
     }
 
-    async generatePreview(){
-
-
-        let canvas = new fabric.Canvas(null);
-        canvas.setWidth(this.canvas.getWidth());
-        canvas.setHeight(this.canvas.getHeight());
-        canvas.setZoom(this.canvas.getZoom());
-
-        let multiplier = 500 / Math.max(canvas.getWidth(), canvas.getHeight());
-        let data = '';
-         canvas.loadFromJSON(this.canvas.toJSON(),  async () => {
-            canvas.renderAll();
-            console.log('renderAll');
-
-
-             await fabric.Image.fromURL(this.productPicture,  (image) => {
-                console.log(image);
-                canvas.setBackgroundImage(image, canvas.renderAll.bind(canvas), {
-                    scaleX: 1,
-                    scaleY: 1
-                });
-                data =  canvas.toDataURL({
-                    format: 'image/jpeg',
-                    multiplier: multiplier,
-                    quality: 0.5
-                });
-            });
-
-        })
-
-        console.log('data');
-        console.log(data);
-        //window.open(data, "_blank")
-
-        //https://pechat.photo/image/polaroid/media/2021/10//1634066347-263.jpg
-
-
-
-
-
-
-        //window.open(data, "_blank")
-
-       // return data;
-
-    }
-
-    exportImage(maxSize?: number, format?: ImageType, isPreview?: boolean): string {
-        isPreview = false;
-        this.generatePreview();
-        let lastScale = this.canvas.getZoom();
+    exportImage(maxSize?: number, format?: ImageType): string {
         let w = this.canvas.getWidth();// / this.getZoom();
         let h = this.canvas.getHeight();// / this.getZoom();
-        let bound = {left: 0, top: 0, width: w, height: h};
-        // @ts-ignore
-        let border = [];//this.canvas.getObjects().filter(obj => obj.id === Constants.OBJECT_2D_BORDER);
-        this.toggleBorderVisibility(border[0]);
-        if(Constructor.instance.is2dEditorMode() && !isPreview){
-            this.canvas.setZoom(1);
-            bound = this.canvas.clipPath.getBoundingRect();
-        }
-
         let multiplier = maxSize ? maxSize / Math.max(w, h) : 1;
         if (!format) format = ImageType.PNG;
         if (format == ImageType.JPG) {
@@ -636,29 +487,13 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
             background.object.height = h;
             background.object.left = w / 2;
             background.object.top = h / 2;
-            if(bound.left){
-                background.object.set({
-                    left: bound.left,
-                    top: bound.top,
-                    width: bound.width * 2,
-                    height: bound.height * 2,
-                });
-            }
-
             background.object.setCoords();
             background.toBack();
             this.canvas.renderAll();
-            let src = this.canvas.toDataURL({
-                format: 'image/jpeg',
-                multiplier: multiplier,
-                quality: 0.5,
-                ...bound
-            });
+            let src = this.canvas.toDataURL({format: 'image/jpeg', multiplier: multiplier, quality: 0.5});
             background.remove();
             this.canvas.renderAll();
             this.history.unlock();
-            this.canvas.setZoom(lastScale);
-            this.toggleBorderVisibility(border[0]);
             return src;
         }
         if (format == ImageType.SVG) {
@@ -667,18 +502,7 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
                 height: h * multiplier,
             } as any);
         }
-        let data = this.canvas.toDataURL({format: Constants.PNG, multiplier: multiplier, ...bound});
-        this.toggleBorderVisibility(border[0]);
-        this.canvas.setZoom(lastScale);
-        return data;
-    }
-
-    toggleBorderVisibility(border){
-        if(border){
-            border.set({
-                opacity: border.opacity == 1 ? 0 : 1
-            })
-        }
+        return this.canvas.toDataURL({format: Constants.PNG, multiplier: multiplier});
     }
 
     public lock() {

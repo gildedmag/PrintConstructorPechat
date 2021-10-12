@@ -8,6 +8,7 @@ class Constructor extends View<Constructor> {
     sides: Side2D[] = [];
     activeSideIndex: number;
     preview: Preview;
+    imageContainer = new FlowControl(2, true);
 
     /** @hidden */
     spinner: Spinner;
@@ -48,12 +49,13 @@ class Constructor extends View<Constructor> {
     private static zoomStep: number = 0.5;
 
     static onReadyHandler = () => true;
+    state: object;
     static onReady(handler: () => any){
         Constructor.onReadyHandler = handler;
     }
 
     //Additional update event handling
-    static onUpdateHandlers: [() => any] = [];
+    static onUpdateHandlers: any[] = [];
     static onUpdate(handler: () => any){
         Constructor.onUpdateHandlers.push(handler);
     }
@@ -121,18 +123,26 @@ class Constructor extends View<Constructor> {
     /**
      * Load 3D model with print areas and fill area from default models path, {@link Settings}
      * @param {string} modelName
+     * @param mode
      * @param {function} callback
      * @param error
      */
-    loadModel(modelName: string, callback?: () => void, error?: (string) => void) {
+    loadModel(modelName: string, mode: string, callback?: () => void, error?: (string) => void) {
+        if (ConstructorUI.instance.options) {
+            ConstructorUI.instance.options.mode = mode;
+        }
+        if(this.state){
+            this.state['mode'] = mode;
+        }
+
         Utils.logMethodName();
         this.preview.loadModel(modelName, callback, error);
         this.changed();
     }
 
-    addSide(width: number, height: number, roundCorners?: number, name?: string, price?: number): Side2D {
+    addSide(width: number, height: number, roundCorners?: number, name?: string, price?: number, productImage?: string, mask?: string): Side2D {
         Utils.logMethodName();
-        let side = new Side2D(this.container, width, height, roundCorners, name, price);
+        let side = new Side2D(this.container, width, height, roundCorners, name, price, productImage, mask);
         this.insertSide(side);
         return side;
     }
@@ -147,6 +157,11 @@ class Constructor extends View<Constructor> {
             side.zoomToFit();
         }
         this.changed();
+    }
+
+    is2dEditorMode(): boolean{
+        return (this.state && this.state['mode'] === '2d') ||
+            (ConstructorUI.instance.options && ConstructorUI.instance.options.mode === '2d');
     }
 
     /**
@@ -374,8 +389,13 @@ class Constructor extends View<Constructor> {
         Utils.logMethodName();
         let element = this.getActiveSide().addElement(type);
         element.object.setOptions(Constructor.settings.elementDefaults[type.getNativeTypeName()]);
-        element.randomizePosition();
         element.setColor(Color.random());
+        // set position of the element when adding new object to canvas
+        if(Constructor.instance.is2dEditorMode()){
+            element.setPositionAtCenterOfViewport();
+        }else{
+            element.randomizePosition();
+        }
         this.changed();
         return element;
     }
@@ -388,7 +408,7 @@ class Constructor extends View<Constructor> {
         return element;
     }
 
-    addImage(src: string, callback?: (Element2D) => void): Element2D {
+    addImage(src: string, callback?: (Element2D) => void, addImageInSidebar?: boolean): Element2D {
         Utils.logMethodName();
         let element = this.getActiveSide().addElement(ElementType.IMAGE);
         let image = element.object as fabric.Image;
@@ -403,6 +423,12 @@ class Constructor extends View<Constructor> {
             element.changed();
             callback && callback(element)
         });
+        if(addImageInSidebar){
+            let panel = ConstructorUI.instance.sidePanel;
+            this.imageContainer.append(new ImageControl(src, true))
+            panel.newElementPanel.append(this.imageContainer);
+            panel.update();
+        }
         return element;
     }
 
@@ -492,6 +518,7 @@ class Constructor extends View<Constructor> {
         this.sides.forEach(side => state.sides.push(side.serialize()));
         state.model = this.preview.modelName;
         state.fills = [];
+        state.mode = Constructor.instance.is2dEditorMode() ? '2d' : '3d';
         for (let i = 0; i < this.preview.fills.length; i++) {
             try {
                 state.fills[i] = this.preview.fills[i].color.getHex();
@@ -555,6 +582,7 @@ class Constructor extends View<Constructor> {
         }
         if (clearHistory) localStorage.clear();
         this.deleteAllSides();
+        this.state = state;
         if (state.sides) {
             state.sides.forEach(sideState => {
                 let side = Side2D.prototype.deserialize(sideState);
@@ -570,7 +598,7 @@ class Constructor extends View<Constructor> {
         }
         this.sides.forEach(side => side.saveState());
         if (state.model && this.preview.modelName != state.model) {
-            this.loadModel(state.model, () => {
+            this.loadModel(state.model, state.mode, () => {
                 this.setFills(state);
                 if (callback) callback();
             });

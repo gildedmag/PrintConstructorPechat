@@ -42,7 +42,6 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                 }
 
                 var reader = new FileReader();
-
                 reader.onload =  async () => {
                     //Trigger.preventUpdate = true;
                     let image = null;

@@ -163,6 +163,7 @@ var Constants;
     Constants["OBJECT_SKEWED"] = "object:skewed";
     Constants["OBJECT_ADDED"] = "object:added";
     Constants["OBJECT_REMOVED"] = "object:removed";
+    Constants["OBJECT_2D_BORDER"] = "visible-border";
     Constants["CHANGE"] = "change";
     Constants["CONTEXT_2D"] = "2d";
     Constants["FILL"] = "fill";
@@ -433,17 +434,23 @@ var Preview = (function (_super) {
         this.isLoaded = false;
         Constructor.instance.spinner.show();
         this.modelName = modelName;
-        Preview.objectLoader.manager.onError = function () {
+        if (!Constructor.instance.is2dEditorMode()) {
+            Preview.objectLoader.manager.onError = function () {
+                Constructor.instance.spinner.hide();
+                error && error("Failed to load model: " + modelName);
+            };
+            Preview.objectLoader.load(Constructor.settings.urls.models + this.modelName + Constructor.settings.fileExtensions.model, function (object) {
+                _this.setScene(object);
+                Constructor.instance.spinner.hide();
+                _this.isLoaded = true;
+                if (callback)
+                    callback();
+            });
+        }
+        else {
+            this.isLoaded = true;
             Constructor.instance.spinner.hide();
-            error && error("Failed to load model: " + modelName);
-        };
-        Preview.objectLoader.load(Constructor.settings.urls.models + this.modelName + Constructor.settings.fileExtensions.model, function (object) {
-            _this.setScene(object);
-            Constructor.instance.spinner.hide();
-            _this.isLoaded = true;
-            if (callback)
-                callback();
-        });
+        }
     };
     Preview.prototype.setupScene = function () {
         var _this = this;
@@ -706,6 +713,7 @@ var Constructor = (function (_super) {
     function Constructor(container, state) {
         var _this = _super.call(this, container instanceof HTMLElement ? container : document.getElementById(container)) || this;
         _this.sides = [];
+        _this.imageContainer = new FlowControl(2, true);
         _this.onSelectHandler = function () {
         };
         _this.onDeselectHandler = function () {
@@ -767,14 +775,20 @@ var Constructor = (function (_super) {
     Constructor.onTextEditingEntered = function (handler) {
         Constructor.onTextEditingEnteredHandler = handler;
     };
-    Constructor.prototype.loadModel = function (modelName, callback, error) {
+    Constructor.prototype.loadModel = function (modelName, mode, callback, error) {
+        if (ConstructorUI.instance.options) {
+            ConstructorUI.instance.options.mode = mode;
+        }
+        if (this.state) {
+            this.state['mode'] = mode;
+        }
         Utils.logMethodName();
         this.preview.loadModel(modelName, callback, error);
         this.changed();
     };
-    Constructor.prototype.addSide = function (width, height, roundCorners, name, price) {
+    Constructor.prototype.addSide = function (width, height, roundCorners, name, price, productImage, mask) {
         Utils.logMethodName();
-        var side = new Side2D(this.container, width, height, roundCorners, name, price);
+        var side = new Side2D(this.container, width, height, roundCorners, name, price, productImage, mask);
         this.insertSide(side);
         return side;
     };
@@ -789,6 +803,10 @@ var Constructor = (function (_super) {
             side.zoomToFit();
         }
         this.changed();
+    };
+    Constructor.prototype.is2dEditorMode = function () {
+        return (this.state && this.state['mode'] === '2d') ||
+            (ConstructorUI.instance.options && ConstructorUI.instance.options.mode === '2d');
     };
     Constructor.prototype.loadPreset = function (filename, callback) {
         this.loadState(Constructor.settings.urls.presets + filename + Constructor.settings.fileExtensions.presets, callback);
@@ -956,8 +974,13 @@ var Constructor = (function (_super) {
         Utils.logMethodName();
         var element = this.getActiveSide().addElement(type);
         element.object.setOptions(Constructor.settings.elementDefaults[type.getNativeTypeName()]);
-        element.randomizePosition();
         element.setColor(Color.random());
+        if (Constructor.instance.is2dEditorMode()) {
+            element.setPositionAtCenterOfViewport();
+        }
+        else {
+            element.randomizePosition();
+        }
         this.changed();
         return element;
     };
@@ -968,7 +991,7 @@ var Constructor = (function (_super) {
         }
         return element;
     };
-    Constructor.prototype.addImage = function (src, callback) {
+    Constructor.prototype.addImage = function (src, callback, addImageInSidebar) {
         Utils.logMethodName();
         var element = this.getActiveSide().addElement(ElementType.IMAGE);
         var image = element.object;
@@ -984,6 +1007,12 @@ var Constructor = (function (_super) {
             element.changed();
             callback && callback(element);
         });
+        if (addImageInSidebar) {
+            var panel = ConstructorUI.instance.sidePanel;
+            this.imageContainer.append(new ImageControl(src, true));
+            panel.newElementPanel.append(this.imageContainer);
+            panel.update();
+        }
         return element;
     };
     Constructor.prototype.changed = function () {
@@ -1041,6 +1070,7 @@ var Constructor = (function (_super) {
         this.sides.forEach(function (side) { return state.sides.push(side.serialize()); });
         state.model = this.preview.modelName;
         state.fills = [];
+        state.mode = Constructor.instance.is2dEditorMode() ? '2d' : '3d';
         for (var i = 0; i < this.preview.fills.length; i++) {
             try {
                 state.fills[i] = this.preview.fills[i].color.getHex();
@@ -1077,6 +1107,7 @@ var Constructor = (function (_super) {
         if (clearHistory)
             localStorage.clear();
         this.deleteAllSides();
+        this.state = state;
         if (state.sides) {
             state.sides.forEach(function (sideState) {
                 var side = Side2D.prototype.deserialize(sideState);
@@ -1091,7 +1122,7 @@ var Constructor = (function (_super) {
         }
         this.sides.forEach(function (side) { return side.saveState(); });
         if (state.model && this.preview.modelName != state.model) {
-            this.loadModel(state.model, function () {
+            this.loadModel(state.model, state.mode, function () {
                 _this.setFills(state);
                 if (callback)
                     callback();
@@ -1131,6 +1162,7 @@ var Constructor = (function (_super) {
 var ConstructorState = (function () {
     function ConstructorState() {
         this.model = null;
+        this.mode = '3d';
         this.fills = [];
         this.sides = [];
     }
@@ -2922,6 +2954,13 @@ var Element2D = (function (_super) {
         this.object.setCoords();
         this.side.canvas.renderAll();
     };
+    Element2D.prototype.setPositionAtCenterOfViewport = function () {
+        var bound = this.side.canvas.clipPath.getBoundingRect();
+        this.object.set({
+            top: (bound.top + bound.height / 2) - this.object.height / 2,
+            left: (bound.left + bound.width / 2) - this.object.width / 2,
+        });
+    };
     Element2D.prototype.offset = function () {
         this.object.left = this.object.left + Constructor.settings.duplicateOffset;
         this.object.top = this.object.top + Constructor.settings.duplicateOffset;
@@ -3354,13 +3393,14 @@ var Element2D = (function (_super) {
     Element2D.prototype.clone = function (callback) {
         var _this = this;
         var objectOptions = this.serialize();
+        var element;
         if (objectOptions.type === 'image') {
             var object = objectOptions.toObject();
             fabric.Image.fromObject(object, function (image) {
                 if (image === null) {
                     return;
                 }
-                var element = new Element2D(ElementType.IMAGE);
+                element = new Element2D(ElementType.IMAGE);
                 element.side = _this;
                 element.object = image;
                 element.setOptions(element.object);
@@ -3368,10 +3408,11 @@ var Element2D = (function (_super) {
             });
         }
         else {
-            var element = Element2D.prototype.deserialize(objectOptions);
+            element = Element2D.prototype.deserialize(objectOptions);
             callback && callback(element);
             element.object.dirty = true;
         }
+        return element;
     };
     Element2D.prototype.remove = function () {
         var _this = this;
@@ -3799,6 +3840,8 @@ var Side2DState = (function (_super) {
         _this.width = side.width;
         _this.height = side.height;
         _this.roundCorners = side.roundCorners;
+        _this.productPicture = side.productPicture || '';
+        _this.mask = side.mask || '';
         return _this;
     }
     Side2DState.prototype.equals = function (state) {
@@ -3809,9 +3852,56 @@ var Side2DState = (function (_super) {
     };
     return Side2DState;
 }(Side2DStateObjects));
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
 var Side2D = (function (_super) {
     __extends(Side2D, _super);
-    function Side2D(htmlElement, width, height, roundCorners, name, price) {
+    function Side2D(htmlElement, width, height, roundCorners, name, price, productPicture, mask) {
         var _this = _super.call(this, htmlElement) || this;
         _this.elements = [];
         _this.price = 0;
@@ -3820,9 +3910,11 @@ var Side2D = (function (_super) {
         _this.width = width;
         _this.height = height;
         _this.name = name;
-        _this.price = parseInt(price) || 0;
+        _this.price = price || 0;
+        _this.productPicture = productPicture;
+        _this.mask = mask;
         _this.canvasElement = document.createElement(Constants.CANVAS);
-        _this.container.appendChild(_this.canvasElement);
+        _this.initializeContainer(width, height, productPicture);
         _this.canvas = new fabric.Canvas(_this.canvasElement, null);
         _this.canvasElement.style.background = Constructor.instance.background;
         _this.canvas.setWidth(width);
@@ -3855,6 +3947,7 @@ var Side2D = (function (_super) {
         _this.verticalGuide = new VerticalGuide(width);
         _this.canvas.add(_this.horizontalGuide);
         _this.canvas.add(_this.verticalGuide);
+        _this.canvas.controlsAboveOverlay = true;
         _this.setZoom(1);
         _this.hideGuides();
         _this.hide();
@@ -3863,8 +3956,65 @@ var Side2D = (function (_super) {
         if (roundCorners)
             _this.setRoundCorners();
         _this.canvasElement.style.border = Constants.LINE_STYLE_PREFIX + Color.GRAY.toHex();
+        _this.createWorkingArea();
         return _this;
     }
+    Side2D.prototype.initializeContainer = function (width, height, productPicture) {
+        if (Constructor.instance.is2dEditorMode()) {
+            this.mainContainer = document.createElement(Constants.DIV);
+            this.mainContainer.className = "side-container";
+            this.mainContainer.style.width = width + "px";
+            this.mainContainer.style.height = height + "px";
+            var background = new Image();
+            background.src = productPicture;
+            this.mainContainer.appendChild(background);
+            this.mainContainer.appendChild(this.canvasElement);
+            this.container.appendChild(this.mainContainer);
+            this.canvasElement.parentElement.style.top = '0%';
+            this.canvasElement.parentElement.style.left = '0%';
+        }
+        else {
+            this.container.appendChild(this.canvasElement);
+        }
+    };
+    Side2D.prototype.createWorkingArea = function () {
+        var _this = this;
+        if (!Constructor.instance.is2dEditorMode()) {
+            return;
+        }
+        var canvas = new fabric.Canvas(null);
+        canvas.setWidth(this.canvas.getWidth());
+        canvas.setHeight(this.canvas.getHeight());
+        canvas.setZoom(this.canvas.getZoom());
+        canvas.loadFromJSON(this.mask, function () {
+            canvas.renderAll();
+            var mask = canvas.getObjects()[0];
+            mask.dirty = true;
+            mask.absolutePositioned = true;
+            if (!_this.canvas.clipPath) {
+                _this.canvas.clipPath = mask;
+            }
+            _this.canvas.renderAll();
+            mask.clone(function (clone) {
+                canvas.add(clone.set({
+                    top: clone.top - 1,
+                    left: clone.left - 1,
+                    selectable: false,
+                    fill: 'transparent',
+                    hoverCursor: 'default',
+                    strokeDashArray: [5, 5],
+                    strokeWidth: 3,
+                    id: Constants.OBJECT_2D_BORDER,
+                    strokeUniform: true
+                }));
+            });
+            var border = canvas.getObjects()[1];
+            border.set({
+                strokeUniform: true
+            });
+            _this.canvas.add(border);
+        });
+    };
     Side2D.prototype.getName = function () {
         return this.name || this.getIndex().toString();
     };
@@ -3892,27 +4042,48 @@ var Side2D = (function (_super) {
         if (checkZoom === void 0) { checkZoom = true; }
         if (value >= Side2D.maxZoom && value <= Side2D.minZoom)
             return;
+        var canvasContainer = this.canvasElement.parentElement;
         this.canvas.setZoom(value);
         this.canvas.setWidth(this.width * value);
         this.canvas.setHeight(this.height * value);
         this.canvas.renderAll();
-        var canvasContainer = this.canvasElement.parentElement;
-        var dh = this.container.clientHeight - canvasContainer.clientHeight;
-        if (dh < 0) {
-            console.log("dh < 0");
-            canvasContainer.style.top = "5px";
-            canvasContainer.style.transform = "translateY(0%)";
+        if (Constructor.instance.is2dEditorMode()) {
+            this.mainContainer.style.width = this.width * value + "px";
+            this.mainContainer.style.height = this.height * value + "px";
+            var dh = this.container.clientHeight - this.mainContainer.clientHeight;
+            if (dh < 0) {
+                this.mainContainer.style.top = "5px";
+                this.mainContainer.style.transform = "translateY(0%)";
+            }
+            else {
+                this.mainContainer.style.top = "50%";
+                this.mainContainer.style.transform = "translateY(-50%)";
+            }
+            if (cx) {
+                canvasContainer.scrollLeft = canvasContainer.scrollWidth * cx;
+                this.mainContainer.scrollLeft = canvasContainer.scrollWidth * cx;
+            }
+            if (cy) {
+                canvasContainer.scrollTop = canvasContainer.scrollHeight * cx;
+                this.mainContainer.scrollTop = canvasContainer.scrollHeight * cx;
+            }
         }
         else {
-            console.log("dh > 0");
-            canvasContainer.style.top = "50%";
-            canvasContainer.style.transform = "translateY(-50%)";
-        }
-        if (cx) {
-            canvasContainer.scrollLeft = canvasContainer.scrollWidth * cx;
-        }
-        if (cy) {
-            canvasContainer.scrollTop = canvasContainer.scrollHeight * cx;
+            var dh = this.container.clientHeight - canvasContainer.clientHeight;
+            if (dh < 0) {
+                canvasContainer.style.top = "5px";
+                canvasContainer.style.transform = "translateY(0%)";
+            }
+            else {
+                canvasContainer.style.top = "50%";
+                canvasContainer.style.transform = "translateY(-50%)";
+            }
+            if (cx) {
+                canvasContainer.scrollLeft = canvasContainer.scrollWidth * cx;
+            }
+            if (cy) {
+                canvasContainer.scrollTop = canvasContainer.scrollHeight * cx;
+            }
         }
         this.setRoundCorners();
     };
@@ -3940,7 +4111,7 @@ var Side2D = (function (_super) {
         return this.width / this.height;
     };
     Side2D.prototype.getElement = function () {
-        return this.canvas.getElement().parentElement;
+        return this.mainContainer ? this.mainContainer : this.canvas.getElement().parentElement;
     };
     Side2D.prototype.getIndex = function () {
         for (var i = 0; i < Constructor.instance.sides.length; i++) {
@@ -3980,6 +4151,10 @@ var Side2D = (function (_super) {
     Side2D.prototype.addElement = function (type) {
         Utils.logMethodName();
         return this.add(new Element2D(type, this));
+    };
+    Side2D.prototype.setProductColor = function (color) {
+        var image = this.mainContainer.childNodes[0];
+        image.style.backgroundColor = color;
     };
     Side2D.prototype.getLayers = function () {
         var layers = [];
@@ -4043,7 +4218,8 @@ var Side2D = (function (_super) {
         return new Side2DState(this);
     };
     Side2D.prototype.deserialize = function (state) {
-        var side = new Side2D(Constructor.instance.getElement(), state.width, state.height, state.roundCorners);
+        if (Constructor.instance.is2dEditorMode()) { }
+        var side = new Side2D(Constructor.instance.getElement(), state.width, state.height, state.roundCorners, null, null, state.productPicture, state.mask);
         if (state.objects) {
             var json = '{"objects":' + JSON.stringify(state.objects) + '}';
             var objects = Side2DStateObjects.parse(json);
@@ -4058,6 +4234,7 @@ var Side2D = (function (_super) {
         this.canvas.clear();
         this.canvas.add(this.horizontalGuide);
         this.canvas.add(this.verticalGuide);
+        this.createWorkingArea();
         this.saveState();
     };
     Side2D.prototype.removeElements = function () {
@@ -4183,7 +4360,511 @@ var Side2D = (function (_super) {
         if (state)
             this.setState(state);
     };
-    Side2D.prototype.exportImage = function (maxSize, format) {
+    Side2D.prototype.generatePreview = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var canvas, multiplier, data;
+            var _this = this;
+            return __generator(this, function (_a) {
+                canvas = new fabric.Canvas(null);
+                canvas.setWidth(this.canvas.getWidth());
+                canvas.setHeight(this.canvas.getHeight());
+                canvas.setZoom(this.canvas.getZoom());
+                multiplier = 500 / Math.max(canvas.getWidth(), canvas.getHeight());
+                data = '';
+                canvas.loadFromJSON(this.canvas.toJSON(), function () { return __awaiter(_this, void 0, void 0, function () {
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                canvas.renderAll();
+                                console.log('renderAll');
+                                return [4, fabric.Image.fromURL(this.productPicture, function (image) {
+                                        console.log(image);
+                                        canvas.setBackgroundImage(image, canvas.renderAll.bind(canvas), {
+                                            scaleX: 1,
+                                            scaleY: 1
+                                        });
+                                        data = canvas.toDataURL({
+                                            format: 'image/jpeg',
+                                            multiplier: multiplier,
+                                            quality: 0.5
+                                        });
+                                    })];
+                            case 1:
+                                _a.sent();
+                                return [2];
+                        }
+                    });
+                }); });
+                console.log('data');
+                console.log(data);
+                return [2];
+            });
+        });
+    };
+    Side2D.prototype.exportImage = function (maxSize, format, isPreview) {
+        isPreview = false;
+        this.generatePreview();
+        var lastScale = this.canvas.getZoom();
+        var w = this.canvas.getWidth();
+        var h = this.canvas.getHeight();
+        var bound = { left: 0, top: 0, width: w, height: h };
+        var border = [];
+        this.toggleBorderVisibility(border[0]);
+        if (Constructor.instance.is2dEditorMode() && !isPreview) {
+            this.canvas.setZoom(1);
+            bound = this.canvas.clipPath.getBoundingRect();
+        }
+        var multiplier = maxSize ? maxSize / Math.max(w, h) : 1;
+        if (!format)
+            format = ImageType.PNG;
+        if (format == ImageType.JPG) {
+            this.history.lock();
+            var background = this.addElement(ElementType.RECTANGLE);
+            background.setColor(Color.WHITE);
+            background.object.width = w;
+            background.object.height = h;
+            background.object.left = w / 2;
+            background.object.top = h / 2;
+            if (bound.left) {
+                background.object.set({
+                    left: bound.left,
+                    top: bound.top,
+                    width: bound.width * 2,
+                    height: bound.height * 2,
+                });
+            }
+            background.object.setCoords();
+            background.toBack();
+            this.canvas.renderAll();
+            var src = this.canvas.toDataURL(__assign({ format: 'image/jpeg', multiplier: multiplier, quality: 0.5 }, bound));
+            background.remove();
+            this.canvas.renderAll();
+            this.history.unlock();
+            this.canvas.setZoom(lastScale);
+            this.toggleBorderVisibility(border[0]);
+            return src;
+        }
+        if (format == ImageType.SVG) {
+            return this.canvas.toSVG({
+                width: w * multiplier,
+                height: h * multiplier,
+            });
+        }
+        var data = this.canvas.toDataURL(__assign({ format: Constants.PNG, multiplier: multiplier }, bound));
+        this.toggleBorderVisibility(border[0]);
+        this.canvas.setZoom(lastScale);
+        return data;
+    };
+    Side2D.prototype.toggleBorderVisibility = function (border) {
+        if (border) {
+            border.set({
+                opacity: border.opacity == 1 ? 0 : 1
+            });
+        }
+    };
+    Side2D.prototype.lock = function () {
+        this.getLayers().forEach(function (element) {
+            element.object.selectable = false;
+        });
+        this.canvas.renderAll();
+    };
+    Side2D.prototype.unlock = function () {
+        this.getLayers().forEach(function (element) {
+            element.object.selectable = true;
+        });
+        this.canvas.renderAll();
+    };
+    Side2D.prototype.getTotalPrice = function () {
+        return this.isEmpty() ? 0 : this.price;
+    };
+    Side2D.prototype.getState = function () {
+        return new Side2DState(this);
+    };
+    Side2D.prototype.equals = function (side) {
+        return this.id == side.id;
+    };
+    Side2D.prototype.isEmpty = function () {
+        return this.elements.length == 0;
+    };
+    Side2D.maxZoom = 10;
+    Side2D.minZoom = 0.001;
+    return Side2D;
+}(View));
+var Side2D1 = (function (_super) {
+    __extends(Side2D1, _super);
+    function Side2D1(htmlElement, width, height, roundCorners, name, price) {
+        var _this = _super.call(this, htmlElement) || this;
+        _this.elements = [];
+        _this.price = 0;
+        _this.id = Math.random() * 1e18;
+        _this.history = new HistoryList();
+        _this.width = width;
+        _this.height = height;
+        _this.name = name;
+        _this.price = parseInt(price) || 0;
+        _this.canvasElement = document.createElement(Constants.CANVAS);
+        _this.container.appendChild(_this.canvasElement);
+        _this.canvas = new fabric.Canvas(_this.canvasElement, null);
+        _this.canvasElement.style.background = Constructor.instance.background;
+        _this.canvas.setWidth(width);
+        _this.canvas.setHeight(height);
+        _this.canvas.selection = false;
+        _this.canvas.on(Constants.MOUSE_UP, function () {
+            _this.hideGuides();
+            _this.saveState();
+        });
+        _this.canvas.on(Constants.TEXT_EDITING_ENTERED, function () {
+            Constructor.onTextEditingEnteredHandler();
+        });
+        _this.canvas.on(Constants.SELECTION_CLEARED, function () {
+            _this.selection = null;
+            _this.changed();
+            Constructor.instance.changed();
+        });
+        _this.canvas.on(Constants.SELECTION_UPDATED, function () {
+            _this.changed();
+            Constructor.instance.changed();
+        });
+        _this.canvas.on(Constants.SELECTION_CREATED, function () {
+            _this.changed();
+            Constructor.instance.changed();
+        });
+        _this.canvas.on(Constants.AFTER_RENDER, function () {
+            Constructor.instance.onElementModificationHandler && Constructor.instance.onElementModificationHandler();
+        });
+        _this.horizontalGuide = new HorizontalGuide(height);
+        _this.verticalGuide = new VerticalGuide(width);
+        _this.canvas.add(_this.horizontalGuide);
+        _this.canvas.add(_this.verticalGuide);
+        _this.setZoom(1);
+        _this.hideGuides();
+        _this.hide();
+        _this.needsHistoryUpdate = false;
+        _this.roundCorners = roundCorners;
+        if (roundCorners)
+            _this.setRoundCorners();
+        _this.canvasElement.style.border = Constants.LINE_STYLE_PREFIX + Color.GRAY.toHex();
+        return _this;
+    }
+    Side2D1.prototype.getName = function () {
+        return this.name || this.getIndex().toString();
+    };
+    Side2D1.prototype.setName = function (value) {
+        this.name = value;
+    };
+    Side2D1.prototype.setRoundCorners = function () {
+        if (this.roundCorners == 100) {
+            this.canvasElement.style.borderRadius = 1e5 + Constants.PX;
+        }
+        else {
+            var smallestSide = Math.min(this.canvasElement.width, this.canvasElement.height);
+            this.canvasElement.style.borderRadius = smallestSide / 2 * (this.roundCorners / 100) + Constants.PX;
+        }
+    };
+    Side2D1.prototype.centerPosition = function () {
+        var canvasContainer = this.canvasElement.parentElement;
+        var dw = this.container.clientWidth - canvasContainer.clientWidth;
+        var dh = this.container.clientHeight - canvasContainer.clientHeight;
+        this.setRoundCorners();
+    };
+    Side2D1.prototype.setZoom = function (value, cx, cy, checkZoom) {
+        if (cx === void 0) { cx = 0; }
+        if (cy === void 0) { cy = 0; }
+        if (checkZoom === void 0) { checkZoom = true; }
+        if (value >= Side2D.maxZoom && value <= Side2D.minZoom)
+            return;
+        this.canvas.setZoom(value);
+        this.canvas.setWidth(this.width * value);
+        this.canvas.setHeight(this.height * value);
+        this.canvas.renderAll();
+        var canvasContainer = this.canvasElement.parentElement;
+        var dh = this.container.clientHeight - canvasContainer.clientHeight;
+        if (dh < 0) {
+            console.log("dh < 0");
+            canvasContainer.style.top = "5px";
+            canvasContainer.style.transform = "translateY(0%)";
+        }
+        else {
+            console.log("dh > 0");
+            canvasContainer.style.top = "50%";
+            canvasContainer.style.transform = "translateY(-50%)";
+        }
+        if (cx) {
+            canvasContainer.scrollLeft = canvasContainer.scrollWidth * cx;
+        }
+        if (cy) {
+            canvasContainer.scrollTop = canvasContainer.scrollHeight * cx;
+        }
+        this.setRoundCorners();
+    };
+    Side2D1.prototype.getZoom = function () {
+        return this.canvas ? this.canvas.getZoom() : 1;
+    };
+    Side2D1.prototype.resetZoom = function () {
+        this.canvas.setZoom(1);
+        this.canvas.setWidth(this.width);
+        this.canvas.setHeight(this.height);
+        this.canvas.renderAll();
+    };
+    Side2D1.prototype.zoomToFit = function () {
+        var _this = this;
+        var value = Math.min(this.container.clientWidth / this.width, this.container.clientHeight / this.height);
+        if (!value) {
+            setTimeout(function () { return _this.zoomToFit(); }, 10);
+        }
+        else {
+            value *= 0.8;
+            this.setZoom(value);
+        }
+    };
+    Side2D1.prototype.getRatio = function () {
+        return this.width / this.height;
+    };
+    Side2D1.prototype.getElement = function () {
+        return this.canvas.getElement().parentElement;
+    };
+    Side2D1.prototype.getIndex = function () {
+        for (var i = 0; i < Constructor.instance.sides.length; i++) {
+            if (Constructor.instance.sides[i].equals(this)) {
+                return i;
+            }
+        }
+        return -1;
+    };
+    Side2D1.prototype.fixElementPosition = function (element) {
+        if (!element.object.isOnScreen(true)) {
+            this.resetElementPosition(element);
+        }
+    };
+    Side2D1.prototype.resetElementPosition = function (element) {
+        element.object.left = this.width / 2;
+        element.object.top = this.height / 2;
+    };
+    Side2D1.prototype.add = function (element) {
+        var _this = this;
+        if (this.elements.length >= 20) {
+            alert("Too many objects on the canvas! Please consider removing some objects before adding new.");
+            return null;
+        }
+        Utils.logMethodName();
+        element.side = this;
+        this.elements.push(element);
+        this.canvas.add(element.object);
+        setTimeout(function () { return _this.fixElementPosition(element); }, 200);
+        element.fitIntoMargins();
+        element.object.setCoords();
+        this.canvas.requestRenderAll();
+        setTimeout(function () { return _this.canvas.renderAll(); }, null);
+        this.changed();
+        return element;
+    };
+    Side2D1.prototype.addElement = function (type) {
+        Utils.logMethodName();
+        return this.add(new Element2D(type, this));
+    };
+    Side2D1.prototype.getLayers = function () {
+        var layers = [];
+        for (var i = 0; i < this.elements.length; i++) {
+            layers.unshift(this.elements[i]);
+        }
+        return layers;
+    };
+    Side2D1.prototype.moveLayer = function (from, to) {
+        var element = this.getLayers()[from];
+        element.toLayer(to);
+        this.changed();
+    };
+    Side2D1.prototype.remove = function (element) {
+        this.canvas.remove(element.object);
+        this.elements.splice(this.elements.indexOf(element), 1);
+        this.deselect();
+        this.canvas.renderAll();
+        this.saveState();
+    };
+    Side2D1.prototype.getPointSize = function () {
+        return 96 / 72 * this.getZoom();
+    };
+    Side2D1.prototype.getInchSize = function () {
+        return 72 * this.getPointSize();
+    };
+    Side2D1.prototype.getCentimeterSize = function () {
+        return this.getInchSize() / 2.54;
+    };
+    Side2D1.prototype.getMillimeterSize = function () {
+        return this.getCentimeterSize() / 10;
+    };
+    Side2D1.prototype.select = function (element) {
+        this.deselect();
+        this.selection = element;
+        this.canvas.setActiveObject(element.object);
+        this.canvas.renderAll();
+        return element;
+    };
+    Side2D1.prototype.deselect = function () {
+        this.selection = null;
+        this.canvas.discardActiveObject();
+        this.canvas.renderAll();
+    };
+    Side2D1.prototype.freeze = function () {
+        this.elements.forEach(function (element) {
+            element.setFrozen(true);
+        });
+    };
+    Side2D1.prototype.unfreeze = function () {
+        this.elements.forEach(function (element) {
+            element.setFrozen(false);
+        });
+    };
+    Side2D1.prototype.hideGuides = function () {
+        this.horizontalGuide.hide();
+        this.verticalGuide.hide();
+        this.canvas.renderAll();
+    };
+    Side2D1.prototype.serialize = function () {
+        return new Side2DState(this);
+    };
+    Side2D1.prototype.deserialize = function (state) {
+        var side = new Side2D(Constructor.instance.getElement(), state.width, state.height, state.roundCorners);
+        if (state.objects) {
+            var json = '{"objects":' + JSON.stringify(state.objects) + '}';
+            var objects = Side2DStateObjects.parse(json);
+            side.setState(objects);
+        }
+        return side;
+    };
+    Side2D1.prototype.clear = function () {
+        Utils.logMethodName();
+        this.elements = [];
+        this.selection = null;
+        this.canvas.clear();
+        this.canvas.add(this.horizontalGuide);
+        this.canvas.add(this.verticalGuide);
+        this.saveState();
+    };
+    Side2D1.prototype.removeElements = function () {
+        Utils.logMethodName();
+        while (this.elements.length) {
+            this.elements[0].remove();
+        }
+        this.saveState();
+    };
+    Side2D1.prototype.addImageFromObjectOptions = function (objectOptions, callback) {
+        var _this = this;
+        Utils.logMethodName();
+        var object = objectOptions.toObject();
+        var side = this;
+        fabric.Image.fromObject(object, function (image) {
+            if (image === null) {
+                callback && callback();
+                return;
+            }
+            var element = new Element2D(ElementType.IMAGE);
+            element.side = _this;
+            element.object = image;
+            element.setOptions(element.object);
+            side.add(element);
+            callback && callback(element);
+            if (objectOptions.filters) {
+                element.filters = [];
+                for (var _i = 0, _a = objectOptions.filters; _i < _a.length; _i++) {
+                    var filterName = _a[_i];
+                    var filter = Filter.get(filterName);
+                    try {
+                        element.addFilter(filter, function () { return element.side.canvas.renderAll(); });
+                    }
+                    catch (e) {
+                        console.error(e.message);
+                    }
+                }
+                element.applyFilters(function (imageElement) {
+                    imageElement.object.dirty = true;
+                    imageElement.side.canvas.requestRenderAll();
+                });
+            }
+        });
+    };
+    Side2D1.prototype.setState = function (state) {
+        Utils.logMethodName();
+        this.history.lock();
+        this.clear();
+        this.addNextObject(state.objects);
+    };
+    Side2D1.prototype.addNextObject = function (objectsBuffer) {
+        var _this = this;
+        if (objectsBuffer.length == 0) {
+            this.saveToLocalStorage(this.getState());
+            this.canvas.requestRenderAll();
+            Constructor.instance.changed();
+            this.history.unlock();
+            return;
+        }
+        var objectOptions = objectsBuffer.shift();
+        if (objectOptions.type === 'image') {
+            this.addImageFromObjectOptions(objectOptions, function () { return _this.addNextObject(objectsBuffer); });
+        }
+        else {
+            var element_3 = Element2D.prototype.deserialize(objectOptions);
+            this.add(element_3);
+            element_3.object.dirty = true;
+            if (element_3.type === ElementType.TEXT) {
+                setTimeout(function () { return element_3.setFontFamily(element_3.getFontFamily()); }, 0);
+            }
+            this.addNextObject(objectsBuffer);
+        }
+    };
+    Side2D1.prototype.getLocalStorageKey = function () {
+        return Constructor.settings.localStorage.keyPrefix + this.getIndex();
+    };
+    Side2D1.prototype.saveToLocalStorage = function (state) {
+        if (!this.history.isLocked()) {
+            Utils.logMethodName();
+            var json = JSON.stringify(state);
+            if (json.length < 1e5) {
+                localStorage.setItem(this.getLocalStorageKey(), json);
+            }
+            else {
+                console.error("state.length > " + 1e5);
+            }
+        }
+    };
+    Side2D1.prototype.loadFromLocalStorage = function () {
+        if (Constructor.settings.localStorage.enabled && !Constructor.instance.isExplicitlyLoaded) {
+            Utils.logMethodName();
+            var key = this.getLocalStorageKey();
+            var state = localStorage.getItem(key);
+            if (state) {
+                var objects = Side2DStateObjects.parse(state);
+                this.setState(objects);
+            }
+        }
+    };
+    Side2D1.prototype.saveState = function () {
+        Utils.logMethodName();
+        var state = new Side2DStateObjects(this);
+        this.history.add(JSON.stringify(state));
+        this.saveToLocalStorage(state);
+        this.changed();
+        Constructor.instance.changed();
+    };
+    Side2D1.prototype.undo = function () {
+        if (this.history.isLocked()) {
+            return;
+        }
+        var state = Side2DStateObjects.parse(this.history.back());
+        this.history.lock();
+        if (state)
+            this.setState(state);
+    };
+    Side2D1.prototype.redo = function () {
+        if (this.history.isLocked()) {
+            return;
+        }
+        var state = Side2DStateObjects.parse(this.history.forward());
+        this.history.lock();
+        if (state)
+            this.setState(state);
+    };
+    Side2D1.prototype.exportImage = function (maxSize, format) {
         var w = this.canvas.getWidth();
         var h = this.canvas.getHeight();
         var multiplier = maxSize ? maxSize / Math.max(w, h) : 1;
@@ -4214,33 +4895,33 @@ var Side2D = (function (_super) {
         }
         return this.canvas.toDataURL({ format: Constants.PNG, multiplier: multiplier });
     };
-    Side2D.prototype.lock = function () {
+    Side2D1.prototype.lock = function () {
         this.getLayers().forEach(function (element) {
             element.object.selectable = false;
         });
         this.canvas.renderAll();
     };
-    Side2D.prototype.unlock = function () {
+    Side2D1.prototype.unlock = function () {
         this.getLayers().forEach(function (element) {
             element.object.selectable = true;
         });
         this.canvas.renderAll();
     };
-    Side2D.prototype.getTotalPrice = function () {
+    Side2D1.prototype.getTotalPrice = function () {
         return this.isEmpty() ? 0 : this.price;
     };
-    Side2D.prototype.getState = function () {
+    Side2D1.prototype.getState = function () {
         return new Side2DState(this);
     };
-    Side2D.prototype.equals = function (side) {
+    Side2D1.prototype.equals = function (side) {
         return this.id == side.id;
     };
-    Side2D.prototype.isEmpty = function () {
+    Side2D1.prototype.isEmpty = function () {
         return this.elements.length == 0;
     };
-    Side2D.maxZoom = 10;
-    Side2D.minZoom = 0.001;
-    return Side2D;
+    Side2D1.maxZoom = 10;
+    Side2D1.minZoom = 0.001;
+    return Side2D1;
 }(View));
 var SnapOffset = (function () {
     function SnapOffset(guidePosition, objectPosition) {
@@ -4947,7 +5628,7 @@ var ConstructorUI = (function (_super) {
                     active = true;
                     _this.loadModelOptions(model, options);
                     try {
-                        c.loadModel(model.file_main, function () {
+                        c.loadModel(model.file_main, model.mode, function () {
                             if (constructorConfiguration && constructorConfiguration.sharedState) {
                                 c.setMode(Mode.Mode3D);
                                 _this.show3D();
@@ -4965,7 +5646,7 @@ var ConstructorUI = (function (_super) {
                 }
                 var url = model.thumb;
                 var button = new ToggleButton(function () {
-                    c.loadModel(model.file_main, function () {
+                    c.loadModel(model.file_main, model.mode, function () {
                         if (constructorConfiguration && constructorConfiguration.sharedState) {
                             _this.show3D();
                         }
@@ -4987,12 +5668,14 @@ var ConstructorUI = (function (_super) {
         });
     };
     ConstructorUI.prototype.show3D = function () {
-        Constructor.instance.setMode(Mode.Mode3D);
-        if (!this.order.model || !this.order.model.constructor_model_option || !this.order.model.constructor_model_option.length) {
-            ConstructorUI.instance.sidePanel.modelsPanel.show();
-        }
-        else {
-            ConstructorUI.instance.sidePanel.optionsPanel.show();
+        if (!Constructor.instance.is2dEditorMode()) {
+            Constructor.instance.setMode(Mode.Mode3D);
+            if (!this.order.model || !this.order.model.constructor_model_option || !this.order.model.constructor_model_option.length) {
+                ConstructorUI.instance.sidePanel.modelsPanel.show();
+            }
+            else {
+                ConstructorUI.instance.sidePanel.optionsPanel.show();
+            }
         }
     };
     ConstructorUI.prototype.show2D = function () {
@@ -5007,10 +5690,11 @@ var ConstructorUI = (function (_super) {
     ConstructorUI.prototype.createSides = function (printareas) {
         Constructor.instance.deleteAllSides();
         printareas.forEach(function (area) {
-            Constructor.instance.addSide(area.width, area.height, parseInt(area.roundCorners), area.name, area.price);
+            Constructor.instance.addSide(area.width, area.height, parseInt(area.roundCorners), area.name, parseFloat(area.price), area.productImage, area.mask);
             Constructor.instance.zoomToFit();
         });
         Constructor.instance.sides.forEach(function (side) { return side.changed(); });
+        this.bottomBar.update();
     };
     ConstructorUI.prototype.loadModelOptions = function (model, options) {
         var _this = this;
@@ -5090,7 +5774,7 @@ var ConstructorUI = (function (_super) {
         });
     };
     ConstructorUI.prototype.getCategoryOptions = function (categoryId, callback) {
-        var url = 'index.php?route=product/category/category&category_id=' + categoryId;
+        var url = 'https://pechat.photo/index.php?route=product/category/category&category_id=' + categoryId;
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url);
         xhr.setRequestHeader('x-requested-with', 'XMLHttpRequest');
@@ -5198,42 +5882,6 @@ var Divider = (function (_super) {
     };
     return Divider;
 }(UIControl));
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
 var FlowControl = (function (_super) {
     __extends(FlowControl, _super);
     function FlowControl(maxColumns, autoFlow) {
@@ -5318,13 +5966,18 @@ var IconControl = (function (_super) {
 }(UIControl));
 var ImageControl = (function (_super) {
     __extends(ImageControl, _super);
-    function ImageControl(value) {
+    function ImageControl(value, clickable) {
         var _this = _super.call(this, "img") || this;
         _this.container.src = (value || "");
+        if (clickable) {
+            _this.container.onclick = function () {
+                Constructor.instance.addImage(_this.container.src, null, false);
+            };
+        }
         return _this;
     }
     ImageControl.prototype.getClassName = function () {
-        return _super.prototype.getClassName.call(this) + " image";
+        return _super.prototype.getClassName.call(this) + " image button sticker";
     };
     ImageControl.prototype.setValue = function (value) {
         this.container.src = value;
@@ -5877,7 +6530,7 @@ var ExportPanel = (function (_super) {
     __extends(ExportPanel, _super);
     function ExportPanel() {
         var _this = _super.call(this) || this;
-        _this.append(new Row(new Button(function () { return _this.download(ImageType.JPG); }, null, "Export JPEG")), new Row(new Button(function () { return _this.download(ImageType.PNG); }, null, "Export PNG")), new Row(new ConditionalButton(function () { return _this.download(ImageType.SVG); }, function () { return Constructor.instance.is2D(); }, "Export SVG")), new Row(new Button(function () { return ConstructorUI.instance.order.shareLink(); }, null, "Share link")));
+        _this.append(new Row(new Button(function () { return _this.download(ImageType.JPG); }, null, "Export JPEG")), new Row(new Button(function () { return _this.download(ImageType.PNG); }, null, "Export PNG")), new Row(new ConditionalButton(function () { return _this.download(ImageType.SVG); }, function () { return Constructor.instance.is2D() && !Constructor.instance.is2dEditorMode(); }, "Export SVG")), new Row(new Button(function () { return ConstructorUI.instance.order.shareLink(); }, null, "Share link")));
         return _this;
     }
     ExportPanel.prototype.getClassName = function () {
@@ -5889,7 +6542,8 @@ var ExportPanel = (function (_super) {
             data = Constructor.instance.preview.exportImageSync(window.outerWidth, format);
         }
         else {
-            data = Constructor.instance.getActiveSide().exportImage(window.outerWidth, format);
+            Constructor.instance.getActiveSide().generatePreview();
+            return;
         }
         if (format == ImageType.SVG) {
             data = 'data:image/svg+xml;charset=utf-8,' + data;
@@ -6704,6 +7358,13 @@ var StickersPanel = (function (_super) {
             image.removeAttribute("data-src");
         };
     };
+    StickersPanel.prototype.test = function () {
+        var _this = this;
+        var imgs = document.querySelectorAll('[data-src]');
+        imgs.forEach(function (img) {
+            _this.observer.observe(img);
+        });
+    };
     StickersPanel.prototype.showed = function () {
         _super.prototype.showed.call(this);
         this.update();
@@ -6885,6 +7546,11 @@ var Order = (function (_super) {
         this.changed();
     };
     Order.prototype.addSelectedOption = function (value) {
+        if (value.type == 'color' && Constructor.instance.is2dEditorMode()) {
+            Constructor.instance.sides.map(function (side) {
+                side.setProductColor(value.constructor_value);
+            });
+        }
         for (var i = 0; i < this.selectedOptions.length; i++) {
             var selectedOption = this.selectedOptions[i];
             if (selectedOption.id == value.id) {
@@ -6906,6 +7572,12 @@ var Order = (function (_super) {
         }
     };
     Order.prototype.removeSelectedOption = function (option) {
+        if (option.type == 'color' && Constructor.instance.is2dEditorMode()) {
+            Constructor.instance.getActiveSide().setProductColor(Constructor.instance.background);
+            Constructor.instance.sides.map(function (side) {
+                side.setProductColor(Constructor.instance.background);
+            });
+        }
         this.removeSelectedOptionId(option.id);
     };
     Order.prototype.removeSelectedOptionId = function (optionId) {
@@ -7041,7 +7713,8 @@ var Order = (function (_super) {
                     method: post,
                     headers: headers,
                     body: Utils.toUrlParameters({
-                        product_id: productId
+                        product_id: productId,
+                        preview: Constructor.instance.sides[0].generatePreview()
                     })
                 });
                 fetch('index.php?route=checkout/cart/add', {
@@ -7156,36 +7829,46 @@ var BottomBar = (function (_super) {
     BottomBar.prototype.update = function () {
         var _this = this;
         this.clear();
-        this.append(new Button(function () {
-            ConstructorUI.instance.toggleClass("collapsed");
-            ConstructorUI.instance.sidePanel.toggleVisibility();
-            ConstructorUI.instance.sideBar.buttons.forEach(function (button) { return button.toggleVisibility(); });
-            window.dispatchEvent(new Event('resize'));
-        }, Icon.BARS).tooltip('Toggle Sidebar'), new Spacer(), new Button(function () {
-            _this.c.zoomIn();
-        }, Icon.SEARCH_PLUS).tooltip('Zoom In'), new Button(function () {
-            _this.c.zoomOut();
-        }, Icon.SEARCH_MINUS).tooltip('Zoom Out'), new ConditionalButton(function () { return _this.c.zoomToFit(); }, function () { return _this.c.is2D(); }, Icon.SEARCH).tooltip('Zoom to Fit'), new ToggleButton(function () {
-            if (_this.c.is2D()) {
+        var previewButtons = [];
+        if (!Constructor.instance.is2dEditorMode()) {
+            previewButtons.push(new ToggleButton(function () {
+                if (_this.c.is2D()) {
+                    ConstructorUI.instance.show3D();
+                }
+                else {
+                    ConstructorUI.instance.show2D();
+                }
+                setTimeout(function () { return window.dispatchEvent(new Event('resize')); }, 100);
+            }, function () { return _this.c.is3D(); }, Icon.DICE_D6, null, null, null).addClass('mobile'));
+            previewButtons.push(new Button(function () {
                 ConstructorUI.instance.show3D();
-            }
-            else {
+                setTimeout(function () { return window.dispatchEvent(new Event('resize')); }, 100);
+            }, Icon.DICE_D6, Utils.isCompact() ? null : "3D-Preview").showWhen(Constructor.instance, function () { return _this.c.is2D(); })
+                .addClass('desktop')
+                .addClass('preview-3d'));
+            previewButtons.push(new Button(function () {
                 ConstructorUI.instance.show2D();
-            }
-            setTimeout(function () { return window.dispatchEvent(new Event('resize')); }, 100);
-        }, function () { return _this.c.is3D(); }, Icon.DICE_D6, null, null, null).addClass('mobile'), new Button(function () {
-            ConstructorUI.instance.show3D();
-            setTimeout(function () { return window.dispatchEvent(new Event('resize')); }, 100);
-        }, Icon.DICE_D6, Utils.isCompact() ? null : "3D-Preview").showWhen(Constructor.instance, function () { return _this.c.is2D(); })
-            .addClass('desktop')
-            .addClass('preview-3d'), new Button(function () {
-            ConstructorUI.instance.show2D();
-            setTimeout(function () { return window.dispatchEvent(new Event('resize')); }, 100);
-        }, Icon.DICE_D6, Utils.isCompact() ? null : "Exit 3D-Preview").showWhen(Constructor.instance, function () { return _this.c.is3D(); })
-            .addClass('desktop')
-            .addClass('preview-3d')
-            .addClass('preview-3d-exit'), new Spacer(), Button.of(function () { return ConstructorUI.instance.addToCartPopover.show(); }, new TriggeredLabelControl(ConstructorUI.instance.order, function () { return ConstructorUI.instance.order.getPricePerItem(); }), new LabelControl('$'), new IconControl(Icon.CART_PLUS)).addClass('price-bottom')
-            .addClass('desktop'), new TriggeredLabelControl(ConstructorUI.instance.order, function () { return ConstructorUI.instance.order.getPricePerItem() + _this.translate('$'); }).addClass('mobile').addClass('price-bottom'), new Button(function () { return ConstructorUI.instance.addToCartPopover.show(); }, Icon.CART_PLUS).addClass('mobile').tooltip('Add to Cart'));
+                setTimeout(function () { return window.dispatchEvent(new Event('resize')); }, 100);
+            }, Icon.DICE_D6, Utils.isCompact() ? null : "Exit 3D-Preview").showWhen(Constructor.instance, function () { return _this.c.is3D(); })
+                .addClass('desktop')
+                .addClass('preview-3d')
+                .addClass('preview-3d-exit'));
+        }
+        this.append.apply(this, __spreadArrays([new Button(function () {
+                ConstructorUI.instance.toggleClass("collapsed");
+                ConstructorUI.instance.sidePanel.toggleVisibility();
+                ConstructorUI.instance.sideBar.buttons.forEach(function (button) { return button.toggleVisibility(); });
+                window.dispatchEvent(new Event('resize'));
+            }, Icon.BARS).tooltip('Toggle Sidebar'), new Spacer(), new Button(function () {
+                _this.c.zoomIn();
+            }, Icon.SEARCH_PLUS).tooltip('Zoom In'),
+            new Button(function () {
+                _this.c.zoomOut();
+            }, Icon.SEARCH_MINUS).tooltip('Zoom Out'),
+            new ConditionalButton(function () { return _this.c.zoomToFit(); }, function () { return _this.c.is2D(); }, Icon.SEARCH).tooltip('Zoom to Fit')], previewButtons, [new Spacer(), Button.of(function () { return ConstructorUI.instance.addToCartPopover.show(); }, new TriggeredLabelControl(ConstructorUI.instance.order, function () { return ConstructorUI.instance.order.getPricePerItem(); }), new LabelControl('$'), new IconControl(Icon.CART_PLUS)).addClass('price-bottom')
+                .addClass('desktop'),
+            new TriggeredLabelControl(ConstructorUI.instance.order, function () { return ConstructorUI.instance.order.getPricePerItem() + _this.translate('$'); }).addClass('mobile').addClass('price-bottom'),
+            new Button(function () { return ConstructorUI.instance.addToCartPopover.show(); }, Icon.CART_PLUS).addClass('mobile').tooltip('Add to Cart')]));
     };
     return BottomBar;
 }(ToolBar));

@@ -27,7 +27,7 @@
 
 <script src="js/fontfaceobserver.js" type="application/javascript"></script>
 <script>
-    
+
 </script>
 <script src="js/three.js" type="application/javascript"></script>
 <script src="js/OrbitControls.js" type="application/javascript"></script>
@@ -35,17 +35,59 @@
 <script src="js/constructor.js" type="application/javascript"></script>
 
 <script type="text/javascript">
+	  let json = JSON.stringify({
+            "version": "4.6.0",
+            "objects": [{
+                "type": "polygon",
+                "version": "4.6.0",
+                "originX": "left",
+                "originY": "top",
+                "left": 87.15,
+                "top": 64.05,
+                "width": 388.5,
+                "height": 388.5,
+                "fill": "white",
+                "stroke": "white",
+                "strokeWidth": 1,
+                "strokeDashArray": null,
+                "strokeLineCap": "butt",
+                "strokeDashOffset": 0,
+                "strokeLineJoin": "miter",
+                "strokeUniform": false,
+                "strokeMiterLimit": 4,
+                "scaleX": 1,
+                "scaleY": 1,
+                "angle": 0,
+                "flipX": false,
+                "flipY": false,
+                "opacity": 1,
+                "shadow": null,
+                "visible": true,
+                "backgroundColor": "",
+                "fillRule": "nonzero",
+                "paintFirst": "fill",
+                "globalCompositeOperation": "source-over",
+                "skewX": 0,
+                "skewY": 0,
+                "points": [{"x": 88.2, "y": 94.5}, {"x": 315, "y": 65.10000000000001}, {
+                    "x": 476.70000000000005,
+                    "y": 228.9
+                }, {"x": 298.2, "y": 275.1}, {"x": 214.20000000000002, "y": 453.6}, {"x": 165.9, "y": 147}]
+            }],
+            "background": null,
+            "backgroundImage": null
+        })
     constructorConfiguration = {
         createDefaultSide: true,
         currencySymbol: 'р.',
         domain: 'https://pechat.photo/',
         modelsUrl: '/render/models/',
         previewBackground: '#00aa00',
-        categoryId: 3, //футболка
+        categoryId: 42, //футболка
         //categoryId: 235, //обложка
         //categoryId: 42, //кружка
         //categoryId: 43, //тарелка
-        sharedState: '{"fills":[16766208,0,3552822],"model":"t-shirt","sides":[{"width":400,"height":300},{"height":600,"objects":[],"roundCorners":100,"width":600}]}',
+        sharedState: '{"fills":[16766208,0,3552822],"model":"t-shirt", "mode":"2d", "sides":[{"width":530,"height":630,"objects":[{"type":"rect"}],  "price":"200р", "productPicture": "http://tshirts.imomin.com/img/crew_front.png", "mask": '+json+'},{"height":630,"objects":[], "width":530, "productPicture": "https://mkarapuz.com.ua/wp-content/uploads/2019/02/muzhskaya-futbolka-krasnaya-1002.png", "mask": '+json+'}]}',
         //selectedOptions: [ '202' ],
         selectedOptions: ["364","369"],
         printWidth: 800,
@@ -58,10 +100,18 @@
     window.addEventListener("load", function () {
         //ConstructorUI.instance.loadCategory(window.constructorConfiguration.categoryId);
         for (let i = 0; i < 5; i++) {
-            Constructor.instance.addElement(ElementType.TEXT)
-            Constructor.instance.zoomIn()
+            //Constructor.instance.addElement(ElementType.TEXT)
+            //Constructor.instance.zoomIn()
         }
     });
+
+    window.addEventListener("load", function () {
+        ConstructorUI.instance.loadCategory(42);
+
+    });
+    setTimeout(() => {
+
+    }, 5000);
 </script>
 
 </body>

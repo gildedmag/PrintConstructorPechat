@@ -53,6 +53,7 @@ enum Constants {
     OBJECT_SKEWED = "object:skewed",
     OBJECT_ADDED = "object:added",
     OBJECT_REMOVED = "object:removed",
+    OBJECT_2D_BORDER = "visible-border",
 
     /**
      * THREE events

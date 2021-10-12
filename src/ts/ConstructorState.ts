@@ -1,11 +1,13 @@
 class ConstructorState implements Equalable<ConstructorState> {
 
     model: string;
+    mode: string;
     fills: number[];
     sides: Side2DState[];
 
     constructor() {
         this.model = null;
+        this.mode = '3d';
         this.fills = [];
         this.sides = [];
     }

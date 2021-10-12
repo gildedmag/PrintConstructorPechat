@@ -219,21 +219,54 @@ body {
     /*background: #eee;*/
     touch-action: auto;
 }
-
-.canvas-container {
-    margin: auto;
+.canvas-container{
     position: absolute;
+    margin: auto;
     top: 50%;
     -ms-transform: translateY(-50%);
     transform: translateY(-50%);
     transition: .4s;
 }
 
-.lower-canvas {
-    border: none !important;
-    box-shadow: 0 0 10px 4px rgba(0, 0, 0, .2);
-    background: white;
+.side-container {
+    margin: auto;
+    position: absolute;
+    top: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
     transition: .4s;
+    background-color: #ccc;
+    position: relative;
+}
+
+
+
+.side-container > img{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    right: 0;
+    margin: auto;
+    /*background: purple;*/
+}
+
+.side-container > .canvas-container{
+    margin: auto;
+    top: 0;
+    -ms-transform: translateY(0%);
+    transform: translateY(0%);
+}
+
+.lower-canvas {
+    border: 1px solid #fff !important;
+    box-shadow: 0 0 10px 4px rgba(0, 0, 0, .2);
+    background: transparent;
+    transition: .4s;
+}
+
+.side-container > .canvas-container .lower-canvas{
+    box-shadow: none;
 }
 
 .control.layer {
@@ -631,7 +664,7 @@ input[type="color"] {
 
 .control.flow img {
     width: 100%;
-    height: 100%;
+   /* height: 100%;*/
 }
 
 .price-bottom.control.label{

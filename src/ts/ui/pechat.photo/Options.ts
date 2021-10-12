@@ -21,6 +21,8 @@ declare module pechat {
         price: string;
         roundCorners: string;
         width: number;
+        productImage: string;
+        mask: string;
     }
 
     export interface ConstructorModel {
@@ -45,6 +47,7 @@ declare module pechat {
         thumb: string;
         weight: string;
         width: string;
+        mode: string;
     }
 
     export interface OptionValue {
@@ -83,6 +86,7 @@ declare module pechat {
         quantity_min: string;
         quantity_step: string;
         thumb: string;
+        mode: string;
     }
 
 }
