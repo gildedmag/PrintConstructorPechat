@@ -10,6 +10,7 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
     selection: Element2D;
     canvasElement: HTMLCanvasElement;
     mainContainer: HTMLElement;
+    image: HTMLImageElement;
 
     name: string;
     price: number = 0;
@@ -117,11 +118,11 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
             this.mainContainer.style.height = `${height}px`;
 
             // create background image
-            let background = new Image();
-            background.src = productPicture;
+            this.image = new Image();
+            this.image.src = productPicture;
 
             // add product photo to container
-            this.mainContainer.appendChild(background);
+            this.mainContainer.appendChild(this.image);
 
             // add canvas to container
             this.mainContainer.appendChild(this.canvasElement);
@@ -564,7 +565,7 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
         if (state) this.setState(state);
     }
 
-    async generatePreview(){
+     generatePreview(){
 
 
         let canvas = new fabric.Canvas(null);
@@ -574,25 +575,42 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
 
         let multiplier = 500 / Math.max(canvas.getWidth(), canvas.getHeight());
         let data = '';
-         canvas.loadFromJSON(this.canvas.toJSON(),  async () => {
+         canvas.loadFromJSON(this.canvas.toJSON(),   () => {
             canvas.renderAll();
             console.log('renderAll');
 
 
-             await fabric.Image.fromURL(this.productPicture,  (image) => {
+              fabric.Image.fromURL(this.productPicture,  (image) => {
                 console.log(image);
                 canvas.setBackgroundImage(image, canvas.renderAll.bind(canvas), {
                     scaleX: 1,
                     scaleY: 1
                 });
-                data =  canvas.toDataURL({
-                    format: 'image/jpeg',
-                    multiplier: multiplier,
-                    quality: 0.5
-                });
+
             });
 
-        })
+        });
+
+         var newImage = new fabric.Image(this.image, {
+             width: canvas.getWidth(),
+             height: canvas.getHeight(),
+             // Set the center of the new object based on the event coordinates relative
+             // to the canvas container.
+             left: 0,
+             top: 0
+         });
+         canvas.add(newImage);
+
+        /* canvas.setBackgroundImage(this.image, canvas.renderAll.bind(canvas), {
+             scaleX: 1,
+             scaleY: 1
+         });*/
+
+        data =  canvas.toDataURL({
+            format: 'image/jpeg',
+            multiplier: multiplier,
+            quality: 0.5
+        });
 
         console.log('data');
         console.log(data);
@@ -600,14 +618,7 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
 
         //https://pechat.photo/image/polaroid/media/2021/10//1634066347-263.jpg
 
-
-
-
-
-
-        //window.open(data, "_blank")
-
-       // return data;
+        return data;
 
     }
 

@@ -3863,42 +3863,6 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
 var Side2D = (function (_super) {
     __extends(Side2D, _super);
     function Side2D(htmlElement, width, height, roundCorners, name, price, productPicture, mask) {
@@ -3965,9 +3929,9 @@ var Side2D = (function (_super) {
             this.mainContainer.className = "side-container";
             this.mainContainer.style.width = width + "px";
             this.mainContainer.style.height = height + "px";
-            var background = new Image();
-            background.src = productPicture;
-            this.mainContainer.appendChild(background);
+            this.image = new Image();
+            this.image.src = productPicture;
+            this.mainContainer.appendChild(this.image);
             this.mainContainer.appendChild(this.canvasElement);
             this.container.appendChild(this.mainContainer);
             this.canvasElement.parentElement.style.top = '0%';
@@ -4361,45 +4325,39 @@ var Side2D = (function (_super) {
             this.setState(state);
     };
     Side2D.prototype.generatePreview = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var canvas, multiplier, data;
-            var _this = this;
-            return __generator(this, function (_a) {
-                canvas = new fabric.Canvas(null);
-                canvas.setWidth(this.canvas.getWidth());
-                canvas.setHeight(this.canvas.getHeight());
-                canvas.setZoom(this.canvas.getZoom());
-                multiplier = 500 / Math.max(canvas.getWidth(), canvas.getHeight());
-                data = '';
-                canvas.loadFromJSON(this.canvas.toJSON(), function () { return __awaiter(_this, void 0, void 0, function () {
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0:
-                                canvas.renderAll();
-                                console.log('renderAll');
-                                return [4, fabric.Image.fromURL(this.productPicture, function (image) {
-                                        console.log(image);
-                                        canvas.setBackgroundImage(image, canvas.renderAll.bind(canvas), {
-                                            scaleX: 1,
-                                            scaleY: 1
-                                        });
-                                        data = canvas.toDataURL({
-                                            format: 'image/jpeg',
-                                            multiplier: multiplier,
-                                            quality: 0.5
-                                        });
-                                    })];
-                            case 1:
-                                _a.sent();
-                                return [2];
-                        }
-                    });
-                }); });
-                console.log('data');
-                console.log(data);
-                return [2];
+        var _this = this;
+        var canvas = new fabric.Canvas(null);
+        canvas.setWidth(this.canvas.getWidth());
+        canvas.setHeight(this.canvas.getHeight());
+        canvas.setZoom(this.canvas.getZoom());
+        var multiplier = 500 / Math.max(canvas.getWidth(), canvas.getHeight());
+        var data = '';
+        canvas.loadFromJSON(this.canvas.toJSON(), function () {
+            canvas.renderAll();
+            console.log('renderAll');
+            fabric.Image.fromURL(_this.productPicture, function (image) {
+                console.log(image);
+                canvas.setBackgroundImage(image, canvas.renderAll.bind(canvas), {
+                    scaleX: 1,
+                    scaleY: 1
+                });
             });
         });
+        var newImage = new fabric.Image(this.image, {
+            width: canvas.getWidth(),
+            height: canvas.getHeight(),
+            left: 0,
+            top: 0
+        });
+        canvas.add(newImage);
+        data = canvas.toDataURL({
+            format: 'image/jpeg',
+            multiplier: multiplier,
+            quality: 0.5
+        });
+        console.log('data');
+        console.log(data);
+        return data;
     };
     Side2D.prototype.exportImage = function (maxSize, format, isPreview) {
         isPreview = false;
@@ -5882,6 +5840,42 @@ var Divider = (function (_super) {
     };
     return Divider;
 }(UIControl));
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
 var FlowControl = (function (_super) {
     __extends(FlowControl, _super);
     function FlowControl(maxColumns, autoFlow) {
@@ -6542,8 +6536,7 @@ var ExportPanel = (function (_super) {
             data = Constructor.instance.preview.exportImageSync(window.outerWidth, format);
         }
         else {
-            Constructor.instance.getActiveSide().generatePreview();
-            return;
+            data = Constructor.instance.getActiveSide().exportImage(window.outerWidth, format);
         }
         if (format == ImageType.SVG) {
             data = 'data:image/svg+xml;charset=utf-8,' + data;
