@@ -219,14 +219,8 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
             this.mainContainer.style.width = `${this.width * value}px`
             this.mainContainer.style.height = `${this.height * value}px`
 
-            let dh = this.container.clientHeight - this.mainContainer.clientHeight;
-            if (dh < 0) {
-                this.mainContainer.style.top = "5px";
-                this.mainContainer.style.transform = "translateY(0%)";
-            } else {
-                this.mainContainer.style.top = "50%";
-                this.mainContainer.style.transform = "translateY(-50%)";
-            }
+            this.mainContainer.style.top = "50%";
+            this.mainContainer.style.transform = "translateY(-50%)";
 
             if (cx) {
                 canvasContainer.scrollLeft = canvasContainer.scrollWidth * cx;
@@ -335,6 +329,12 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
         let image: ChildNode = this.mainContainer.childNodes[0];
         // @ts-ignore
         image.style.backgroundColor = color;
+    }
+
+    getProductColor(){
+        let image: ChildNode = this.mainContainer.childNodes[0];
+        // @ts-ignore
+        return image.style.backgroundColor !== "" ? image.style.backgroundColor : Constructor.instance.background;
     }
 
     getLayers(): Element2D[] {
@@ -565,72 +565,52 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
         if (state) this.setState(state);
     }
 
-     generatePreview(){
-
-
+     generatePreview(size: number){
         let canvas = new fabric.Canvas(null);
         canvas.setWidth(this.canvas.getWidth());
         canvas.setHeight(this.canvas.getHeight());
         canvas.setZoom(this.canvas.getZoom());
 
-        let multiplier = 500 / Math.max(canvas.getWidth(), canvas.getHeight());
-        let data = '';
+        let multiplier = size ? size / Math.max(canvas.getWidth(), canvas.getHeight()) : 1;
          canvas.loadFromJSON(this.canvas.toJSON(),   () => {
             canvas.renderAll();
-            console.log('renderAll');
-
-
-              fabric.Image.fromURL(this.productPicture,  (image) => {
-                console.log(image);
-                canvas.setBackgroundImage(image, canvas.renderAll.bind(canvas), {
-                    scaleX: 1,
-                    scaleY: 1
-                });
-
-            });
-
+             let border = canvas.getObjects().filter(obj => obj.fill === 'transparent' && obj.stroke === 'white');
+             let group = new fabric.Group(canvas.getObjects())
+             group.remove(border[0]);
+             group.set({
+                 clipPath: border[0]
+             });
+             canvas.clipPath = null;
+             canvas.clear();
+             canvas.add(group);
+             canvas.setBackgroundColor(this.getProductColor(), () => {})
         });
 
-         var newImage = new fabric.Image(this.image, {
-             width: canvas.getWidth(),
-             height: canvas.getHeight(),
-             // Set the center of the new object based on the event coordinates relative
-             // to the canvas container.
+         let bgImage = new fabric.Image(this.image, {
+
              left: 0,
-             top: 0
+             top: 0,
          });
-         canvas.add(newImage);
+         canvas.add(bgImage);
+         bgImage.sendToBack();
 
-        /* canvas.setBackgroundImage(this.image, canvas.renderAll.bind(canvas), {
-             scaleX: 1,
-             scaleY: 1
-         });*/
 
-        data =  canvas.toDataURL({
+        return canvas.toDataURL({
             format: 'image/jpeg',
             multiplier: multiplier,
             quality: 0.5
         });
 
-        console.log('data');
-        console.log(data);
-        //window.open(data, "_blank")
-
-        //https://pechat.photo/image/polaroid/media/2021/10//1634066347-263.jpg
-
-        return data;
-
     }
 
     exportImage(maxSize?: number, format?: ImageType, isPreview?: boolean): string {
         isPreview = false;
-        this.generatePreview();
         let lastScale = this.canvas.getZoom();
         let w = this.canvas.getWidth();// / this.getZoom();
         let h = this.canvas.getHeight();// / this.getZoom();
         let bound = {left: 0, top: 0, width: w, height: h};
         // @ts-ignore
-        let border = [];//this.canvas.getObjects().filter(obj => obj.id === Constants.OBJECT_2D_BORDER);
+        let border = this.canvas.getObjects().filter(obj => obj.id === Constants.OBJECT_2D_BORDER);
         this.toggleBorderVisibility(border[0]);
         if(Constructor.instance.is2dEditorMode() && !isPreview){
             this.canvas.setZoom(1);

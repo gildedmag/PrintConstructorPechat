@@ -135,6 +135,10 @@ class Constructor extends View<Constructor> {
             this.state['mode'] = mode;
         }
 
+        if(this.is2dEditorMode()){
+            ConstructorUI.instance.show2D()
+        }
+
         Utils.logMethodName();
         this.preview.loadModel(modelName, callback, error);
         this.changed();

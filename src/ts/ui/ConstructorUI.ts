@@ -260,7 +260,7 @@ class ConstructorUI extends UIControl {
 
                 if (!modelLoaded) {
                     active = true;
-                    this.loadModelOptions(model, options);
+
                     try {
                         c.loadModel(
                             model.file_main,
@@ -277,6 +277,7 @@ class ConstructorUI extends UIControl {
                     } catch (e) {
                         alert(e.message);
                     }
+                    this.loadModelOptions(model, options);
                 } else if (!this.order.model && c.preview.modelName == model.file_main) {
                     this.loadModelOptions(model, options);
                     this.show3D();

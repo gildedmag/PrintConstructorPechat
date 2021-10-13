@@ -278,7 +278,7 @@ class Order extends Trigger<Constructor> {
                     headers: headers,
                     body: Utils.toUrlParameters({
                         product_id: productId,
-                        preview: Constructor.instance.sides[0].generatePreview()
+                        preview: Constructor.instance.sides[0].generatePreview(Constants.PREVIEW_SIZE)
                     })
                 });
 

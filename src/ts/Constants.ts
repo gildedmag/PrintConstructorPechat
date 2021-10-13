@@ -83,5 +83,5 @@ enum Constants {
     PNG = "png",
     JPG = "jpg",
 
-
+    PREVIEW_SIZE = 500,
 }

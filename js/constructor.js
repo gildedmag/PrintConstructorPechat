@@ -182,6 +182,7 @@ var Constants;
     Constants["MATERIAL_NAME_SEPARATOR"] = "_";
     Constants["PNG"] = "png";
     Constants["JPG"] = "jpg";
+    Constants[Constants["PREVIEW_SIZE"] = 500] = "PREVIEW_SIZE";
 })(Constants || (Constants = {}));
 var Version = (function () {
     function Version() {
@@ -781,6 +782,9 @@ var Constructor = (function (_super) {
         }
         if (this.state) {
             this.state['mode'] = mode;
+        }
+        if (this.is2dEditorMode()) {
+            ConstructorUI.instance.show2D();
         }
         Utils.logMethodName();
         this.preview.loadModel(modelName, callback, error);
@@ -4014,15 +4018,8 @@ var Side2D = (function (_super) {
         if (Constructor.instance.is2dEditorMode()) {
             this.mainContainer.style.width = this.width * value + "px";
             this.mainContainer.style.height = this.height * value + "px";
-            var dh = this.container.clientHeight - this.mainContainer.clientHeight;
-            if (dh < 0) {
-                this.mainContainer.style.top = "5px";
-                this.mainContainer.style.transform = "translateY(0%)";
-            }
-            else {
-                this.mainContainer.style.top = "50%";
-                this.mainContainer.style.transform = "translateY(-50%)";
-            }
+            this.mainContainer.style.top = "50%";
+            this.mainContainer.style.transform = "translateY(-50%)";
             if (cx) {
                 canvasContainer.scrollLeft = canvasContainer.scrollWidth * cx;
                 this.mainContainer.scrollLeft = canvasContainer.scrollWidth * cx;
@@ -4119,6 +4116,10 @@ var Side2D = (function (_super) {
     Side2D.prototype.setProductColor = function (color) {
         var image = this.mainContainer.childNodes[0];
         image.style.backgroundColor = color;
+    };
+    Side2D.prototype.getProductColor = function () {
+        var image = this.mainContainer.childNodes[0];
+        return image.style.backgroundColor !== "" ? image.style.backgroundColor : Constructor.instance.background;
     };
     Side2D.prototype.getLayers = function () {
         var layers = [];
@@ -4324,49 +4325,45 @@ var Side2D = (function (_super) {
         if (state)
             this.setState(state);
     };
-    Side2D.prototype.generatePreview = function () {
+    Side2D.prototype.generatePreview = function (size) {
         var _this = this;
         var canvas = new fabric.Canvas(null);
         canvas.setWidth(this.canvas.getWidth());
         canvas.setHeight(this.canvas.getHeight());
         canvas.setZoom(this.canvas.getZoom());
-        var multiplier = 500 / Math.max(canvas.getWidth(), canvas.getHeight());
-        var data = '';
+        var multiplier = size ? size / Math.max(canvas.getWidth(), canvas.getHeight()) : 1;
         canvas.loadFromJSON(this.canvas.toJSON(), function () {
             canvas.renderAll();
-            console.log('renderAll');
-            fabric.Image.fromURL(_this.productPicture, function (image) {
-                console.log(image);
-                canvas.setBackgroundImage(image, canvas.renderAll.bind(canvas), {
-                    scaleX: 1,
-                    scaleY: 1
-                });
+            var border = canvas.getObjects().filter(function (obj) { return obj.fill === 'transparent' && obj.stroke === 'white'; });
+            var group = new fabric.Group(canvas.getObjects());
+            group.remove(border[0]);
+            group.set({
+                clipPath: border[0]
             });
+            canvas.clipPath = null;
+            canvas.clear();
+            canvas.add(group);
+            canvas.setBackgroundColor(_this.getProductColor(), function () { });
         });
-        var newImage = new fabric.Image(this.image, {
-            width: canvas.getWidth(),
-            height: canvas.getHeight(),
+        var bgImage = new fabric.Image(this.image, {
             left: 0,
-            top: 0
+            top: 0,
         });
-        canvas.add(newImage);
-        data = canvas.toDataURL({
+        canvas.add(bgImage);
+        bgImage.sendToBack();
+        return canvas.toDataURL({
             format: 'image/jpeg',
             multiplier: multiplier,
             quality: 0.5
         });
-        console.log('data');
-        console.log(data);
-        return data;
     };
     Side2D.prototype.exportImage = function (maxSize, format, isPreview) {
         isPreview = false;
-        this.generatePreview();
         var lastScale = this.canvas.getZoom();
         var w = this.canvas.getWidth();
         var h = this.canvas.getHeight();
         var bound = { left: 0, top: 0, width: w, height: h };
-        var border = [];
+        var border = this.canvas.getObjects().filter(function (obj) { return obj.id === Constants.OBJECT_2D_BORDER; });
         this.toggleBorderVisibility(border[0]);
         if (Constructor.instance.is2dEditorMode() && !isPreview) {
             this.canvas.setZoom(1);
@@ -5584,7 +5581,6 @@ var ConstructorUI = (function (_super) {
                 var active = false;
                 if (!modelLoaded) {
                     active = true;
-                    _this.loadModelOptions(model, options);
                     try {
                         c.loadModel(model.file_main, model.mode, function () {
                             if (constructorConfiguration && constructorConfiguration.sharedState) {
@@ -5597,6 +5593,7 @@ var ConstructorUI = (function (_super) {
                     catch (e) {
                         alert(e.message);
                     }
+                    _this.loadModelOptions(model, options);
                 }
                 else if (!_this.order.model && c.preview.modelName == model.file_main) {
                     _this.loadModelOptions(model, options);
@@ -7707,7 +7704,7 @@ var Order = (function (_super) {
                     headers: headers,
                     body: Utils.toUrlParameters({
                         product_id: productId,
-                        preview: Constructor.instance.sides[0].generatePreview()
+                        preview: Constructor.instance.sides[0].generatePreview(Constants.PREVIEW_SIZE)
                     })
                 });
                 fetch('index.php?route=checkout/cart/add', {

@@ -46,7 +46,7 @@ class ExportPanel extends UIControl {
             data = Constructor.instance.preview.exportImageSync(window.outerWidth, format);
         } else {
             data = Constructor.instance.getActiveSide().exportImage(window.outerWidth, format);
-            //Constructor.instance.getActiveSide().generatePreview();
+            //Constructor.instance.getActiveSide().generatePreview(Constants.PREVIEW_SIZE);
             //return;
         }
         if (format == ImageType.SVG){
