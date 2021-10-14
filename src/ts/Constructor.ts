@@ -136,7 +136,7 @@ class Constructor extends View<Constructor> {
         }
 
         if(this.is2dEditorMode()){
-            ConstructorUI.instance.show2D()
+            //ConstructorUI.instance.show2D()
         }
 
         Utils.logMethodName();

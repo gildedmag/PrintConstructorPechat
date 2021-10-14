@@ -784,7 +784,6 @@ var Constructor = (function (_super) {
             this.state['mode'] = mode;
         }
         if (this.is2dEditorMode()) {
-            ConstructorUI.instance.show2D();
         }
         Utils.logMethodName();
         this.preview.loadModel(modelName, callback, error);
@@ -3933,8 +3932,12 @@ var Side2D = (function (_super) {
             this.mainContainer.className = "side-container";
             this.mainContainer.style.width = width + "px";
             this.mainContainer.style.height = height + "px";
+            Constructor.instance.spinner.show();
             this.image = new Image();
             this.image.src = productPicture;
+            this.image.onload = function () {
+                Constructor.instance.spinner.hide();
+            };
             this.mainContainer.appendChild(this.image);
             this.mainContainer.appendChild(this.canvasElement);
             this.container.appendChild(this.mainContainer);
@@ -4060,6 +4063,7 @@ var Side2D = (function (_super) {
     Side2D.prototype.zoomToFit = function () {
         var _this = this;
         var value = Math.min(this.container.clientWidth / this.width, this.container.clientHeight / this.height);
+        console.log(value);
         if (!value) {
             setTimeout(function () { return _this.zoomToFit(); }, 10);
         }
@@ -4090,6 +4094,7 @@ var Side2D = (function (_super) {
     Side2D.prototype.resetElementPosition = function (element) {
         element.object.left = this.width / 2;
         element.object.top = this.height / 2;
+        this.canvas.setZoom(this.canvas.getZoom());
     };
     Side2D.prototype.add = function (element) {
         var _this = this;
@@ -4325,47 +4330,48 @@ var Side2D = (function (_super) {
         if (state)
             this.setState(state);
     };
-    Side2D.prototype.generatePreview = function (size) {
+    Side2D.prototype.generatePreview = function (maxSize) {
         var _this = this;
-        var canvas = new fabric.Canvas(null);
-        canvas.setWidth(this.canvas.getWidth());
-        canvas.setHeight(this.canvas.getHeight());
-        canvas.setZoom(this.canvas.getZoom());
-        var multiplier = size ? size / Math.max(canvas.getWidth(), canvas.getHeight()) : 1;
-        canvas.loadFromJSON(this.canvas.toJSON(), function () {
-            canvas.renderAll();
-            var border = canvas.getObjects().filter(function (obj) { return obj.fill === 'transparent' && obj.stroke === 'white'; });
-            var group = new fabric.Group(canvas.getObjects());
-            group.remove(border[0]);
-            group.set({
-                clipPath: border[0]
-            });
-            canvas.clipPath = null;
-            canvas.clear();
-            canvas.add(group);
-            canvas.setBackgroundColor(_this.getProductColor(), function () { });
+        if (!Constructor.instance.is2dEditorMode()) {
+            return '';
+        }
+        var w = this.canvas.getWidth();
+        var h = this.canvas.getHeight();
+        var border = this.canvas.getObjects().filter(function (obj) { return obj.id === Constants.OBJECT_2D_BORDER; });
+        this.toggleBorderVisibility(border[0]);
+        var objects = this.canvas.getObjects();
+        var group = new fabric.Group(this.canvas.getObjects());
+        group.set({
+            clipPath: this.canvas.clipPath
         });
+        this.canvas.clipPath = null;
+        this.canvas.clear();
+        this.canvas.add(group);
         var bgImage = new fabric.Image(this.image, {
             left: 0,
             top: 0,
         });
-        canvas.add(bgImage);
+        this.canvas.add(bgImage);
         bgImage.sendToBack();
-        return canvas.toDataURL({
-            format: 'image/jpeg',
-            multiplier: multiplier,
-            quality: 0.5
-        });
+        var multiplier = maxSize ? maxSize / Math.max(w, h) : 1;
+        var data = this.canvas.toDataURL({ format: ImageType.PNG, multiplier: multiplier });
+        this.toggleBorderVisibility(border[0]);
+        this.canvas.clipPath = group.clipPath;
+        group.destroy();
+        this.canvas.remove(group);
+        this.canvas.remove(bgImage);
+        objects.map(function (object) { return _this.canvas.add(object); });
+        window.open(data, '_blank');
+        return data;
     };
-    Side2D.prototype.exportImage = function (maxSize, format, isPreview) {
-        isPreview = false;
+    Side2D.prototype.exportImage = function (maxSize, format) {
         var lastScale = this.canvas.getZoom();
         var w = this.canvas.getWidth();
         var h = this.canvas.getHeight();
         var bound = { left: 0, top: 0, width: w, height: h };
         var border = this.canvas.getObjects().filter(function (obj) { return obj.id === Constants.OBJECT_2D_BORDER; });
         this.toggleBorderVisibility(border[0]);
-        if (Constructor.instance.is2dEditorMode() && !isPreview) {
+        if (Constructor.instance.is2dEditorMode()) {
             this.canvas.setZoom(1);
             bound = this.canvas.clipPath.getBoundingRect();
         }
@@ -6534,6 +6540,7 @@ var ExportPanel = (function (_super) {
         }
         else {
             data = Constructor.instance.getActiveSide().exportImage(window.outerWidth, format);
+            Constructor.instance.getActiveSide().generatePreview(Constants.PREVIEW_SIZE);
         }
         if (format == ImageType.SVG) {
             data = 'data:image/svg+xml;charset=utf-8,' + data;

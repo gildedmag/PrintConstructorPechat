@@ -117,9 +117,13 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
             this.mainContainer.style.width = `${width}px`;
             this.mainContainer.style.height = `${height}px`;
 
+            Constructor.instance.spinner.show();
             // create background image
             this.image = new Image();
             this.image.src = productPicture;
+            this.image.onload = () => {
+                Constructor.instance.spinner.hide();
+            };
 
             // add product photo to container
             this.mainContainer.appendChild(this.image);
@@ -300,6 +304,7 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
     resetElementPosition(element: Element2D): void {
         element.object.left = this.width / 2;
         element.object.top = this.height / 2;
+        this.canvas.setZoom(this.canvas.getZoom());
     }
 
     add(element: Element2D): Element2D {
@@ -565,17 +570,45 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
         if (state) this.setState(state);
     }
 
-     generatePreview(size: number){
+     /*generatePreview(size: number){
+        if(!Constructor.instance.is2dEditorMode()){
+           // return '';
+        }
+         let canvasElement = document.createElement(Constants.CANVAS);
         let canvas = new fabric.Canvas(null);
         canvas.setWidth(this.canvas.getWidth());
         canvas.setHeight(this.canvas.getHeight());
         canvas.setZoom(this.canvas.getZoom());
 
         let multiplier = size ? size / Math.max(canvas.getWidth(), canvas.getHeight()) : 1;
-         canvas.loadFromJSON(this.canvas.toJSON(),   () => {
-            canvas.renderAll();
+        // this.canvas.clear();
+         let bgImage1 = new fabric.Image(this.image, {
+             left: 0,
+             top: 0,
+         });
+        // this.canvas.add(bgImage1)
+         this.canvas.getObjects().map(obj => obj.dirty = false);
+         this.canvas.renderAll();
+         this.canvas.requestRenderAll();
+         console.log(this.canvas.toJSON())
+        let objects = this.canvas.getObjects()
+             .filter(obj => obj.fill !== 'transparent' && obj.stroke !== 'white')
+             //.map(object => canvas.add(object))
+
+         //let group = new fabric.Group(objects);
+     /!*    group.set({
+             clipPath: this.canvas.clipPath
+         });*!/
+         //canvas.add(group);
+        // canvas.setBackgroundColor(this.getProductColor(), () => {});
+
+         canvas.loadFromJSON(JSON.stringify(this.canvas.toJSON()),   () => {
+
+             canvas.renderAll();
+
              let border = canvas.getObjects().filter(obj => obj.fill === 'transparent' && obj.stroke === 'white');
-             let group = new fabric.Group(canvas.getObjects())
+             let group = new fabric.Group(canvas.getObjects());
+             //console.log(group);
              group.remove(border[0]);
              group.set({
                  clipPath: border[0]
@@ -583,28 +616,129 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
              canvas.clipPath = null;
              canvas.clear();
              canvas.add(group);
-             canvas.setBackgroundColor(this.getProductColor(), () => {})
-        });
+             group.bringToFront();
+             canvas.getObjects().map(object => canvas.add(object))
+            // canvas.setBackgroundColor(this.getProductColor(), () => {});
+             canvas.renderAll();
+         }, () => {
+             console.log((canvas.getObjects()));
+             canvas.renderAll();
+         });
 
          let bgImage = new fabric.Image(this.image, {
-
              left: 0,
              top: 0,
          });
-         canvas.add(bgImage);
+         //canvas.add(bgImage);
+         canvas.add(objects[2]);
          bgImage.sendToBack();
 
+      /!*   let canv = new fabric.Canvas(null);
+         canv.setWidth(canvas.getWidth());
+         canv.setHeight(canvas.getHeight());
+         canv.setZoom(canvas.getZoom());
 
-        return canvas.toDataURL({
+         canv.loadFromJSON(canvas.toDatalessJSON(), () => {
+             //canv.renderAll();
+         });
+
+
+         fabric.Image.fromURL(this.productPicture, function(img){
+
+             canvas.add(img);
+             canvas.renderAll();
+
+             let rect = new fabric.Rect({
+                 left: 100,
+                 top: 100,
+                 width: 100,
+                 height: 75,
+                 fill: 'rgba(255,0,0,0.5)',
+             });
+             canvas.add(rect);
+             console.log(canvas.toJSON())
+             // загружаем в новый канвас сериализированный первый канвас
+             canv.loadFromJSON(canvas.toJSON(), () => {
+                 canv.renderAll();
+
+                 let data =  canv.toDataURL({
+                     format: 'image/jpeg',
+                     multiplier: multiplier,
+                     quality: 0.5
+                 });
+
+                 window.open(data, '_blank');
+             })
+
+         });*!/
+
+
+        let data =  canvas.toDataURL({
             format: 'image/jpeg',
             multiplier: multiplier,
             quality: 0.5
         });
 
+        window.open(data, '_blank');
+        return data;
+    }*/
+
+    generatePreview(maxSize){
+        if(!Constructor.instance.is2dEditorMode()){
+             return '';
+        }
+        let w = this.canvas.getWidth();
+        let h = this.canvas.getHeight();
+        // get mask border
+        // @ts-ignore
+        let border = this.canvas.getObjects().filter(obj => obj.id === Constants.OBJECT_2D_BORDER);
+        // switch off mask border
+        this.toggleBorderVisibility(border[0]);
+
+        // store all objects fo the canvas
+        let objects = this.canvas.getObjects();
+        // make the group of all objects of the canvas
+        let group = new fabric.Group(this.canvas.getObjects());
+        // set clip path to the group
+        group.set({
+            clipPath: this.canvas.clipPath
+        });
+        // remove clip path from the canvas
+        this.canvas.clipPath = null;
+        // clear canvas and add group with mask
+        this.canvas.clear();
+        this.canvas.add(group);
+
+        let bgImage = new fabric.Image(this.image, {
+            left: 0,
+            top: 0,
+        });
+        // add background image to the canvas
+        this.canvas.add(bgImage);
+        bgImage.sendToBack();
+
+        // get canvas data URL
+        let multiplier = maxSize ? maxSize / Math.max(w, h) : 1;
+        let data = this.canvas.toDataURL({format: ImageType.PNG, multiplier: multiplier});
+
+        // switch on the mask border
+        this.toggleBorderVisibility(border[0]);
+        // resume canvas clip path
+        this.canvas.clipPath = group.clipPath;
+        // remove tmp group
+        group.destroy();
+        //group.ungroupOnCanvas();
+        this.canvas.remove(group);
+        // remove tmp background
+        this.canvas.remove(bgImage);
+        // restore all objects on the canvas
+        objects.map(object => this.canvas.add(object));
+
+        //window.open(data, '_blank');
+        return data;
     }
 
-    exportImage(maxSize?: number, format?: ImageType, isPreview?: boolean): string {
-        isPreview = false;
+    exportImage(maxSize?: number, format?: ImageType): string {
         let lastScale = this.canvas.getZoom();
         let w = this.canvas.getWidth();// / this.getZoom();
         let h = this.canvas.getHeight();// / this.getZoom();
@@ -612,7 +746,7 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
         // @ts-ignore
         let border = this.canvas.getObjects().filter(obj => obj.id === Constants.OBJECT_2D_BORDER);
         this.toggleBorderVisibility(border[0]);
-        if(Constructor.instance.is2dEditorMode() && !isPreview){
+        if(Constructor.instance.is2dEditorMode()){
             this.canvas.setZoom(1);
             bound = this.canvas.clipPath.getBoundingRect();
         }
