@@ -428,7 +428,6 @@ class ConstructorUI extends UIControl {
 
     bindDoubleClick() {
         Constructor.onTextEditingEntered(() => {
-            console.log("onTextEditingEntered");
             setTimeout(() => {
                 ConstructorUI.instance.sidePanel.selectionPanel.show();
             }, 100);
@@ -448,7 +447,7 @@ class ConstructorUI extends UIControl {
 
 
     getCategoryOptions(categoryId: number, callback: (options: Options) => any) {
-        let url = 'https://pechat.photo/index.php?route=product/category/category&category_id=' + categoryId;
+        let url = '/index.php?route=product/category/category&category_id=' + categoryId;
         //let url = this.domain + 'index.php?route=product/category/category&category_id=' + categoryId;
         let xhr = new XMLHttpRequest();
 

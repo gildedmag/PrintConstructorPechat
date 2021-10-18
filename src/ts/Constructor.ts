@@ -94,14 +94,12 @@ class Constructor extends View<Constructor> {
 
         if (state){
             try {
-                console.log(state);
                 this.setState(state);
             } catch (e) {
                 console.error(e);
                 this.addSide(width, height);
             }
         } else if(Constructor.settings.createDefaultSide) {
-            console.log("this.container.clientWidth", this.container.clientWidth);
             this.addSide(width, height);
         }
         this.preview.hide();
@@ -135,13 +133,12 @@ class Constructor extends View<Constructor> {
             this.state['mode'] = mode;
         }
 
-        if(this.is2dEditorMode()){
-            //ConstructorUI.instance.show2D()
-        }
-
         Utils.logMethodName();
         this.preview.loadModel(modelName, callback, error);
         this.changed();
+        if(this.is2dEditorMode()){
+            this.setMode(Mode.Mode2D);
+        }
     }
 
     addSide(width: number, height: number, roundCorners?: number, name?: string, price?: number, productImage?: string, mask?: string): Side2D {

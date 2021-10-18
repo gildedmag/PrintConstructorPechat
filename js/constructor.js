@@ -741,7 +741,6 @@ var Constructor = (function (_super) {
             : 240;
         if (state) {
             try {
-                console.log(state);
                 _this.setState(state);
             }
             catch (e) {
@@ -750,7 +749,6 @@ var Constructor = (function (_super) {
             }
         }
         else if (Constructor.settings.createDefaultSide) {
-            console.log("this.container.clientWidth", _this.container.clientWidth);
             _this.addSide(width, height);
         }
         _this.preview.hide();
@@ -783,11 +781,12 @@ var Constructor = (function (_super) {
         if (this.state) {
             this.state['mode'] = mode;
         }
-        if (this.is2dEditorMode()) {
-        }
         Utils.logMethodName();
         this.preview.loadModel(modelName, callback, error);
         this.changed();
+        if (this.is2dEditorMode()) {
+            this.setMode(Mode.Mode2D);
+        }
     };
     Constructor.prototype.addSide = function (width, height, roundCorners, name, price, productImage, mask) {
         Utils.logMethodName();
@@ -4063,7 +4062,6 @@ var Side2D = (function (_super) {
     Side2D.prototype.zoomToFit = function () {
         var _this = this;
         var value = Math.min(this.container.clientWidth / this.width, this.container.clientHeight / this.height);
-        console.log(value);
         if (!value) {
             setTimeout(function () { return _this.zoomToFit(); }, 10);
         }
@@ -4361,7 +4359,6 @@ var Side2D = (function (_super) {
         this.canvas.remove(group);
         this.canvas.remove(bgImage);
         objects.map(function (object) { return _this.canvas.add(object); });
-        window.open(data, '_blank');
         return data;
     };
     Side2D.prototype.exportImage = function (maxSize, format) {
@@ -5728,14 +5725,13 @@ var ConstructorUI = (function (_super) {
     };
     ConstructorUI.prototype.bindDoubleClick = function () {
         Constructor.onTextEditingEntered(function () {
-            console.log("onTextEditingEntered");
             setTimeout(function () {
                 ConstructorUI.instance.sidePanel.selectionPanel.show();
             }, 100);
         });
     };
     ConstructorUI.prototype.getCategoryOptions = function (categoryId, callback) {
-        var url = 'https://pechat.photo/index.php?route=product/category/category&category_id=' + categoryId;
+        var url = '/index.php?route=product/category/category&category_id=' + categoryId;
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url);
         xhr.setRequestHeader('x-requested-with', 'XMLHttpRequest');
@@ -6540,7 +6536,6 @@ var ExportPanel = (function (_super) {
         }
         else {
             data = Constructor.instance.getActiveSide().exportImage(window.outerWidth, format);
-            Constructor.instance.getActiveSide().generatePreview(Constants.PREVIEW_SIZE);
         }
         if (format == ImageType.SVG) {
             data = 'data:image/svg+xml;charset=utf-8,' + data;
