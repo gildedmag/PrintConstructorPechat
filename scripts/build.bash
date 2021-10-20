@@ -13,6 +13,6 @@ if ! grep -q "$SUBSTITUTE" "$FILE"; then
 fi
 
 time tsc
-time uglifyjs js/three.js js/heic2any.js js/fontfaceobserver.js js/OrbitControls.js js/fabric.min.js js/constructor.js -c -m -o build/constructor.min.js
+time uglifyjs js/three.js js/heic2any.js js/fontfaceobserver.js js/OrbitControls.js js/fabric.js js/constructor.js -c -m -o build/constructor.min.js
 cp -R "build/constructor.min.js" "examples/constructor.min.js"
 echo `du -sh "build/constructor.min.js"`
