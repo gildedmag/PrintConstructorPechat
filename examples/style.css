@@ -76,6 +76,22 @@ body {
     padding: 0;
 }
 
+img.control.button {
+    padding: 4px !important;
+    margin: 4px !important;
+}
+
+img.control.button.selected  {
+    border: 1px solid #fff !important;
+    padding: 2px !important;
+    margin: 4px !important;
+}
+
+.control.button.layout {
+    padding: 0;
+    margin: 4px !important;
+}
+
 .vertical {
     flex-flow: column;
     width: 100%;

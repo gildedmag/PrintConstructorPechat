@@ -1,6 +1,8 @@
 /// <reference path="../TriggeredUIControl.ts" />
 class NewElementPanel extends TriggeredUIControl<Constructor> {
 
+    imageContainer = new FlowControl(2, true);
+
     getClassName(): string {
         return super.getClassName() + " vertical";
     }
@@ -26,7 +28,7 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
             let target = e.target || window.event.srcElement;
             let files = target.files;
             if (FileReader && files && files.length) {
-                if (files.length > 1){
+                if (files.length > 1) {
                     new Popover("Error", "Please select one file of Jpeg or Png or Heic type!")
                     return;
                 } else {
@@ -35,25 +37,26 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                         && !files[0].name.toLowerCase().endsWith('.jpeg')
                         && !files[0].name.toLowerCase().endsWith('.png')
                         && !files[0].name.toLowerCase().endsWith('.heic')
-                    ){
+                    ) {
                         new Popover("Error", "Please select Jpeg or Png or Heic image!")
                         return;
                     }
                 }
 
                 var reader = new FileReader();
-                reader.onload =  async () => {
+                reader.onload = async () => {
                     //Trigger.preventUpdate = true;
                     let image = null;
 
-                    if(files[0].name.toLowerCase().endsWith('.heic')){
+                    var src;
+                    if (files[0].name.toLowerCase().endsWith('.heic')) {
                         Constructor.instance.spinner.show();
-                        let b64 = await this.convertHeicToJpg(files[0]);
-                        image = Constructor.instance.addImage(b64);
-                        Constructor.instance.spinner.hide();
-                    }else{
-                        image = Constructor.instance.addImage(reader.result);
+                        src = await this.convertHeicToJpg(files[0]);
+                    } else {
+                        src = reader.result;
                     }
+                    image = Constructor.instance.addFrame(src);
+                    Constructor.instance.spinner.hide();
 
                     const data = new URLSearchParams();
                     let formData = new FormData(form);
@@ -126,15 +129,16 @@ class NewElementPanel extends TriggeredUIControl<Constructor> {
                 )
             )
         );
+        this.append(this.imageContainer);
 
 
         this.update();
     }
 
-    openFileChooser(input){
-        if(constructorConfiguration.onFileChooserRequest){
+    openFileChooser(input) {
+        if (constructorConfiguration.onFileChooserRequest) {
             constructorConfiguration.onFileChooserRequest.call(this);
-        }else{
+        } else {
             input.click();
         }
     }

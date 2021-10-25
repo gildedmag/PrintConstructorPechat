@@ -84,4 +84,6 @@ enum Constants {
     JPG = "jpg",
 
     PREVIEW_SIZE = 500,
+
+    FRAME_DEFAULT_FILL= "rgb(120, 213, 115)",
 }

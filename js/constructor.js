@@ -41,7 +41,7 @@ var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
             ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
         return extendStatics(d, b);
     };
     return function (d, b) {
@@ -58,14 +58,19 @@ var Color = (function (_super) {
             args[_i] = arguments[_i];
         }
         var _this = this;
-        if (args.length === 1) {
-            if (typeof args[0] === Constants.STRING)
-                _this = _super.apply(this, args) || this;
+        try {
+            if (args.length === 1) {
+                if (typeof args[0] === Constants.STRING)
+                    _this = _super.apply(this, args) || this;
+                else
+                    _this = _super.call(this, args[0].toRgba()) || this;
+            }
             else
-                _this = _super.call(this, args[0].toRgba()) || this;
+                _this = _super.call(this, Color.componentsToRgbaString.apply(Color, args)) || this;
         }
-        else
-            _this = _super.call(this, Color.componentsToRgbaString.apply(Color, args)) || this;
+        catch (e) {
+            return Color.BLACK;
+        }
         return _this;
     }
     Color.prototype.toHex = function () {
@@ -183,11 +188,12 @@ var Constants;
     Constants["PNG"] = "png";
     Constants["JPG"] = "jpg";
     Constants[Constants["PREVIEW_SIZE"] = 500] = "PREVIEW_SIZE";
+    Constants["FRAME_DEFAULT_FILL"] = "rgb(120, 213, 115)";
 })(Constants || (Constants = {}));
 var Version = (function () {
     function Version() {
     }
-    Version.version = "26.05.2021 18:28";
+    Version.version = "25.10.2021 11:08";
     return Version;
 }());
 var Trigger = (function () {
@@ -714,7 +720,6 @@ var Constructor = (function (_super) {
     function Constructor(container, state) {
         var _this = _super.call(this, container instanceof HTMLElement ? container : document.getElementById(container)) || this;
         _this.sides = [];
-        _this.imageContainer = new FlowControl(2, true);
         _this.onSelectHandler = function () {
         };
         _this.onDeselectHandler = function () {
@@ -809,6 +814,15 @@ var Constructor = (function (_super) {
     Constructor.prototype.is2dEditorMode = function () {
         return (this.state && this.state['mode'] === '2d') ||
             (ConstructorUI.instance.options && ConstructorUI.instance.options.mode === '2d');
+    };
+    Constructor.prototype.hasImages = function () {
+        for (var _i = 0, _a = Constructor.instance.sides; _i < _a.length; _i++) {
+            var side = _a[_i];
+            if (side.getImageSources().length != 0) {
+                return true;
+            }
+        }
+        return false;
     };
     Constructor.prototype.loadPreset = function (filename, callback) {
         this.loadState(Constructor.settings.urls.presets + filename + Constructor.settings.fileExtensions.presets, callback);
@@ -993,7 +1007,7 @@ var Constructor = (function (_super) {
         }
         return element;
     };
-    Constructor.prototype.addImage = function (src, callback, addImageInSidebar) {
+    Constructor.prototype.addImage = function (src, callback) {
         Utils.logMethodName();
         var element = this.getActiveSide().addElement(ElementType.IMAGE);
         var image = element.object;
@@ -1009,12 +1023,12 @@ var Constructor = (function (_super) {
             element.changed();
             callback && callback(element);
         });
-        if (addImageInSidebar) {
-            var panel = ConstructorUI.instance.sidePanel;
-            this.imageContainer.append(new ImageControl(src, true));
-            panel.newElementPanel.append(this.imageContainer);
-            panel.update();
-        }
+        return element;
+    };
+    Constructor.prototype.addFrame = function (src, dimensions) {
+        var side = this.getActiveSide();
+        var frame = new Frame(side, src, null, dimensions);
+        var element = this.getActiveSide().add(frame);
         return element;
     };
     Constructor.prototype.changed = function () {
@@ -2875,6 +2889,15 @@ var Utils = (function () {
         window.getSelection().removeAllRanges();
         document.body.removeChild(node);
     };
+    Utils.isMobile = function () {
+        var check = false;
+        (function (a) {
+            if (/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i.test(a) || /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0, 4)))
+                check = true;
+        })(navigator.userAgent || navigator.vendor || window.opera);
+        return check;
+    };
+    ;
     return Utils;
 }());
 var Dimensions = (function () {
@@ -2889,6 +2912,7 @@ var Element2D = (function (_super) {
     function Element2D(type, side) {
         var _this = _super.call(this) || this;
         _this.hash = Math.random();
+        _this.clip = null;
         _this.type = type;
         _this.side = side;
         if (type === ElementType.IMAGE) {
@@ -3592,6 +3616,7 @@ var ElementType = (function (_super) {
     ElementType.TRIANGLE = new ElementType(fabric.Triangle);
     ElementType.TEXT = new ElementType(fabric.IText);
     ElementType.IMAGE = new ElementType(fabric.Image);
+    ElementType.FRAME = new ElementType(fabric.Path);
     return ElementType;
 }(Associated));
 var Filter = (function (_super) {
@@ -3632,6 +3657,401 @@ var Filter = (function (_super) {
     }));
     return Filter;
 }(Associated));
+var HelperControl = (function (_super) {
+    __extends(HelperControl, _super);
+    function HelperControl(side, object, offset) {
+        if (offset === void 0) { offset = 0; }
+        var _this = _super.call(this, HelperControl.DEFAULTS) || this;
+        _this.pressed = false;
+        _this.offset = 0;
+        _this.dragCursor = 'url("https://www.google.com/intl/en_ALL/mapfiles/closedhand.cur"), auto';
+        _this.defaultCursor = 'url("https://www.google.com/intl/en_ALL/mapfiles/openhand.cur"), auto';
+        _this.side = side;
+        _this.object = object;
+        _this.offset = offset;
+        _this.visible = false;
+        _this.updatePosition();
+        _this.bringToFront();
+        _this.dirty = true;
+        _this.object.canvas && _this.object.canvas.renderAll();
+        _this.on("mouseover", function (e) {
+            console.error("mouseover");
+            _this.opacity = 1;
+            if (_this.pressed) {
+                _this.hoverCursor = _this.dragCursor;
+                _this.side.canvas.hoverCursor = _this.dragCursor;
+                _this.side.canvas.setCursor(_this.dragCursor);
+            }
+            else {
+                console.error(_this.pressed);
+                _this.hoverCursor = _this.defaultCursor;
+                _this.side.canvas.hoverCursor = _this.defaultCursor;
+                _this.side.canvas.setCursor(_this.defaultCursor);
+            }
+            _this.side.canvas.renderAll();
+        });
+        _this.on("mouseout", function (e) {
+            if (!_this.pressed) {
+                side.canvas.hoverCursor = 'move';
+            }
+            _this.opacity = 0.8;
+            _this.object.canvas && _this.object.canvas.renderAll();
+        });
+        _this.side.canvas.on("mouse:move", function (e) {
+            if (_this.pressed && _this.mouseMoveEvent) {
+                _this.mouseMoveEvent(e.pointer);
+                _this.side.canvas.setCursor(_this.dragCursor);
+            }
+            if (_this.pressed && _this.hoverCursor != _this.dragCursor) {
+                _this.hoverCursor = _this.dragCursor;
+                _this.side.canvas.hoverCursor = _this.dragCursor;
+            }
+        });
+        _this.side.canvas.on("mouse:up", function (e) {
+            console.error("canvas mouseup");
+            if (_this.mouseMoveEvent) {
+                _this.pressed = false;
+                _this.mouseUpEvent && _this.mouseUpEvent(e.pointer);
+            }
+            _this.side.canvas.hoverCursor = 'move';
+            _this.side.canvas.renderAll();
+            _this.side.canvas.setCursor('move');
+        });
+        _this.on("mousedown", function (e) {
+            _this.pressed = true;
+            _this.hoverCursor = _this.dragCursor;
+            _this.side.canvas.hoverCursor = _this.dragCursor;
+            _this.side.canvas.setCursor(_this.dragCursor);
+            _this.mouseDownEvent && _this.mouseDownEvent(e.pointer);
+            _this.object.canvas.setActiveObject(_this.object);
+        });
+        _this.on("mouseup", function (e) {
+            console.error("helper mouseup");
+            _this.pressed = false;
+        });
+        return _this;
+    }
+    HelperControl.prototype.setIcon = function (base64, scale) {
+        if (scale === void 0) { scale = 1; }
+        return;
+        scale = scale * HelperControl.DEFAULTS.radius / 128;
+        this.fill = new fabric.Pattern({
+            source: base64,
+            repeat: "no-repeat"
+        });
+        this.fill.patternTransform = [scale, 0, 0, scale, 0, 0];
+    };
+    HelperControl.prototype.show = function (force) {
+        if (force === void 0) { force = false; }
+        if (force || this.visible == null || !this.visible) {
+            this.visible = true;
+            this.bringToFront();
+            this.dirty = true;
+            this.object.canvas && this.object.canvas.renderAll();
+        }
+    };
+    HelperControl.prototype.hide = function () {
+        if (this.visible) {
+            this.visible = false;
+            this.dirty = true;
+            this.object.canvas && this.object.canvas.renderAll();
+        }
+    };
+    HelperControl.prototype.updatePosition = function (force) {
+        if (force === void 0) { force = false; }
+        this.left = this.object.left + this.offset;
+        this.top = this.object.top;
+        this.show(force);
+        this.setCoords();
+    };
+    HelperControl.DEFAULTS = {
+        width: window.devicePixelRatio == 1 ? 32 : 16 * window.devicePixelRatio,
+        height: window.devicePixelRatio == 1 ? 32 : 16 * window.devicePixelRatio,
+        left: 0,
+        top: 0,
+        radius: window.devicePixelRatio == 1 ? 32 : 16 * window.devicePixelRatio,
+        fill: "#444",
+        selectable: false,
+        originX: "center",
+        originY: "center",
+        opacity: 0.8,
+        hasBorders: true,
+    };
+    return HelperControl;
+}(fabric.Rect));
+var Frame = (function (_super) {
+    __extends(Frame, _super);
+    function Frame(side, src, callback, dimensions) {
+        var _this = _super.call(this, ElementType.RECTANGLE, side) || this;
+        _this.mouseDownX = 0;
+        _this.mouseDownY = 0;
+        _this.offsetX = 0;
+        _this.offsetY = 0;
+        _this.frameLeft = 0;
+        _this.frameTop = 0;
+        _this.scale = 1;
+        _this.lastScale = 1;
+        _this.src = src;
+        var element = _this;
+        _this.frame = element.object;
+        _this.scrollControl = new HelperControl(_this.side, _this.frame, HelperControl.DEFAULTS.radius / 2);
+        _this.scrollControl.mouseDownEvent = function (point) {
+            _this.mouseDownX = point.x;
+            _this.mouseDownY = point.y;
+        };
+        _this.scrollControl.mouseMoveEvent = function (point) {
+            var x = point.x - _this.mouseDownX + _this.offsetX;
+            var y = point.y - _this.mouseDownY + _this.offsetY;
+            if (x > 0) {
+                x = 0;
+            }
+            else if (_this.frame.fill.source) {
+                var minOffset = -_this.frame.fill.source.width * _this.scale + _this.frame.width;
+                if (x < minOffset) {
+                    x = minOffset;
+                }
+            }
+            if (y > 0) {
+                y = 0;
+            }
+            else if (_this.frame.fill.source) {
+                var minOffset = -_this.frame.fill.source.height * _this.scale + _this.frame.height;
+                if (y < minOffset) {
+                    y = minOffset;
+                }
+            }
+            _this.frame.fill.offsetX = x;
+            _this.frame.fill.offsetY = y;
+            side.canvas.renderAll();
+        };
+        _this.scrollControl.mouseUpEvent = function (point) {
+            _this.frameLeft = _this.frame.left;
+            _this.frameTop = _this.frame.top;
+            _this.offsetX = _this.frame.fill.offsetX;
+            _this.offsetY = _this.frame.fill.offsetY;
+        };
+        _this.scaleControl = new HelperControl(_this.side, _this.frame, -HelperControl.DEFAULTS.radius / 2);
+        _this.scaleControl.mouseDownEvent = function (point) {
+            _this.mouseDownX = point.x;
+            _this.mouseDownY = point.y;
+        };
+        _this.scaleControl.mouseMoveEvent = function (point) {
+            var dy = point.y - _this.mouseDownY;
+            var scale = _this.scale + dy / window.screen.height * 8;
+            if (scale < 0.01 || scale > 4) {
+                return;
+            }
+            var projectedRight = _this.offsetX + _this.frame.fill.source.width * scale;
+            if (projectedRight < _this.frame.width) {
+                return;
+            }
+            var projectedBottom = _this.offsetY + _this.frame.fill.source.height * scale;
+            if (projectedBottom < _this.frame.height) {
+                return;
+            }
+            _this.lastScale = _this.scale + dy / window.screen.height * 8;
+            _this.frame.fill.patternTransform = [_this.lastScale, 0, 0, _this.lastScale, 0, 0];
+            side.canvas.renderAll();
+        };
+        _this.scaleControl.mouseUpEvent = function (point) {
+            _this.scale = _this.lastScale;
+        };
+        _this.scaleControl.setIcon(Frame.scaleControlIcon);
+        _this.scrollControl.setIcon(Frame.scrollControlIcon);
+        _this.scaleControl.defaultCursor = "nesw-resize";
+        _this.scaleControl.dragCursor = "nesw-resize";
+        _this.controls = [_this.scrollControl, _this.scaleControl];
+        for (var _i = 0, _a = _this.controls; _i < _a.length; _i++) {
+            var control = _a[_i];
+            _this.side.canvas.add(control);
+        }
+        if (dimensions != null) {
+            _this.frame.width = dimensions.width;
+            _this.frame.height = dimensions.height;
+            _this.frame.left = dimensions.left;
+            _this.frame.top = dimensions.top;
+            _this.object.setCoords();
+            _this.side.canvas.renderAll();
+        }
+        else {
+            _this.frame.width = 200;
+            _this.frame.height = 200;
+            _this.randomizePosition();
+        }
+        _this.frame.originX = "center";
+        _this.frame.originY = "center";
+        _this.frameLeft = _this.frame.left;
+        _this.frameTop = _this.frame.top;
+        _this.frame.objectCaching = false;
+        _this.frame.set('strokeUniform', true);
+        var pattern;
+        if (src == null || src.length == 0) {
+            pattern = "rgb(255,255,255)";
+        }
+        else {
+            pattern = new fabric.Pattern({
+                source: src,
+                repeat: "no-repeat"
+            });
+        }
+        _this.frame.fill = pattern;
+        _this.frame.setCoords();
+        side.canvas.renderAll();
+        side.saveState();
+        element.changed();
+        side.canvas.preserveObjectStacking = true;
+        side.canvas.uniScaleTransform = true;
+        _this.frame.on("mousedblclick", function (e) {
+        });
+        _this.frame.on(Constants.SELECTED, function () {
+            side.canvas.renderAll();
+            _this.updateControls(true);
+        });
+        _this.frame.on(Constants.DESELECTED, function () {
+            _this.hideControls();
+        });
+        _this.frame.on('scaling', function (e) {
+            _this.normalizeScale();
+            _this.hideControls();
+        });
+        _this.frame.on('scaled', function (e) {
+            _this.normalizeScale();
+            _this.updateControls();
+        });
+        _this.frame.on('mouseover', function (e) {
+        });
+        _this.frame.on('mousemove', function (e) {
+        });
+        _this.frame.on('moving', function (e) {
+            _this.updateControls();
+        });
+        _this.frame.on('moved', function (e) {
+            _this.frameLeft = _this.frame.left;
+            _this.frameTop = _this.frame.top;
+            _this.offsetX = _this.frame.fill.offsetX;
+            _this.offsetY = _this.frame.fill.offsetY;
+            _this.updateControls();
+        });
+        _this.frame.on('dragenter', function (e) {
+            console.error('dragenter', e);
+            if (_this.frame.fill.source) {
+                _this.cachedImage = _this.frame.fill;
+            }
+            _this.frame.fill = Constants.FRAME_DEFAULT_FILL;
+            side.canvas.renderAll();
+        });
+        _this.frame.on('dragover', function (e) {
+        });
+        _this.frame.on('dragleave', function (e) {
+            console.error('dragleave', e);
+            if (_this.cachedImage != null) {
+                _this.frame.fill = _this.cachedImage;
+            }
+            else if (_this.frame.fill.source == null) {
+                _this.frame.fill = "rgb(255,255,255)";
+            }
+            _this.frame.stroke = Color.GRAY.toRgba();
+            side.canvas.renderAll();
+        });
+        _this.frame.on('drop', function (e) {
+            console.error('drop', e);
+            e.e.preventDefault();
+            if (_this.cachedImage) {
+                _this.frame.fill = _this.cachedImage;
+            }
+            var src = e.e.dataTransfer.getData("text/plain");
+            if (!_this.frame.fill || !_this.frame.fill.source) {
+                _this.frame.fill = new fabric.Pattern({
+                    source: src,
+                    repeat: "no-repeat"
+                });
+                setTimeout(function () {
+                    Constructor.instance.getActiveSide().canvas.renderAll();
+                });
+            }
+            else {
+                _this.frame.fill.source.src = src;
+            }
+            _this.frame.opacity = 1;
+            side.canvas.renderAll();
+        });
+        _this.frame.on('dragstart', function (e) {
+            console.error('dragstart', e);
+        });
+        callback && callback(_this.frame);
+        _this.updateControls();
+        return element;
+    }
+    Frame.prototype.resetImageTransform = function () {
+        this.mouseDownX = 0;
+        this.mouseDownY = 0;
+        this.offsetX = 0;
+        this.offsetY = 0;
+        this.frameLeft = this.frame.left;
+        this.frameTop = this.frame.top;
+        this.frame.fill = new fabric.Pattern({
+            source: this.src,
+            repeat: "no-repeat"
+        });
+        this.side.canvas.renderAll();
+    };
+    Frame.prototype.normalizeScale = function () {
+        var w = this.frame.width * this.frame.scaleX;
+        var h = this.frame.height * this.frame.scaleY;
+        if (!this.frame.fill || !this.frame.fill.source || !this.frame.fill.source.width) {
+            return;
+        }
+        var projectedRight = this.offsetX + this.frame.fill.source.width * this.scale;
+        if (projectedRight < w) {
+            this.frame.set({
+                'height': h / this.frame.scaleY,
+                'width': w / this.frame.scaleX,
+                'scaleX': 1,
+                'scaleY': 1
+            });
+            return;
+        }
+        var projectedBottom = this.offsetY + this.frame.fill.source.height * this.scale;
+        if (projectedBottom < h) {
+            this.frame.set({
+                'height': h / this.frame.scaleY,
+                'width': w / this.frame.scaleX,
+                'scaleX': 1,
+                'scaleY': 1
+            });
+            return;
+        }
+        this.frame.set({
+            'height': h,
+            'width': w,
+            'scaleX': 1,
+            'scaleY': 1
+        });
+    };
+    Frame.prototype.updateControls = function (forceShow) {
+        if (forceShow === void 0) { forceShow = false; }
+        for (var _i = 0, _a = this.controls; _i < _a.length; _i++) {
+            var control = _a[_i];
+            control.updatePosition(forceShow);
+        }
+    };
+    Frame.prototype.hideControls = function () {
+        for (var _i = 0, _a = this.controls; _i < _a.length; _i++) {
+            var control = _a[_i];
+            control.hide();
+        }
+    };
+    Frame.prototype.isText = function () {
+        return false;
+    };
+    Frame.prototype.isImage = function () {
+        return false;
+    };
+    Frame.scrollControlIcon = "data:image/png;base64,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";
+    Frame.scaleControlIcon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAA3NCSVQICAjb4U/gAAAACXBIWXMAAAI9AAACPQGsco8uAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAMlQTFRF////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALJMpoAAAAEJ0Uk5TAAIEEDM1QENTV1piY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fqaoqq2vsLG8vr/Q2Nrc5ebq7O/w8fr7/P3+dMHBqgAAAeBJREFUeNrtm9dSAkEQRUcUwazknIMJEUQEMTD9/x+lhVUUEnZnhu6elz4fsOe8bM1LX6X2IdqfTvtR5Y3EHH6ZJ3z5kxoW6KQffwqWpHz407BCmt+fgX9kuP1ZWCPL68/BBjlOfx62kPfsZywowA4KPP4i7KTI4S9BACV6fxkCKVP7KxBChdZfhVCqlP4aGFCj89fBiDqVvwGGNGj8TTCmSeFvgQUtfH8brGhj+ztgSQfX3wVrup79qAUxcCKGFjBwCxigBUzcAiZoAUO3gCH3G0D3JkSeXPy9COJ/eHI/Gr9/mqq/ZuPRXVzRMluTHipmJEACJEACJEACJEACJEACJEACJEACJEACJEACJEACJEACJEACJEACJEACJEACJIA5IH77YnPA8PH2+niKqI/0XE44Hg7QAhyPWPCOO72f8Xg/ZHI85XpGC3A7ZtPHeL+B0zkf6oFx17Pf4aQT/cTb8qiV4Mjd6qyX5Mzf4rCZaOjQ8Ow3fhMIpyZG5/2kYxuDgQPx4Cl04kE++QoZuTCM3gJnPiyzv4ChE9PwcdfUi2/6uX3sphnHr9sK9I1iZHPwqK8VK+uTT32lmPk/etWXip20Z//q8FlfKC8sp9/nyhN/4/fvM+WNxfz/aK9P/ABeyTyDEgAK6wAAAABJRU5ErkJggg==";
+    Frame.resetControlIcon = "data:image/png;base64,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";
+    return Frame;
+}(Element2D));
 var Guide = (function (_super) {
     __extends(Guide, _super);
     function Guide() {
@@ -4083,6 +4503,24 @@ var Side2D = (function (_super) {
             }
         }
         return -1;
+    };
+    Side2D.prototype.getImageSources = function () {
+        var sources = [];
+        for (var _i = 0, _a = this.elements; _i < _a.length; _i++) {
+            var element = _a[_i];
+            if (element.object && element.object.fill && element.object.fill.source) {
+                var image = element.object.fill.source;
+                if (image instanceof HTMLImageElement) {
+                    var src = image.src;
+                    if (src != null) {
+                        if (!sources.includes(src)) {
+                            sources.push(src);
+                        }
+                    }
+                }
+            }
+        }
+        return sources;
     };
     Side2D.prototype.fixElementPosition = function (element) {
         if (!element.object.isOnScreen(true)) {
@@ -4954,6 +5392,7 @@ var LocalizedStrings = (function () {
         'Circle': 'Добавить круг',
         'Rectangle': 'Добавить квадрат',
         'Triangle': 'Добавить треугольник',
+        'Containers': 'Добавить контейнер',
         'Text': 'Текст',
         'Image': 'Загрузить фото',
         'Alignment': 'Выравнивание',
@@ -5209,6 +5648,15 @@ var UIControl = (function (_super) {
     };
     UIControl.prototype.showed = function () {
         this.children.forEach(function (child) { return child.showed(); });
+    };
+    UIControl.prototype.isSelected = function () {
+        return this.container.classList.contains("selected");
+    };
+    UIControl.prototype.select = function () {
+        this.container.classList.add("selected");
+    };
+    UIControl.prototype.deselect = function () {
+        this.container.classList.remove("selected");
     };
     UIControl.map = {};
     UIControl.nextId = 0;
@@ -5960,11 +6408,30 @@ var IconControl = (function (_super) {
 var ImageControl = (function (_super) {
     __extends(ImageControl, _super);
     function ImageControl(value, clickable) {
-        var _this = _super.call(this, "img") || this;
+        var _this = _super.call(this, Constructor.instance, "img") || this;
+        _this.src = value;
         _this.container.src = (value || "");
         if (clickable) {
             _this.container.onclick = function () {
-                Constructor.instance.addImage(_this.container.src, null, false);
+                var selection = Constructor.instance.getSelection();
+                if (selection != null && selection.object != null) {
+                    if (selection.object.fill != null && selection.object.fill.source != null) {
+                        selection.object.fill.source.src = value;
+                    }
+                    else {
+                        selection.object.fill = new fabric.Pattern({
+                            source: value,
+                            repeat: "no-repeat"
+                        });
+                    }
+                    setTimeout(function () {
+                        Constructor.instance.getActiveSide().canvas.renderAll();
+                    });
+                }
+                else {
+                    Constructor.instance.addFrame(_this.container.src);
+                }
+                Constructor.instance.changed();
             };
         }
         return _this;
@@ -5972,11 +6439,26 @@ var ImageControl = (function (_super) {
     ImageControl.prototype.getClassName = function () {
         return _super.prototype.getClassName.call(this) + " image button sticker";
     };
+    ImageControl.prototype.update = function () {
+        if (this.src) {
+            var selection = Constructor.instance.getSelection();
+            if (selection
+                && selection.object
+                && selection.object.fill
+                && selection.object.fill.source
+                && this.src == selection.object.fill.source.src) {
+                this.select();
+            }
+            else {
+                this.deselect();
+            }
+        }
+    };
     ImageControl.prototype.setValue = function (value) {
         this.container.src = value;
     };
     return ImageControl;
-}(UIControl));
+}(TriggeredUIControl));
 var LabelControl = (function (_super) {
     __extends(LabelControl, _super);
     function LabelControl(value) {
@@ -6260,6 +6742,79 @@ var FullScreenButton = (function (_super) {
     };
     return FullScreenButton;
 }(ToggleButton));
+var LayoutButton = (function (_super) {
+    __extends(LayoutButton, _super);
+    function LayoutButton(layout) {
+        var _this = _super.call(this) || this;
+        var size = 60;
+        var margin = 4;
+        var innerSize = size - margin;
+        _this.container.style.width = size + "px";
+        _this.container.style.height = size + "px";
+        _this.container.style.border = "1px solid #ddd";
+        _this.container.style.position = "relative";
+        for (var i = 0; i < layout.length; i++) {
+            var block = layout[i];
+            var div = document.createElement("div");
+            div.style.position = "absolute";
+            div.style.background = "#ddd";
+            div.style.width = block[0] * innerSize / 100 - margin + "px";
+            div.style.height = block[1] * innerSize / 100 - margin + "px";
+            div.style.left = block[2] * innerSize / 100 + margin + "px";
+            div.style.top = block[3] * innerSize / 100 + margin + "px";
+            _this.container.append(div);
+        }
+        _this.container.onclick = function () { return _this.addFrames(layout); };
+        return _this;
+    }
+    LayoutButton.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " button layout";
+    };
+    LayoutButton.prototype.addFrames = function (layout) {
+        var side = Constructor.instance.getActiveSide();
+        var size;
+        if (side.canvas.clipPath) {
+            size = Math.min(side.canvas.clipPath.width, side.canvas.clipPath.width);
+        }
+        else {
+            size = Math.min(side.width, side.height);
+        }
+        var margin = 4;
+        var innerSize = size - margin;
+        var sideCenterX = side.width / 2;
+        var sideCenterY = side.height / 2;
+        var startX = sideCenterX - innerSize / 2;
+        var startY = sideCenterY - innerSize / 2;
+        for (var i = 0; i < layout.length; i++) {
+            var block = layout[i];
+            var w = block[0] * innerSize / 100 - margin;
+            var h = block[1] * innerSize / 100 - margin;
+            var x = block[2] * innerSize / 100 + margin + startX + w / 2;
+            var y = block[3] * innerSize / 100 + margin + startY + h / 2;
+            var dimensions = new Block(w, h, x, y);
+            console.error("block[2] * innerSize / 100 + margin + startX", block[2] * innerSize / 100 + margin + startX);
+            console.error("dimensions ", dimensions);
+            Constructor.instance.addFrame(null, dimensions);
+        }
+        side.canvas.renderAll();
+    };
+    return LayoutButton;
+}(UIControl));
+var Block = (function () {
+    function Block(width, height, left, top) {
+        if (left === void 0) { left = 0; }
+        if (top === void 0) { top = 0; }
+        this.width = 100;
+        this.height = 100;
+        this.left = 0;
+        this.top = 0;
+        this.width = width;
+        this.height = height;
+        this.left = left;
+        this.top = top;
+    }
+    return Block;
+}());
 var RightButton = (function (_super) {
     __extends(RightButton, _super);
     function RightButton(action, icon, label) {
@@ -6651,6 +7206,77 @@ var FontFamilyPanel = (function (_super) {
     };
     return FontFamilyPanel;
 }(TriggeredUIControl));
+var FramesPanel = (function (_super) {
+    __extends(FramesPanel, _super);
+    function FramesPanel() {
+        var _this = _super.call(this, Constructor.instance) || this;
+        _this.append(new Row(new Spacer(), new LabelControl("Containers"), new Spacer()));
+        _this.append(new Row(new Spacer(), new LayoutButton([
+            [90, 90, 5, 5],
+        ]), new Spacer(), new LayoutButton([
+            [50, 50, 0, 0],
+            [50, 50, 50, 0],
+            [100, 50, 0, 50],
+        ]), new Spacer(), new LayoutButton([
+            [100 / 3, 100 / 3, 0, 0],
+            [100 / 3, 100 / 3, 100 / 3, 0],
+            [100 / 3, 100 / 3, 100 / 3 * 2, 0],
+            [100, 100 / 3 * 2, 0, 100 / 3],
+        ]), new Spacer()), new Row(new Spacer(), new LayoutButton([
+            [33, 33, 0, 0],
+            [33, 33, 0, 0],
+            [33, 33, 0, 33],
+            [33, 33, 0, 66],
+            [33, 33, 33, 0],
+            [33, 33, 33, 33],
+            [33, 33, 33, 66],
+            [33, 33, 66, 0],
+            [33, 33, 66, 33],
+            [33, 33, 66, 66],
+        ]), new Spacer(), new LayoutButton([
+            [50, 50, 0, 0],
+            [50, 50, 50, 0],
+            [50, 50, 0, 50],
+            [50, 50, 50, 50],
+        ]), new Spacer(), new LayoutButton([
+            [33, 33, 0, 0],
+            [33, 33, 33, 0],
+            [33, 33, 66, 0],
+            [66, 66, 0, 33],
+            [33, 33, 66, 0],
+            [33, 33, 66, 33],
+            [33, 33, 66, 66],
+        ]), new Spacer()), new Row(new Spacer(), new LayoutButton([
+            [60, 100, 0, 0],
+            [40, 50, 60, 0],
+            [40, 50, 60, 50],
+        ]), new Spacer(), new LayoutButton([
+            [100, 50, 0, 0],
+            [100, 50, 0, 50],
+        ]), new Spacer(), new LayoutButton([
+            [50, 100, 0, 0],
+            [50, 100, 50, 0],
+        ]), new Spacer()));
+        _this.append(new Row(new ConditionalButton(function () { return _this.c.getActiveSide().clear(); }, function () { return !_this.c.getActiveSide() || !_this.c.getActiveSide().isEmpty(); }, null, "Clear Side")));
+        _this.update();
+        return _this;
+    }
+    FramesPanel.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " vertical";
+    };
+    FramesPanel.prototype.show = function () {
+        _super.prototype.show.call(this);
+        this.update();
+    };
+    FramesPanel.prototype.updateVisibility = function () {
+        this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
+    };
+    FramesPanel.prototype.addButton = function (label, type, icon) {
+        var _this = this;
+        this.append(new Row(new Button(function () { return _this.c.addElement(type); }, icon, label)));
+    };
+    return FramesPanel;
+}(TriggeredUIControl));
 var LayerUIControl = (function (_super) {
     __extends(LayerUIControl, _super);
     function LayerUIControl(element, layers) {
@@ -6966,6 +7592,7 @@ var NewElementPanel = (function (_super) {
     __extends(NewElementPanel, _super);
     function NewElementPanel() {
         var _this = _super.call(this, Constructor.instance) || this;
+        _this.imageContainer = new FlowControl(2, true);
         var form = document.createElement("form");
         var input = document.createElement("input");
         var text = document.createElement("input");
@@ -6999,7 +7626,7 @@ var NewElementPanel = (function (_super) {
                 }
                 var reader = new FileReader();
                 reader.onload = function () { return __awaiter(_this, void 0, void 0, function () {
-                    var image, b64, data, formData;
+                    var image, src, data, formData;
                     return __generator(this, function (_a) {
                         switch (_a.label) {
                             case 0:
@@ -7008,14 +7635,14 @@ var NewElementPanel = (function (_super) {
                                 Constructor.instance.spinner.show();
                                 return [4, this.convertHeicToJpg(files[0])];
                             case 1:
-                                b64 = _a.sent();
-                                image = Constructor.instance.addImage(b64);
-                                Constructor.instance.spinner.hide();
+                                src = _a.sent();
                                 return [3, 3];
                             case 2:
-                                image = Constructor.instance.addImage(reader.result);
+                                src = reader.result;
                                 _a.label = 3;
                             case 3:
+                                image = Constructor.instance.addFrame(src);
+                                Constructor.instance.spinner.hide();
                                 data = new URLSearchParams();
                                 formData = new FormData(form);
                                 formData.forEach(function (value, key) {
@@ -7055,6 +7682,7 @@ var NewElementPanel = (function (_super) {
         _this.addButton("Rectangle", ElementType.RECTANGLE, Icon.SQUARE);
         _this.addButton("Triangle", ElementType.TRIANGLE, Icon.PLAY);
         _this.append(new Row(new ConditionalButton(function () { return _this.c.getActiveSide().clear(); }, function () { return !_this.c.getActiveSide() || !_this.c.getActiveSide().isEmpty(); }, null, "Clear Side")));
+        _this.append(_this.imageContainer);
         _this.update();
         return _this;
     }
@@ -7244,12 +7872,14 @@ var SidePanel = (function (_super) {
         _this.stickersPanel = new StickersPanel();
         _this.selectionPanel = new SelectionPanel();
         _this.newElementPanel = new NewElementPanel();
+        _this.framesPanel = new FramesPanel();
+        _this.galleryPanel = new GalleryPanel();
         _this.fontFamilyPanel = new FontFamilyPanel();
         _this.samplesPanel = new SamplesPanel();
         _this.optionsPanel = new OptionsPanel();
         _this.filtersPanel = new FiltersPanel();
         _this.sharePanel = new ExportPanel();
-        _this.append(_this.newElementPanel, _this.layersPanel, _this.stickersPanel, _this.selectionPanel, _this.fontFamilyPanel, _this.modelsPanel, _this.samplesPanel, _this.optionsPanel, _this.filtersPanel, _this.sharePanel, new Container()
+        _this.append(_this.newElementPanel, _this.framesPanel, _this.galleryPanel, _this.layersPanel, _this.stickersPanel, _this.selectionPanel, _this.fontFamilyPanel, _this.modelsPanel, _this.samplesPanel, _this.optionsPanel, _this.filtersPanel, _this.sharePanel, new Container()
             .addClass('sidepanel-freespace')
             .addClass('mobile'));
         _this.container.onclick = function (e) {
@@ -7926,7 +8556,7 @@ var SideBar = (function (_super) {
         var _this = _super.call(this) || this;
         _this.buttons = [];
         var panel = ConstructorUI.instance.sidePanel;
-        _this.append(_this.createSwitch(panel.modelsPanel, Icon.MUG_HOT).tooltip('Product Types'), _this.createSwitch(panel.newElementPanel, Icon.SHAPES, function () { return Constructor.instance.is2D(); }).tooltip('Page'), _this.createSwitch(panel.stickersPanel, Icon.SPLOTCH, function () { return Constructor.instance.is2D(); }).tooltip('Stickers'), _this.createSwitch(panel.layersPanel, Icon.LAYER_GROUP, function () { return Constructor.instance.is2D(); }).tooltip('Layers'), _this.createSwitch(panel.selectionPanel, Icon.SLIDERS_H, function () { return Constructor.instance.hasSelection(); }).tooltip('Properties'), _this.createSwitch(panel.fontFamilyPanel, Icon.FONT, function () { return Constructor.instance.hasTextSelection(); }).tooltip('Fonts'), _this.createSwitch(panel.filtersPanel, Icon.TINT, function () { return Constructor.instance.hasImageSelection(); }).tooltip('Filters'), _this.createSwitch(panel.optionsPanel, Icon.CLIPBOARD_LIST, function () { return ConstructorUI.instance.order.model && ConstructorUI.instance.order.model.constructor_model_option && ConstructorUI.instance.order.model.constructor_model_option.length > 0; }).tooltip('Options'), _this.createSwitch(panel.samplesPanel, Icon.INFO_CIRCLE).tooltip('Product Info'), _this.createSwitch(panel.sharePanel, Icon.FILE_DOWNLOAD).tooltip('Export & Sharing'), new Spacer());
+        _this.append(_this.createSwitch(panel.modelsPanel, Icon.MUG_HOT).tooltip('Product Types'), _this.createSwitch(panel.newElementPanel, Icon.SHAPES, function () { return Constructor.instance.is2D(); }).tooltip('Page'), _this.createSwitch(panel.framesPanel, Icon.TH_LARGE, function () { return Constructor.instance.is2D(); }).tooltip('Frames'), _this.createSwitch(panel.galleryPanel, Icon.IMAGES, function () { return Constructor.instance.is2D() && Constructor.instance.hasImages(); }).tooltip('Gallery'), _this.createSwitch(panel.stickersPanel, Icon.SPLOTCH, function () { return Constructor.instance.is2D(); }).tooltip('Stickers'), _this.createSwitch(panel.layersPanel, Icon.LAYER_GROUP, function () { return Constructor.instance.is2D(); }).tooltip('Layers'), _this.createSwitch(panel.selectionPanel, Icon.SLIDERS_H, function () { return Constructor.instance.hasSelection(); }).tooltip('Properties'), _this.createSwitch(panel.fontFamilyPanel, Icon.FONT, function () { return Constructor.instance.hasTextSelection(); }).tooltip('Fonts'), _this.createSwitch(panel.filtersPanel, Icon.TINT, function () { return Constructor.instance.hasImageSelection(); }).tooltip('Filters'), _this.createSwitch(panel.optionsPanel, Icon.CLIPBOARD_LIST, function () { return ConstructorUI.instance.order.model && ConstructorUI.instance.order.model.constructor_model_option && ConstructorUI.instance.order.model.constructor_model_option.length > 0; }).tooltip('Options'), _this.createSwitch(panel.samplesPanel, Icon.INFO_CIRCLE).tooltip('Product Info'), _this.createSwitch(panel.sharePanel, Icon.FILE_DOWNLOAD).tooltip('Export & Sharing'), new Spacer());
         _this.hideOthers(!_this.c.getActiveSide() || _this.c.getActiveSide().isEmpty() ? panel.newElementPanel : panel.layersPanel);
         return _this;
     }
@@ -8005,4 +8635,54 @@ var TopBar = (function (_super) {
     };
     return TopBar;
 }(TriggeredToolBar));
+var GalleryPanel = (function (_super) {
+    __extends(GalleryPanel, _super);
+    function GalleryPanel() {
+        var _this = _super.call(this, Constructor.instance) || this;
+        _this.imageContainer = new FlowControl(2, true);
+        _this.images = [];
+        _this.append(_this.imageContainer);
+        _this.update();
+        setTimeout(function () { return _this.updateImages(); }, 200);
+        return _this;
+    }
+    GalleryPanel.prototype.getClassName = function () {
+        return _super.prototype.getClassName.call(this) + " vertical";
+    };
+    GalleryPanel.prototype.updateImages = function () {
+        for (var _i = 0, _a = Constructor.instance.sides; _i < _a.length; _i++) {
+            var side = _a[_i];
+            for (var _b = 0, _c = side.getImageSources(); _b < _c.length; _b++) {
+                var src = _c[_b];
+                if (this.images && this.images.indexOf(src) == -1) {
+                    this.images.push(src);
+                    var imageControl = new ImageControl(src, true);
+                    this.imageContainer.append(imageControl);
+                }
+            }
+        }
+    };
+    GalleryPanel.prototype.show = function () {
+        _super.prototype.show.call(this);
+        this.update();
+    };
+    GalleryPanel.prototype.update = function () {
+        _super.prototype.update.call(this);
+        this.updateImages();
+        var selection = Constructor.instance.getSelection();
+        if (selection instanceof Frame && !selection.src) {
+            if (!this.isVisible()) {
+                this.show();
+            }
+        }
+    };
+    GalleryPanel.prototype.updateVisibility = function () {
+        this.trigger.getMode() == Mode.Mode2D ? this.show() : this.hide();
+    };
+    GalleryPanel.prototype.addButton = function (label, type, icon) {
+        var _this = this;
+        this.append(new Row(new Button(function () { return _this.c.addElement(type); }, icon, label)));
+    };
+    return GalleryPanel;
+}(TriggeredUIControl));
 //# sourceMappingURL=constructor.js.map

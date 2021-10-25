@@ -1,7 +1,7 @@
 /// <reference path="../Color.ts" />
 class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Element2D, ObjectOptions> {
 
-    private static commonDefaults = {
+    static commonDefaults = {
         hasBorders: false,
         cornerColor: Color.TRANSPARENT_BLACK.toRgba(),
         transparentCorners: false,
@@ -26,6 +26,8 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
 
     /** @hidden */
     filtersCache: string[];
+
+    clip: object = null;
 
     private verticalGuides: number[];
 

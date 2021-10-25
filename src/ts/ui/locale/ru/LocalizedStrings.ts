@@ -11,6 +11,7 @@ class LocalizedStrings {
         'Circle': 'Добавить круг',
         'Rectangle': 'Добавить квадрат',
         'Triangle': 'Добавить треугольник',
+        'Containers': 'Добавить контейнер',
         'Text': 'Текст',
         'Image': 'Загрузить фото',
         'Alignment': 'Выравнивание',

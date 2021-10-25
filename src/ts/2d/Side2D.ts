@@ -295,6 +295,24 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
         return -1;
     }
 
+    getImageSources(): String[] {
+        let sources = [];
+        for (let element of this.elements) {
+            if (element.object && element.object.fill && element.object.fill.source){
+                let image = element.object.fill.source;
+                if (image instanceof HTMLImageElement){
+                    let src = image.src;
+                    if (src != null){
+                        if (!sources.includes(src)){
+                            sources.push(src);
+                        }
+                    }
+                }
+            }
+        }
+        return sources;
+    }
+
     fixElementPosition(element: Element2D): void {
         if (!element.object.isOnScreen(true)) {
             this.resetElementPosition(element);

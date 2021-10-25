@@ -9,6 +9,7 @@ class ElementType extends Associated<ElementType>{
     static TRIANGLE = new ElementType(fabric.Triangle);
     static TEXT = new ElementType(fabric.IText);
     static IMAGE = new ElementType(fabric.Image);
+    static FRAME = new ElementType(fabric.Path);
 
     constructor(nativeType: any) {
         super(nativeType.prototype.type);

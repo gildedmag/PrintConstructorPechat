@@ -8,7 +8,6 @@ class Constructor extends View<Constructor> {
     sides: Side2D[] = [];
     activeSideIndex: number;
     preview: Preview;
-    imageContainer = new FlowControl(2, true);
 
     /** @hidden */
     spinner: Spinner;
@@ -50,17 +49,19 @@ class Constructor extends View<Constructor> {
 
     static onReadyHandler = () => true;
     state: object;
-    static onReady(handler: () => any){
+
+    static onReady(handler: () => any) {
         Constructor.onReadyHandler = handler;
     }
 
     //Additional update event handling
     static onUpdateHandlers: any[] = [];
-    static onUpdate(handler: () => any){
+
+    static onUpdate(handler: () => any) {
         Constructor.onUpdateHandlers.push(handler);
     }
 
-    static onTextEditingEntered(handler: () => any){
+    static onTextEditingEntered(handler: () => any) {
         Constructor.onTextEditingEnteredHandler = handler;
     }
 
@@ -92,14 +93,14 @@ class Constructor extends View<Constructor> {
             ? this.container.parentElement.clientHeight * .8
             : 240;
 
-        if (state){
+        if (state) {
             try {
                 this.setState(state);
             } catch (e) {
                 console.error(e);
                 this.addSide(width, height);
             }
-        } else if(Constructor.settings.createDefaultSide) {
+        } else if (Constructor.settings.createDefaultSide) {
             this.addSide(width, height);
         }
         this.preview.hide();
@@ -129,14 +130,14 @@ class Constructor extends View<Constructor> {
         if (ConstructorUI.instance.options) {
             ConstructorUI.instance.options.mode = mode;
         }
-        if(this.state){
+        if (this.state) {
             this.state['mode'] = mode;
         }
 
         Utils.logMethodName();
         this.preview.loadModel(modelName, callback, error);
         this.changed();
-        if(this.is2dEditorMode()){
+        if (this.is2dEditorMode()) {
             this.setMode(Mode.Mode2D);
         }
     }
@@ -160,9 +161,18 @@ class Constructor extends View<Constructor> {
         this.changed();
     }
 
-    is2dEditorMode(): boolean{
+    is2dEditorMode(): boolean {
         return (this.state && this.state['mode'] === '2d') ||
             (ConstructorUI.instance.options && ConstructorUI.instance.options.mode === '2d');
+    }
+
+    hasImages(): boolean {
+        for (let side of Constructor.instance.sides) {
+            if (side.getImageSources().length != 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -253,7 +263,7 @@ class Constructor extends View<Constructor> {
     private dummyElement = document.createElement('empty');
 
     getActiveSide(): Side2D {
-        if (!this.sides || this.sides.length == 0){
+        if (!this.sides || this.sides.length == 0) {
             return new Side2D(this.dummyElement, 0, 0);
         }
         return this.sides[this.activeSideIndex];
@@ -380,7 +390,7 @@ class Constructor extends View<Constructor> {
     }
 
     getSelection(): Element2D {
-        if (this.sides.length == 0){
+        if (this.sides.length == 0) {
             return null;
         }
         return this.getActiveSide().selection;
@@ -392,24 +402,24 @@ class Constructor extends View<Constructor> {
         element.object.setOptions(Constructor.settings.elementDefaults[type.getNativeTypeName()]);
         element.setColor(Color.random());
         // set position of the element when adding new object to canvas
-        if(Constructor.instance.is2dEditorMode()){
+        if (Constructor.instance.is2dEditorMode()) {
             element.setPositionAtCenterOfViewport();
-        }else{
+        } else {
             element.randomizePosition();
         }
         this.changed();
         return element;
     }
 
-    addText(value?: string){
+    addText(value?: string) {
         let element = this.addElement(ElementType.TEXT);
-        if (value){
+        if (value) {
             element.setText(value);
         }
         return element;
     }
 
-    addImage(src: string, callback?: (Element2D) => void, addImageInSidebar?: boolean): Element2D {
+    addImage(src: string, callback?: (Element2D) => void): Element2D {
         Utils.logMethodName();
         let element = this.getActiveSide().addElement(ElementType.IMAGE);
         let image = element.object as fabric.Image;
@@ -424,15 +434,15 @@ class Constructor extends View<Constructor> {
             element.changed();
             callback && callback(element)
         });
-        if(addImageInSidebar){
-            let panel = ConstructorUI.instance.sidePanel;
-            this.imageContainer.append(new ImageControl(src, true))
-            panel.newElementPanel.append(this.imageContainer);
-            panel.update();
-        }
         return element;
     }
 
+    addFrame(src?: string, dimensions?: Block): Frame {
+        let side = this.getActiveSide();
+        let frame = new Frame(side, src, null, dimensions)
+        let element = this.getActiveSide().add(frame);
+        return element as Frame;
+    }
 
     changed() {
         super.changed();
@@ -609,7 +619,7 @@ class Constructor extends View<Constructor> {
         }
     }
 
-    setFills(state: ConstructorState){
+    setFills(state: ConstructorState) {
         if (state.fills) {
             for (let i = 0; i < state.fills.length; i++) {
                 if (this.preview.fills[i]) {
