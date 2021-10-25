@@ -193,7 +193,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "25.10.2021 11:08";
+    Version.version = "25.10.2021 17:59";
     return Version;
 }());
 var Trigger = (function () {
@@ -2913,6 +2913,14 @@ var Element2D = (function (_super) {
         var _this = _super.call(this) || this;
         _this.hash = Math.random();
         _this.clip = null;
+        _this.mouseDownX = 0;
+        _this.mouseDownY = 0;
+        _this.offsetX = 0;
+        _this.offsetY = 0;
+        _this.frameLeft = 0;
+        _this.frameTop = 0;
+        _this.scale = 1;
+        _this.lastScale = 1;
         _this.type = type;
         _this.side = side;
         if (type === ElementType.IMAGE) {
@@ -2981,7 +2989,13 @@ var Element2D = (function (_super) {
         this.side.canvas.renderAll();
     };
     Element2D.prototype.setPositionAtCenterOfViewport = function () {
-        var bound = this.side.canvas.clipPath.getBoundingRect();
+        var bound;
+        if (this.side.canvas.clipPath) {
+            bound = this.side.canvas.clipPath.getBoundingRect();
+        }
+        else {
+            bound = this.side;
+        }
         this.object.set({
             top: (bound.top + bound.height / 2) - this.object.height / 2,
             left: (bound.left + bound.width / 2) - this.object.width / 2,
@@ -3435,6 +3449,10 @@ var Element2D = (function (_super) {
         }
         else {
             element = Element2D.prototype.deserialize(objectOptions);
+            element.side = this.side;
+            element.object.fill = this.object.fill;
+            element.createImageControls();
+            this.side.canvas.renderAll();
             callback && callback(element);
             element.object.dirty = true;
         }
@@ -3590,6 +3608,230 @@ var Element2D = (function (_super) {
         element.setOptions(element.object);
         return element;
     };
+    Element2D.prototype.createImageControls = function () {
+        var _this = this;
+        if (!this.object.fill && !this.object.fill.source) {
+            return;
+        }
+        this.frame = this.object;
+        if (this.object.fill && this.object.fill.source && this.object.fill.source.src) {
+            this.src = this.object.fill.source.src;
+        }
+        this.scrollControl = new HelperControl(this.side, this.frame, HelperControl.DEFAULTS.radius / 2);
+        this.scrollControl.mouseDownEvent = function (point) {
+            _this.mouseDownX = point.x;
+            _this.mouseDownY = point.y;
+        };
+        this.scrollControl.mouseMoveEvent = function (point) {
+            var x = point.x - _this.mouseDownX + _this.offsetX;
+            var y = point.y - _this.mouseDownY + _this.offsetY;
+            if (x > 0) {
+                x = 0;
+            }
+            else if (_this.frame.fill.source) {
+                var minOffset = -_this.frame.fill.source.width * _this.scale + _this.frame.width;
+                if (x < minOffset) {
+                    x = minOffset;
+                }
+            }
+            if (y > 0) {
+                y = 0;
+            }
+            else if (_this.frame.fill.source) {
+                var minOffset = -_this.frame.fill.source.height * _this.scale + _this.frame.height;
+                if (y < minOffset) {
+                    y = minOffset;
+                }
+            }
+            _this.frame.fill.offsetX = x;
+            _this.frame.fill.offsetY = y;
+            _this.side.canvas.renderAll();
+        };
+        this.scrollControl.mouseUpEvent = function (point) {
+            _this.frameLeft = _this.frame.left;
+            _this.frameTop = _this.frame.top;
+            _this.offsetX = _this.frame.fill.offsetX;
+            _this.offsetY = _this.frame.fill.offsetY;
+        };
+        this.scaleControl = new HelperControl(this.side, this.frame, -HelperControl.DEFAULTS.radius / 2);
+        this.scaleControl.mouseDownEvent = function (point) {
+            _this.mouseDownX = point.x;
+            _this.mouseDownY = point.y;
+        };
+        this.scaleControl.mouseMoveEvent = function (point) {
+            var dy = point.y - _this.mouseDownY;
+            var scale = _this.scale + dy / window.screen.height * 8;
+            if (scale < 0.01 || scale > 4) {
+                return;
+            }
+            var projectedRight = _this.offsetX + _this.frame.fill.source.width * scale;
+            if (projectedRight < _this.frame.width) {
+                return;
+            }
+            var projectedBottom = _this.offsetY + _this.frame.fill.source.height * scale;
+            if (projectedBottom < _this.frame.height) {
+                return;
+            }
+            _this.lastScale = _this.scale + dy / window.screen.height * 8;
+            _this.frame.fill.patternTransform = [_this.lastScale, 0, 0, _this.lastScale, 0, 0];
+            _this.side.canvas.renderAll();
+        };
+        this.scaleControl.mouseUpEvent = function (point) {
+            _this.scale = _this.lastScale;
+        };
+        this.scaleControl.defaultCursor = "nesw-resize";
+        this.scaleControl.dragCursor = "nesw-resize";
+        this.controls = [this.scrollControl, this.scaleControl];
+        for (var _i = 0, _a = this.controls; _i < _a.length; _i++) {
+            var control = _a[_i];
+            this.side.canvas.add(control);
+        }
+        this.frame.originX = "center";
+        this.frame.originY = "center";
+        this.frameLeft = this.frame.left;
+        this.frameTop = this.frame.top;
+        this.frame.objectCaching = false;
+        this.frame.set('strokeUniform', true);
+        if (!this.src && (!this.frame.fill || !this.frame.fill.source || !this.frame.fill.source.src)) {
+            this.frame.fill = "rgb(200,255,200)";
+        }
+        else {
+            this.frame.fill = new fabric.Pattern({
+                source: this.src,
+                repeat: "no-repeat"
+            });
+        }
+        this.frame.setCoords();
+        this.side.canvas.renderAll();
+        this.side.saveState();
+        this.changed();
+        this.side.canvas.preserveObjectStacking = true;
+        this.side.canvas.uniScaleTransform = true;
+        this.frame.on("mousedblclick", function (e) {
+        });
+        this.frame.on(Constants.SELECTED, function () {
+            _this.side.canvas.renderAll();
+            _this.updateControls(true);
+        });
+        this.frame.on(Constants.DESELECTED, function () {
+            _this.hideControls();
+        });
+        this.frame.on('scaling', function (e) {
+            _this.normalizeFrameScale();
+            _this.hideControls();
+        });
+        this.frame.on('scaled', function (e) {
+            _this.normalizeFrameScale();
+            _this.updateControls();
+        });
+        this.frame.on('mouseover', function (e) {
+        });
+        this.frame.on('mousemove', function (e) {
+        });
+        this.frame.on('moving', function (e) {
+            _this.updateControls();
+        });
+        this.frame.on('moved', function (e) {
+            _this.frameLeft = _this.frame.left;
+            _this.frameTop = _this.frame.top;
+            _this.offsetX = _this.frame.fill.offsetX;
+            _this.offsetY = _this.frame.fill.offsetY;
+            _this.updateControls();
+        });
+        this.frame.on('dragenter', function (e) {
+            if (_this.frame.fill.source) {
+                _this.cachedImage = _this.frame.fill;
+            }
+            _this.frame.fill = Constants.FRAME_DEFAULT_FILL;
+            _this.side.canvas.renderAll();
+        });
+        this.frame.on('dragover', function (e) {
+        });
+        this.frame.on('dragleave', function (e) {
+            if (_this.cachedImage != null) {
+                _this.frame.fill = _this.cachedImage;
+            }
+            else if (_this.frame.fill.source == null) {
+                _this.frame.fill = "rgb(255,255,255)";
+            }
+            _this.frame.stroke = Color.GRAY.toRgba();
+            _this.side.canvas.renderAll();
+        });
+        this.frame.on('drop', function (e) {
+            console.error('drop', e);
+            e.e.preventDefault();
+            if (_this.cachedImage) {
+                _this.frame.fill = _this.cachedImage;
+            }
+            var src = e.e.dataTransfer.getData("text/plain");
+            if (!_this.frame.fill || !_this.frame.fill.source) {
+                _this.frame.fill = new fabric.Pattern({
+                    source: src,
+                    repeat: "no-repeat"
+                });
+                setTimeout(function () {
+                    Constructor.instance.getActiveSide().canvas.renderAll();
+                });
+            }
+            else {
+                _this.frame.fill.source.src = src;
+            }
+            _this.frame.opacity = 1;
+            _this.side.canvas.renderAll();
+        });
+        this.frame.on('dragstart', function (e) {
+            console.error('dragstart', e);
+        });
+        setTimeout(function () {
+            _this.side.canvas.renderAll();
+        });
+    };
+    Element2D.prototype.normalizeFrameScale = function () {
+        var w = this.frame.width * this.frame.scaleX;
+        var h = this.frame.height * this.frame.scaleY;
+        if (!this.frame.fill || !this.frame.fill.source || !this.frame.fill.source.width) {
+            return;
+        }
+        var projectedRight = this.offsetX + this.frame.fill.source.width * this.scale;
+        if (projectedRight < w) {
+            this.frame.set({
+                'height': h / this.frame.scaleY,
+                'width': w / this.frame.scaleX,
+                'scaleX': 1,
+                'scaleY': 1
+            });
+            return;
+        }
+        var projectedBottom = this.offsetY + this.frame.fill.source.height * this.scale;
+        if (projectedBottom < h) {
+            this.frame.set({
+                'height': h / this.frame.scaleY,
+                'width': w / this.frame.scaleX,
+                'scaleX': 1,
+                'scaleY': 1
+            });
+            return;
+        }
+        this.frame.set({
+            'height': h,
+            'width': w,
+            'scaleX': 1,
+            'scaleY': 1
+        });
+    };
+    Element2D.prototype.updateControls = function (forceShow) {
+        if (forceShow === void 0) { forceShow = false; }
+        for (var _i = 0, _a = this.controls; _i < _a.length; _i++) {
+            var control = _a[_i];
+            control.updatePosition(forceShow);
+        }
+    };
+    Element2D.prototype.hideControls = function () {
+        for (var _i = 0, _a = this.controls; _i < _a.length; _i++) {
+            var control = _a[_i];
+            control.hide();
+        }
+    };
     Element2D.commonDefaults = {
         hasBorders: false,
         cornerColor: Color.TRANSPARENT_BLACK.toRgba(),
@@ -3670,12 +3912,7 @@ var HelperControl = (function (_super) {
         _this.object = object;
         _this.offset = offset;
         _this.visible = false;
-        _this.updatePosition();
-        _this.bringToFront();
-        _this.dirty = true;
-        _this.object.canvas && _this.object.canvas.renderAll();
         _this.on("mouseover", function (e) {
-            console.error("mouseover");
             _this.opacity = 1;
             if (_this.pressed) {
                 _this.hoverCursor = _this.dragCursor;
@@ -3683,7 +3920,6 @@ var HelperControl = (function (_super) {
                 _this.side.canvas.setCursor(_this.dragCursor);
             }
             else {
-                console.error(_this.pressed);
                 _this.hoverCursor = _this.defaultCursor;
                 _this.side.canvas.hoverCursor = _this.defaultCursor;
                 _this.side.canvas.setCursor(_this.defaultCursor);
@@ -3708,7 +3944,6 @@ var HelperControl = (function (_super) {
             }
         });
         _this.side.canvas.on("mouse:up", function (e) {
-            console.error("canvas mouseup");
             if (_this.mouseMoveEvent) {
                 _this.pressed = false;
                 _this.mouseUpEvent && _this.mouseUpEvent(e.pointer);
@@ -3726,9 +3961,11 @@ var HelperControl = (function (_super) {
             _this.object.canvas.setActiveObject(_this.object);
         });
         _this.on("mouseup", function (e) {
-            console.error("helper mouseup");
             _this.pressed = false;
         });
+        _this.updatePosition();
+        _this.bringToFront();
+        _this.side.canvas.renderAll();
         return _this;
     }
     HelperControl.prototype.setIcon = function (base64, scale) {
@@ -3794,77 +4031,6 @@ var Frame = (function (_super) {
         _this.src = src;
         var element = _this;
         _this.frame = element.object;
-        _this.scrollControl = new HelperControl(_this.side, _this.frame, HelperControl.DEFAULTS.radius / 2);
-        _this.scrollControl.mouseDownEvent = function (point) {
-            _this.mouseDownX = point.x;
-            _this.mouseDownY = point.y;
-        };
-        _this.scrollControl.mouseMoveEvent = function (point) {
-            var x = point.x - _this.mouseDownX + _this.offsetX;
-            var y = point.y - _this.mouseDownY + _this.offsetY;
-            if (x > 0) {
-                x = 0;
-            }
-            else if (_this.frame.fill.source) {
-                var minOffset = -_this.frame.fill.source.width * _this.scale + _this.frame.width;
-                if (x < minOffset) {
-                    x = minOffset;
-                }
-            }
-            if (y > 0) {
-                y = 0;
-            }
-            else if (_this.frame.fill.source) {
-                var minOffset = -_this.frame.fill.source.height * _this.scale + _this.frame.height;
-                if (y < minOffset) {
-                    y = minOffset;
-                }
-            }
-            _this.frame.fill.offsetX = x;
-            _this.frame.fill.offsetY = y;
-            side.canvas.renderAll();
-        };
-        _this.scrollControl.mouseUpEvent = function (point) {
-            _this.frameLeft = _this.frame.left;
-            _this.frameTop = _this.frame.top;
-            _this.offsetX = _this.frame.fill.offsetX;
-            _this.offsetY = _this.frame.fill.offsetY;
-        };
-        _this.scaleControl = new HelperControl(_this.side, _this.frame, -HelperControl.DEFAULTS.radius / 2);
-        _this.scaleControl.mouseDownEvent = function (point) {
-            _this.mouseDownX = point.x;
-            _this.mouseDownY = point.y;
-        };
-        _this.scaleControl.mouseMoveEvent = function (point) {
-            var dy = point.y - _this.mouseDownY;
-            var scale = _this.scale + dy / window.screen.height * 8;
-            if (scale < 0.01 || scale > 4) {
-                return;
-            }
-            var projectedRight = _this.offsetX + _this.frame.fill.source.width * scale;
-            if (projectedRight < _this.frame.width) {
-                return;
-            }
-            var projectedBottom = _this.offsetY + _this.frame.fill.source.height * scale;
-            if (projectedBottom < _this.frame.height) {
-                return;
-            }
-            _this.lastScale = _this.scale + dy / window.screen.height * 8;
-            _this.frame.fill.patternTransform = [_this.lastScale, 0, 0, _this.lastScale, 0, 0];
-            side.canvas.renderAll();
-        };
-        _this.scaleControl.mouseUpEvent = function (point) {
-            _this.scale = _this.lastScale;
-        };
-        _this.scaleControl.setIcon(Frame.scaleControlIcon);
-        _this.scrollControl.setIcon(Frame.scrollControlIcon);
-        _this.scaleControl.defaultCursor = "nesw-resize";
-        _this.scaleControl.dragCursor = "nesw-resize";
-        _this.controls = [_this.scrollControl, _this.scaleControl];
-        for (var _i = 0, _a = _this.controls; _i < _a.length; _i++) {
-            var control = _a[_i];
-            _this.side.canvas.add(control);
-        }
         if (dimensions != null) {
             _this.frame.width = dimensions.width;
             _this.frame.height = dimensions.height;
@@ -3878,106 +4044,7 @@ var Frame = (function (_super) {
             _this.frame.height = 200;
             _this.randomizePosition();
         }
-        _this.frame.originX = "center";
-        _this.frame.originY = "center";
-        _this.frameLeft = _this.frame.left;
-        _this.frameTop = _this.frame.top;
-        _this.frame.objectCaching = false;
-        _this.frame.set('strokeUniform', true);
-        var pattern;
-        if (src == null || src.length == 0) {
-            pattern = "rgb(255,255,255)";
-        }
-        else {
-            pattern = new fabric.Pattern({
-                source: src,
-                repeat: "no-repeat"
-            });
-        }
-        _this.frame.fill = pattern;
-        _this.frame.setCoords();
-        side.canvas.renderAll();
-        side.saveState();
-        element.changed();
-        side.canvas.preserveObjectStacking = true;
-        side.canvas.uniScaleTransform = true;
-        _this.frame.on("mousedblclick", function (e) {
-        });
-        _this.frame.on(Constants.SELECTED, function () {
-            side.canvas.renderAll();
-            _this.updateControls(true);
-        });
-        _this.frame.on(Constants.DESELECTED, function () {
-            _this.hideControls();
-        });
-        _this.frame.on('scaling', function (e) {
-            _this.normalizeScale();
-            _this.hideControls();
-        });
-        _this.frame.on('scaled', function (e) {
-            _this.normalizeScale();
-            _this.updateControls();
-        });
-        _this.frame.on('mouseover', function (e) {
-        });
-        _this.frame.on('mousemove', function (e) {
-        });
-        _this.frame.on('moving', function (e) {
-            _this.updateControls();
-        });
-        _this.frame.on('moved', function (e) {
-            _this.frameLeft = _this.frame.left;
-            _this.frameTop = _this.frame.top;
-            _this.offsetX = _this.frame.fill.offsetX;
-            _this.offsetY = _this.frame.fill.offsetY;
-            _this.updateControls();
-        });
-        _this.frame.on('dragenter', function (e) {
-            console.error('dragenter', e);
-            if (_this.frame.fill.source) {
-                _this.cachedImage = _this.frame.fill;
-            }
-            _this.frame.fill = Constants.FRAME_DEFAULT_FILL;
-            side.canvas.renderAll();
-        });
-        _this.frame.on('dragover', function (e) {
-        });
-        _this.frame.on('dragleave', function (e) {
-            console.error('dragleave', e);
-            if (_this.cachedImage != null) {
-                _this.frame.fill = _this.cachedImage;
-            }
-            else if (_this.frame.fill.source == null) {
-                _this.frame.fill = "rgb(255,255,255)";
-            }
-            _this.frame.stroke = Color.GRAY.toRgba();
-            side.canvas.renderAll();
-        });
-        _this.frame.on('drop', function (e) {
-            console.error('drop', e);
-            e.e.preventDefault();
-            if (_this.cachedImage) {
-                _this.frame.fill = _this.cachedImage;
-            }
-            var src = e.e.dataTransfer.getData("text/plain");
-            if (!_this.frame.fill || !_this.frame.fill.source) {
-                _this.frame.fill = new fabric.Pattern({
-                    source: src,
-                    repeat: "no-repeat"
-                });
-                setTimeout(function () {
-                    Constructor.instance.getActiveSide().canvas.renderAll();
-                });
-            }
-            else {
-                _this.frame.fill.source.src = src;
-            }
-            _this.frame.opacity = 1;
-            side.canvas.renderAll();
-        });
-        _this.frame.on('dragstart', function (e) {
-            console.error('dragstart', e);
-        });
+        _this.createImageControls();
         callback && callback(_this.frame);
         _this.updateControls();
         return element;
@@ -3995,61 +4062,12 @@ var Frame = (function (_super) {
         });
         this.side.canvas.renderAll();
     };
-    Frame.prototype.normalizeScale = function () {
-        var w = this.frame.width * this.frame.scaleX;
-        var h = this.frame.height * this.frame.scaleY;
-        if (!this.frame.fill || !this.frame.fill.source || !this.frame.fill.source.width) {
-            return;
-        }
-        var projectedRight = this.offsetX + this.frame.fill.source.width * this.scale;
-        if (projectedRight < w) {
-            this.frame.set({
-                'height': h / this.frame.scaleY,
-                'width': w / this.frame.scaleX,
-                'scaleX': 1,
-                'scaleY': 1
-            });
-            return;
-        }
-        var projectedBottom = this.offsetY + this.frame.fill.source.height * this.scale;
-        if (projectedBottom < h) {
-            this.frame.set({
-                'height': h / this.frame.scaleY,
-                'width': w / this.frame.scaleX,
-                'scaleX': 1,
-                'scaleY': 1
-            });
-            return;
-        }
-        this.frame.set({
-            'height': h,
-            'width': w,
-            'scaleX': 1,
-            'scaleY': 1
-        });
-    };
-    Frame.prototype.updateControls = function (forceShow) {
-        if (forceShow === void 0) { forceShow = false; }
-        for (var _i = 0, _a = this.controls; _i < _a.length; _i++) {
-            var control = _a[_i];
-            control.updatePosition(forceShow);
-        }
-    };
-    Frame.prototype.hideControls = function () {
-        for (var _i = 0, _a = this.controls; _i < _a.length; _i++) {
-            var control = _a[_i];
-            control.hide();
-        }
-    };
     Frame.prototype.isText = function () {
         return false;
     };
     Frame.prototype.isImage = function () {
         return false;
     };
-    Frame.scrollControlIcon = "data:image/png;base64,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";
-    Frame.scaleControlIcon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAA3NCSVQICAjb4U/gAAAACXBIWXMAAAI9AAACPQGsco8uAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAAAMlQTFRF////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALJMpoAAAAEJ0Uk5TAAIEEDM1QENTV1piY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fqaoqq2vsLG8vr/Q2Nrc5ebq7O/w8fr7/P3+dMHBqgAAAeBJREFUeNrtm9dSAkEQRUcUwazknIMJEUQEMTD9/x+lhVUUEnZnhu6elz4fsOe8bM1LX6X2IdqfTvtR5Y3EHH6ZJ3z5kxoW6KQffwqWpHz407BCmt+fgX9kuP1ZWCPL68/BBjlOfx62kPfsZywowA4KPP4i7KTI4S9BACV6fxkCKVP7KxBChdZfhVCqlP4aGFCj89fBiDqVvwGGNGj8TTCmSeFvgQUtfH8brGhj+ztgSQfX3wVrup79qAUxcCKGFjBwCxigBUzcAiZoAUO3gCH3G0D3JkSeXPy9COJ/eHI/Gr9/mqq/ZuPRXVzRMluTHipmJEACJEACJEACJEACJEACJEACJEACJEACJEACJEACJEACJEACJEACJEACJEACJIA5IH77YnPA8PH2+niKqI/0XE44Hg7QAhyPWPCOO72f8Xg/ZHI85XpGC3A7ZtPHeL+B0zkf6oFx17Pf4aQT/cTb8qiV4Mjd6qyX5Mzf4rCZaOjQ8Ow3fhMIpyZG5/2kYxuDgQPx4Cl04kE++QoZuTCM3gJnPiyzv4ChE9PwcdfUi2/6uX3sphnHr9sK9I1iZHPwqK8VK+uTT32lmPk/etWXip20Z//q8FlfKC8sp9/nyhN/4/fvM+WNxfz/aK9P/ABeyTyDEgAK6wAAAABJRU5ErkJggg==";
-    Frame.resetControlIcon = "data:image/png;base64,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";
     return Frame;
 }(Element2D));
 var Guide = (function (_super) {
@@ -4152,6 +4170,7 @@ var ObjectOptions = (function () {
             if (this[property] !== undefined)
                 options[property] = this[property];
         }
+        console.error(options["fill"]);
         if (this.filters)
             options.filters = this.filters;
         return options;
@@ -4624,7 +4643,8 @@ var Side2D = (function (_super) {
         return new Side2DState(this);
     };
     Side2D.prototype.deserialize = function (state) {
-        if (Constructor.instance.is2dEditorMode()) { }
+        if (Constructor.instance.is2dEditorMode()) {
+        }
         var side = new Side2D(Constructor.instance.getElement(), state.width, state.height, state.roundCorners, null, null, state.productPicture, state.mask);
         if (state.objects) {
             var json = '{"objects":' + JSON.stringify(state.objects) + '}';
@@ -4701,15 +4721,30 @@ var Side2D = (function (_super) {
             return;
         }
         var objectOptions = objectsBuffer.shift();
+        console.error(objectOptions);
         if (objectOptions.type === 'image') {
             this.addImageFromObjectOptions(objectOptions, function () { return _this.addNextObject(objectsBuffer); });
         }
         else {
             var element_2 = Element2D.prototype.deserialize(objectOptions);
+            element_2.side = this;
+            console.error(objectOptions.fill.source);
+            var pattern = new fabric.Pattern({
+                source: objectOptions.fill.source,
+                repeat: "no-repeat",
+                patternTransform: objectOptions.fill.patternTransform,
+                offsetX: objectOptions.fill.offsetX,
+                offsetY: objectOptions.fill.offsetY
+            });
+            element_2.object.fill = pattern;
+            console.error("element.object.fill", element_2.object.fill);
             this.add(element_2);
             element_2.object.dirty = true;
             if (element_2.type === ElementType.TEXT) {
                 setTimeout(function () { return element_2.setFontFamily(element_2.getFontFamily()); }, 0);
+            }
+            else {
+                setTimeout(function () { return element_2.createImageControls(); }, 100);
             }
             this.addNextObject(objectsBuffer);
         }
@@ -5236,7 +5271,13 @@ var Side2D1 = (function (_super) {
     };
     Side2D1.prototype.saveState = function () {
         Utils.logMethodName();
-        var state = new Side2DStateObjects(this);
+        try {
+            var state = new Side2DStateObjects(this);
+        }
+        catch (e) {
+            console.error(e);
+            return;
+        }
         this.history.add(JSON.stringify(state));
         this.saveToLocalStorage(state);
         this.changed();
@@ -6424,9 +6465,10 @@ var ImageControl = (function (_super) {
                             repeat: "no-repeat"
                         });
                     }
+                    Constructor.instance.getActiveSide().canvas.renderAll();
                     setTimeout(function () {
                         Constructor.instance.getActiveSide().canvas.renderAll();
-                    });
+                    }, 100);
                 }
                 else {
                     Constructor.instance.addFrame(_this.container.src);
@@ -6792,8 +6834,6 @@ var LayoutButton = (function (_super) {
             var x = block[2] * innerSize / 100 + margin + startX + w / 2;
             var y = block[3] * innerSize / 100 + margin + startY + h / 2;
             var dimensions = new Block(w, h, x, y);
-            console.error("block[2] * innerSize / 100 + margin + startX", block[2] * innerSize / 100 + margin + startX);
-            console.error("dimensions ", dimensions);
             Constructor.instance.addFrame(null, dimensions);
         }
         side.canvas.renderAll();
@@ -8556,7 +8596,7 @@ var SideBar = (function (_super) {
         var _this = _super.call(this) || this;
         _this.buttons = [];
         var panel = ConstructorUI.instance.sidePanel;
-        _this.append(_this.createSwitch(panel.modelsPanel, Icon.MUG_HOT).tooltip('Product Types'), _this.createSwitch(panel.newElementPanel, Icon.SHAPES, function () { return Constructor.instance.is2D(); }).tooltip('Page'), _this.createSwitch(panel.framesPanel, Icon.TH_LARGE, function () { return Constructor.instance.is2D(); }).tooltip('Frames'), _this.createSwitch(panel.galleryPanel, Icon.IMAGES, function () { return Constructor.instance.is2D() && Constructor.instance.hasImages(); }).tooltip('Gallery'), _this.createSwitch(panel.stickersPanel, Icon.SPLOTCH, function () { return Constructor.instance.is2D(); }).tooltip('Stickers'), _this.createSwitch(panel.layersPanel, Icon.LAYER_GROUP, function () { return Constructor.instance.is2D(); }).tooltip('Layers'), _this.createSwitch(panel.selectionPanel, Icon.SLIDERS_H, function () { return Constructor.instance.hasSelection(); }).tooltip('Properties'), _this.createSwitch(panel.fontFamilyPanel, Icon.FONT, function () { return Constructor.instance.hasTextSelection(); }).tooltip('Fonts'), _this.createSwitch(panel.filtersPanel, Icon.TINT, function () { return Constructor.instance.hasImageSelection(); }).tooltip('Filters'), _this.createSwitch(panel.optionsPanel, Icon.CLIPBOARD_LIST, function () { return ConstructorUI.instance.order.model && ConstructorUI.instance.order.model.constructor_model_option && ConstructorUI.instance.order.model.constructor_model_option.length > 0; }).tooltip('Options'), _this.createSwitch(panel.samplesPanel, Icon.INFO_CIRCLE).tooltip('Product Info'), _this.createSwitch(panel.sharePanel, Icon.FILE_DOWNLOAD).tooltip('Export & Sharing'), new Spacer());
+        _this.append(_this.createSwitch(panel.modelsPanel, Icon.MUG_HOT).tooltip('Product Types'), _this.createSwitch(panel.newElementPanel, Icon.SHAPES, function () { return Constructor.instance.is2D(); }).tooltip('Page'), _this.createSwitch(panel.framesPanel, Icon.TH_LARGE, function () { return Constructor.instance.is2D(); }).tooltip('Frames'), _this.createSwitch(panel.galleryPanel, Icon.IMAGES, function () { return Constructor.instance.is2D() && Constructor.instance.hasImages(); }).tooltip('Gallery'), _this.createSwitch(panel.stickersPanel, Icon.SPLOTCH, function () { return Constructor.instance.is2D(); }).tooltip('Stickers'), _this.createSwitch(panel.layersPanel, Icon.LAYER_GROUP, function () { return Constructor.instance.is2D(); }).tooltip('Layers'), _this.createSwitch(panel.selectionPanel, Icon.SLIDERS_H, function () { return Constructor.instance.hasSelection(); }).tooltip('Properties'), _this.createSwitch(panel.fontFamilyPanel, Icon.FONT, function () { return Constructor.instance.hasTextSelection(); }).tooltip('Fonts'), _this.createSwitch(panel.filtersPanel, Icon.TINT, function () { return Constructor.instance.is2D(); }).tooltip('Filters'), _this.createSwitch(panel.optionsPanel, Icon.CLIPBOARD_LIST, function () { return ConstructorUI.instance.order.model && ConstructorUI.instance.order.model.constructor_model_option && ConstructorUI.instance.order.model.constructor_model_option.length > 0; }).tooltip('Options'), _this.createSwitch(panel.samplesPanel, Icon.INFO_CIRCLE).tooltip('Product Info'), _this.createSwitch(panel.sharePanel, Icon.FILE_DOWNLOAD).tooltip('Export & Sharing'), new Spacer());
         _this.hideOthers(!_this.c.getActiveSide() || _this.c.getActiveSide().isEmpty() ? panel.newElementPanel : panel.layersPanel);
         return _this;
     }

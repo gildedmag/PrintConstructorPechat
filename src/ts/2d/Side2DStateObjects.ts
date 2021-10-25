@@ -23,7 +23,7 @@ class Side2DStateObjects<T> implements Equalable<Side2DStateObjects<T>> {
     }
 
     equals(state: Side2DStateObjects<T>): boolean {
-        if (!state){
+        if (!state) {
             return false;
         }
         if (state.objects.length != this.objects.length) {

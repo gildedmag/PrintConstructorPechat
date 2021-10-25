@@ -46,25 +46,14 @@ class HelperControl extends fabric.Rect {
         this.object = object;
         this.offset = offset;
         this.visible = false;
-        //this.bringToFront();
-        this.updatePosition();
-        // this.background.bringToFront();
-        // this.background.originX = "center";
-        // this.background.originY = "center";
-        this.bringToFront();
-        this.dirty = true;
-        //this.side.canvas.add(this.background);
-        this.object.canvas && this.object.canvas.renderAll();
 
         this.on("mouseover", e => {
-            console.error("mouseover");
             this.opacity = 1;
             if (this.pressed) {
                 this.hoverCursor = this.dragCursor;
                 this.side.canvas.hoverCursor = this.dragCursor;
                 this.side.canvas.setCursor(this.dragCursor);
             } else {
-                console.error(this.pressed);
                 this.hoverCursor = this.defaultCursor;
                 this.side.canvas.hoverCursor = this.defaultCursor;
                 this.side.canvas.setCursor(this.defaultCursor);
@@ -90,7 +79,6 @@ class HelperControl extends fabric.Rect {
             }
         });
         this.side.canvas.on("mouse:up", e => {
-            console.error("canvas mouseup");
             if (this.mouseMoveEvent) {
                 this.pressed = false;
                 this.mouseUpEvent && this.mouseUpEvent(e.pointer);
@@ -108,9 +96,11 @@ class HelperControl extends fabric.Rect {
             this.object.canvas.setActiveObject(this.object);
         });
         this.on("mouseup", e => {
-            console.error("helper mouseup");
             this.pressed = false;
         });
+        this.updatePosition();
+        this.bringToFront();
+        this.side.canvas.renderAll();
     }
 
     show(force = false) {
@@ -136,12 +126,8 @@ class HelperControl extends fabric.Rect {
     updatePosition(force = false) {
         this.left = this.object.left + this.offset;// + this.object.width / 2;
         this.top = this.object.top;// + this.object.top / 2;
-        //this.background.left = this.left;
-        //this.background.top = this.top;
-
         this.show(force);
         this.setCoords();
-        //this.dirty = true;
     }
 
 }

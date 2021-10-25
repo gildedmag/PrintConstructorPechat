@@ -28,8 +28,6 @@ class LayoutButton extends UIControl {
             let x = block[2] * innerSize / 100 + margin + startX + w / 2;
             let y = block[3] * innerSize / 100 + margin + startY + h / 2
             let dimensions = new Block(w, h, x, y);
-            console.error("block[2] * innerSize / 100 + margin + startX", block[2] * innerSize / 100 + margin + startX);
-            console.error("dimensions ", dimensions);
             Constructor.instance.addFrame(null, dimensions);
         }
         side.canvas.renderAll();

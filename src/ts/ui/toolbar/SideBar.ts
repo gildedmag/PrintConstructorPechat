@@ -62,7 +62,7 @@ class SideBar extends VerticalToolBarUIControl {
             this.createSwitch(
                 panel.filtersPanel,
                 Icon.TINT,
-                () => Constructor.instance.hasImageSelection()
+                () => Constructor.instance.is2D()
             ).tooltip('Filters'),
 
             this.createSwitch(

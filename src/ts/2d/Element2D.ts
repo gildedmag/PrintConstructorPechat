@@ -29,6 +29,22 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
 
     clip: object = null;
 
+    src: String;
+    frame: fabric.Rect;
+    cachedImage: any;
+    scrollControl: HelperControl;
+    resetControl: HelperControl;
+    scaleControl: HelperControl;
+    mouseDownX = 0;
+    mouseDownY = 0;
+    offsetX = 0;
+    offsetY = 0;
+    frameLeft = 0;
+    frameTop = 0;
+    scale = 1;
+    lastScale = 1;
+    controls: HelperControl[];
+
     private verticalGuides: number[];
 
     private horizontalGuides: number[];
@@ -52,9 +68,11 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
                 if (Constructor.instance.preview) {
                     Constructor.instance.preview.render();
                 }
+                //this.createImageControls();
             });
         }
         this.setOptions(this.object);
+        //this.createImageControls();
     }
 
     /** @hidden */
@@ -108,7 +126,12 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
 
     setPositionAtCenterOfViewport(){
         // set position of the element when adding new object to canvas
-        let bound = this.side.canvas.clipPath.getBoundingRect();
+        let bound
+        if (this.side.canvas.clipPath){
+            bound = this.side.canvas.clipPath.getBoundingRect();
+        } else {
+            bound = this.side;
+        }
         this.object.set({
             top: (bound.top + bound.height / 2) - this.object.height / 2,
             left: (bound.left + bound.width / 2) - this.object.width / 2,
@@ -618,6 +641,11 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
             });
         } else {
             element = Element2D.prototype.deserialize(objectOptions);
+            element.side = this.side;
+            element.object.fill = this.object.fill;
+            // element.object.fill.source = this.object.fill.source;
+            element.createImageControls();
+            this.side.canvas.renderAll();
             callback && callback(element);
             element.object.dirty = true;
         }
@@ -802,5 +830,255 @@ class Element2D extends Trigger<Element2D> implements Indexed, Serializable<Elem
     // changed() {
     //     /Constructor.instance.changed();
     // }
+
+    createImageControls() {
+        if (!this.object.fill && !this.object.fill.source){
+            return;
+        }
+        this.frame = this.object;
+        if (this.object.fill && this.object.fill.source && this.object.fill.source.src){
+            this.src = this.object.fill.source.src;
+        }
+        this.scrollControl = new HelperControl(this.side, this.frame, HelperControl.DEFAULTS.radius / 2);
+        this.scrollControl.mouseDownEvent = point => {
+            this.mouseDownX = point.x;
+            this.mouseDownY = point.y;
+        };
+        this.scrollControl.mouseMoveEvent = point => {
+            let x = point.x - this.mouseDownX + this.offsetX;
+            let y = point.y - this.mouseDownY + this.offsetY;
+
+            if (x > 0) {
+                x = 0;
+            } else if (this.frame.fill.source) {
+                let minOffset = -this.frame.fill.source.width * this.scale + this.frame.width
+                if (x < minOffset) {
+                    x = minOffset;
+                }
+            }
+            if (y > 0) {
+                y = 0;
+            } else if (this.frame.fill.source) {
+                let minOffset = -this.frame.fill.source.height * this.scale + this.frame.height
+                if (y < minOffset) {
+                    y = minOffset;
+                }
+            }
+            this.frame.fill.offsetX = x;
+            this.frame.fill.offsetY = y;
+            this.side.canvas.renderAll();
+        };
+        this.scrollControl.mouseUpEvent = point => {
+            this.frameLeft = this.frame.left;
+            this.frameTop = this.frame.top;
+            this.offsetX = this.frame.fill.offsetX;
+            this.offsetY = this.frame.fill.offsetY;
+        };
+        // this.resetControl = new HelperControl(this.side, this.frame, HelperControl.DEFAULTS.radius);
+        // this.resetControl.mouseDownEvent = () => {
+        //     this.resetImageTransform();
+        // }
+        this.scaleControl = new HelperControl(this.side, this.frame, -HelperControl.DEFAULTS.radius / 2);
+        this.scaleControl.mouseDownEvent = point => {
+            this.mouseDownX = point.x;
+            this.mouseDownY = point.y;
+        };
+        this.scaleControl.mouseMoveEvent = point => {
+            let dy = point.y - this.mouseDownY;
+            let scale = this.scale + dy / window.screen.height * 8;
+            if (scale < 0.01 || scale > 4) {
+                return;
+            }
+            let projectedRight = this.offsetX + this.frame.fill.source.width * scale;
+            if (projectedRight < this.frame.width) {
+                return;
+            }
+            let projectedBottom = this.offsetY + this.frame.fill.source.height * scale;
+            if (projectedBottom < this.frame.height) {
+                return;
+            }
+            this.lastScale = this.scale + dy / window.screen.height * 8;
+            this.frame.fill.patternTransform = [this.lastScale, 0, 0, this.lastScale, 0, 0];
+            this.side.canvas.renderAll();
+        };
+        this.scaleControl.mouseUpEvent = point => {
+            this.scale = this.lastScale;
+        };
+
+        //this.scaleControl.setIcon(Frame.scaleControlIcon);
+        //this.scrollControl.setIcon(Frame.scrollControlIcon);
+        this.scaleControl.defaultCursor = "nesw-resize";
+        this.scaleControl.dragCursor = "nesw-resize";
+        //this.resetControl.setIcon(Frame.resetControlIcon);
+        this.controls = [this.scrollControl, this.scaleControl];
+        for (let control of this.controls) {
+            this.side.canvas.add(control);
+        }
+
+        this.frame.originX = "center";
+        this.frame.originY = "center";
+        this.frameLeft = this.frame.left;
+        this.frameTop = this.frame.top;
+        this.frame.objectCaching = false;
+        this.frame.set('strokeUniform', true);
+        // this.frame.stroke = Color.GRAY.toRgba();
+        // this.frame.strokeWidth = 1;
+        if (!this.src && (!this.frame.fill || !this.frame.fill.source || !this.frame.fill.source.src)) {
+            this.frame.fill = "rgb(200,255,200)";
+        } else {
+            this.frame.fill = new fabric.Pattern({
+                source: this.src,
+                repeat: "no-repeat"
+            });
+        }
+        this.frame.setCoords();
+
+        this.side.canvas.renderAll();
+        this.side.saveState();
+        this.changed();
+        this.side.canvas.preserveObjectStacking = true;
+        this.side.canvas.uniScaleTransform = true;
+
+        this.frame.on("mousedblclick", e => {
+        });
+
+        this.frame.on(Constants.SELECTED, () => {
+            this.side.canvas.renderAll();
+            this.updateControls(true);
+        });
+
+        this.frame.on(Constants.DESELECTED, () => {
+            this.hideControls();
+        });
+
+        this.frame.on('scaling', e => {
+            this.normalizeFrameScale();
+            this.hideControls();
+        });
+
+        this.frame.on('scaled', e => {
+            this.normalizeFrameScale();
+            this.updateControls();
+        });
+
+        this.frame.on('mouseover', e => {
+        });
+
+        this.frame.on('mousemove', e => {
+        });
+
+        this.frame.on('moving', e => {
+            this.updateControls();
+        });
+
+        this.frame.on('moved', e => {
+            this.frameLeft = this.frame.left;
+            this.frameTop = this.frame.top;
+            this.offsetX = this.frame.fill.offsetX;
+            this.offsetY = this.frame.fill.offsetY;
+            this.updateControls();
+        });
+
+        this.frame.on('dragenter', e => {
+            if (this.frame.fill.source) {
+                this.cachedImage = this.frame.fill;
+            }
+            this.frame.fill = Constants.FRAME_DEFAULT_FILL;
+            this.side.canvas.renderAll();
+        });
+
+        this.frame.on('dragover', e => {
+        });
+
+        this.frame.on('dragleave', e => {
+            if (this.cachedImage != null) {
+                this.frame.fill = this.cachedImage;
+            } else if (this.frame.fill.source == null) {
+                this.frame.fill = "rgb(255,255,255)";
+            }
+            this.frame.stroke = Color.GRAY.toRgba();
+            this.side.canvas.renderAll();
+        });
+
+        this.frame.on('drop', (e) => {
+            console.error('drop', e);
+            //e.e.preventDefault();
+            e.e.preventDefault();
+            if (this.cachedImage) {
+                this.frame.fill = this.cachedImage;
+            }
+            let src = e.e.dataTransfer.getData("text/plain");
+            //console.error(src);
+
+            if (!this.frame.fill || !this.frame.fill.source) {
+                this.frame.fill = new fabric.Pattern({
+                    source: src,
+                    repeat: "no-repeat"
+                });
+                setTimeout(() => {
+                    Constructor.instance.getActiveSide().canvas.renderAll();
+                })
+            } else {
+                this.frame.fill.source.src = src;
+            }
+
+            this.frame.opacity = 1;
+            this.side.canvas.renderAll();
+        });
+
+        this.frame.on('dragstart', (e) => {
+            console.error('dragstart', e);
+        });
+
+        setTimeout(() => {
+            this.side.canvas.renderAll();
+        })
+    }
+
+    normalizeFrameScale() {
+        let w = this.frame.width * this.frame.scaleX;
+        let h = this.frame.height * this.frame.scaleY;
+        if (!this.frame.fill || !this.frame.fill.source || !this.frame.fill.source.width){
+            return;
+        }
+        let projectedRight = this.offsetX + this.frame.fill.source.width * this.scale;
+        if (projectedRight < w) {
+            this.frame.set({
+                'height': h / this.frame.scaleY,
+                'width': w / this.frame.scaleX,
+                'scaleX': 1,
+                'scaleY': 1
+            });
+            return;
+        }
+        let projectedBottom = this.offsetY + this.frame.fill.source.height * this.scale;
+        if (projectedBottom < h) {
+            this.frame.set({
+                'height': h / this.frame.scaleY,
+                'width': w / this.frame.scaleX,
+                'scaleX': 1,
+                'scaleY': 1
+            });
+            return;
+        }
+        this.frame.set({
+            'height': h,
+            'width': w,
+            'scaleX': 1,
+            'scaleY': 1
+        });
+    }
+
+    updateControls(forceShow: boolean = false) {
+        for (let control of this.controls) {
+            control.updatePosition(forceShow);
+        }
+    }
+
+    hideControls() {
+        for (let control of this.controls) {
+            control.hide();
+        }
+    }
 
 }

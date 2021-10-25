@@ -446,7 +446,12 @@ class Side2D1 extends View<Side2D> implements Indexed, Serializable<Side2D, Side
 
     saveState() {
         Utils.logMethodName();
-        let state = new Side2DStateObjects(this);
+        try {
+            let state = new Side2DStateObjects(this);
+        } catch (e) {
+            console.error(e);
+            return;
+        }
         // if (!state.objects[0]){//} && this.elements.length > 0){
         //     return;
         // }

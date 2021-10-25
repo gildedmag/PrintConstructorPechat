@@ -1,5 +1,5 @@
 /// <reference path="./Side2DState.ts" />
-class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side2DState>, Equalable<Side2D> {
+class Side2D extends View<Side2D> implements Indexed, Serializable<Side2D, Side2DState>, Equalable<Side2D> {
 
     static maxZoom: number = 10;
     static minZoom: number = 0.001;
@@ -110,7 +110,7 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
     }
 
     private initializeContainer(width: number, height: number, productPicture: string) {
-        if(Constructor.instance.is2dEditorMode()){
+        if (Constructor.instance.is2dEditorMode()) {
             // create container for 2d products
             this.mainContainer = document.createElement(Constants.DIV);
             this.mainContainer.className = "side-container";
@@ -136,27 +136,27 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
 
             this.canvasElement.parentElement.style.top = '0%';
             this.canvasElement.parentElement.style.left = '0%';
-        }else{
+        } else {
             this.container.appendChild(this.canvasElement);
 
         }
     }
 
     private createWorkingArea() {
-       if(!Constructor.instance.is2dEditorMode()){
-           return;
-       }
+        if (!Constructor.instance.is2dEditorMode()) {
+            return;
+        }
         let canvas = new fabric.Canvas(null);
         canvas.setWidth(this.canvas.getWidth())
         canvas.setHeight(this.canvas.getHeight())
         canvas.setZoom(this.canvas.getZoom())
-        canvas.loadFromJSON(this.mask,  () => {
+        canvas.loadFromJSON(this.mask, () => {
             canvas.renderAll();
 
             let mask = canvas.getObjects()[0];
             mask.dirty = true;
             mask.absolutePositioned = true;
-            if(!this.canvas.clipPath){
+            if (!this.canvas.clipPath) {
                 this.canvas.clipPath = mask;
             }
             this.canvas.renderAll();
@@ -218,7 +218,7 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
         this.canvas.setHeight(this.height * value);
         this.canvas.renderAll();
 
-        if(Constructor.instance.is2dEditorMode()) {
+        if (Constructor.instance.is2dEditorMode()) {
 
             this.mainContainer.style.width = `${this.width * value}px`
             this.mainContainer.style.height = `${this.height * value}px`
@@ -234,7 +234,7 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
                 canvasContainer.scrollTop = canvasContainer.scrollHeight * cx;
                 this.mainContainer.scrollTop = canvasContainer.scrollHeight * cx;
             }
-        }else{
+        } else {
 
             let dh = this.container.clientHeight - canvasContainer.clientHeight;
             if (dh < 0) {
@@ -245,10 +245,10 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
                 canvasContainer.style.transform = "translateY(-50%)";
             }
 
-            if (cx){
+            if (cx) {
                 canvasContainer.scrollLeft = canvasContainer.scrollWidth * cx;
             }
-            if (cy){
+            if (cy) {
                 canvasContainer.scrollTop = canvasContainer.scrollHeight * cx;
             }
         }
@@ -283,7 +283,7 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
     }
 
     getElement() {
-        return  this.mainContainer ? this.mainContainer : this.canvas.getElement().parentElement;
+        return this.mainContainer ? this.mainContainer : this.canvas.getElement().parentElement;
     }
 
     getIndex(): number {
@@ -298,12 +298,12 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
     getImageSources(): String[] {
         let sources = [];
         for (let element of this.elements) {
-            if (element.object && element.object.fill && element.object.fill.source){
+            if (element.object && element.object.fill && element.object.fill.source) {
                 let image = element.object.fill.source;
-                if (image instanceof HTMLImageElement){
+                if (image instanceof HTMLImageElement) {
                     let src = image.src;
-                    if (src != null){
-                        if (!sources.includes(src)){
+                    if (src != null) {
+                        if (!sources.includes(src)) {
                             sources.push(src);
                         }
                     }
@@ -348,13 +348,13 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
         return this.add(new Element2D(type, this));
     }
 
-    setProductColor(color: string){
+    setProductColor(color: string) {
         let image: ChildNode = this.mainContainer.childNodes[0];
         // @ts-ignore
         image.style.backgroundColor = color;
     }
 
-    getProductColor(){
+    getProductColor() {
         let image: ChildNode = this.mainContainer.childNodes[0];
         // @ts-ignore
         return image.style.backgroundColor !== "" ? image.style.backgroundColor : Constructor.instance.background;
@@ -435,7 +435,8 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
     }
 
     deserialize(state: Side2DState): Side2D {
-        if(Constructor.instance.is2dEditorMode()){}
+        if (Constructor.instance.is2dEditorMode()) {
+        }
         let side = new Side2D(Constructor.instance.getElement(), state.width, state.height, state.roundCorners, null, null, state.productPicture, state.mask);
         if (state.objects) {
             let json = '{"objects":' + JSON.stringify(state.objects) + '}'; //TODO: make it look not like a hack!
@@ -517,14 +518,29 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
             return;
         }
         let objectOptions = objectsBuffer.shift();
+        console.error(objectOptions);
         if (objectOptions.type === 'image') {
             this.addImageFromObjectOptions(objectOptions, () => this.addNextObject(objectsBuffer));
         } else {
             let element = Element2D.prototype.deserialize(objectOptions);
+            element.side = this;
+            console.error(objectOptions.fill.source);
+            let pattern = new fabric.Pattern({
+                source: objectOptions.fill.source,
+                repeat: "no-repeat",
+                patternTransform: objectOptions.fill.patternTransform,
+                offsetX: objectOptions.fill.offsetX,
+                offsetY: objectOptions.fill.offsetY
+            });
+            element.object.fill = pattern;
+            console.error("element.object.fill", element.object.fill);
+
             this.add(element);
             element.object.dirty = true;
             if (element.type === ElementType.TEXT) {
                 setTimeout(() => element.setFontFamily(element.getFontFamily()), 0);
+            } else {
+                setTimeout(() => element.createImageControls(), 100);
             }
             this.addNextObject(objectsBuffer);
         }
@@ -588,122 +604,122 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
         if (state) this.setState(state);
     }
 
-     /*generatePreview(size: number){
-        if(!Constructor.instance.is2dEditorMode()){
-           // return '';
-        }
-         let canvasElement = document.createElement(Constants.CANVAS);
-        let canvas = new fabric.Canvas(null);
-        canvas.setWidth(this.canvas.getWidth());
-        canvas.setHeight(this.canvas.getHeight());
-        canvas.setZoom(this.canvas.getZoom());
+    /*generatePreview(size: number){
+       if(!Constructor.instance.is2dEditorMode()){
+          // return '';
+       }
+        let canvasElement = document.createElement(Constants.CANVAS);
+       let canvas = new fabric.Canvas(null);
+       canvas.setWidth(this.canvas.getWidth());
+       canvas.setHeight(this.canvas.getHeight());
+       canvas.setZoom(this.canvas.getZoom());
 
-        let multiplier = size ? size / Math.max(canvas.getWidth(), canvas.getHeight()) : 1;
-        // this.canvas.clear();
-         let bgImage1 = new fabric.Image(this.image, {
-             left: 0,
-             top: 0,
-         });
-        // this.canvas.add(bgImage1)
-         this.canvas.getObjects().map(obj => obj.dirty = false);
-         this.canvas.renderAll();
-         this.canvas.requestRenderAll();
-         console.log(this.canvas.toJSON())
-        let objects = this.canvas.getObjects()
-             .filter(obj => obj.fill !== 'transparent' && obj.stroke !== 'white')
-             //.map(object => canvas.add(object))
+       let multiplier = size ? size / Math.max(canvas.getWidth(), canvas.getHeight()) : 1;
+       // this.canvas.clear();
+        let bgImage1 = new fabric.Image(this.image, {
+            left: 0,
+            top: 0,
+        });
+       // this.canvas.add(bgImage1)
+        this.canvas.getObjects().map(obj => obj.dirty = false);
+        this.canvas.renderAll();
+        this.canvas.requestRenderAll();
+        console.log(this.canvas.toJSON())
+       let objects = this.canvas.getObjects()
+            .filter(obj => obj.fill !== 'transparent' && obj.stroke !== 'white')
+            //.map(object => canvas.add(object))
 
-         //let group = new fabric.Group(objects);
-     /!*    group.set({
-             clipPath: this.canvas.clipPath
-         });*!/
-         //canvas.add(group);
-        // canvas.setBackgroundColor(this.getProductColor(), () => {});
+        //let group = new fabric.Group(objects);
+    /!*    group.set({
+            clipPath: this.canvas.clipPath
+        });*!/
+        //canvas.add(group);
+       // canvas.setBackgroundColor(this.getProductColor(), () => {});
 
-         canvas.loadFromJSON(JSON.stringify(this.canvas.toJSON()),   () => {
+        canvas.loadFromJSON(JSON.stringify(this.canvas.toJSON()),   () => {
 
-             canvas.renderAll();
+            canvas.renderAll();
 
-             let border = canvas.getObjects().filter(obj => obj.fill === 'transparent' && obj.stroke === 'white');
-             let group = new fabric.Group(canvas.getObjects());
-             //console.log(group);
-             group.remove(border[0]);
-             group.set({
-                 clipPath: border[0]
-             });
-             canvas.clipPath = null;
-             canvas.clear();
-             canvas.add(group);
-             group.bringToFront();
-             canvas.getObjects().map(object => canvas.add(object))
-            // canvas.setBackgroundColor(this.getProductColor(), () => {});
-             canvas.renderAll();
-         }, () => {
-             console.log((canvas.getObjects()));
-             canvas.renderAll();
-         });
-
-         let bgImage = new fabric.Image(this.image, {
-             left: 0,
-             top: 0,
-         });
-         //canvas.add(bgImage);
-         canvas.add(objects[2]);
-         bgImage.sendToBack();
-
-      /!*   let canv = new fabric.Canvas(null);
-         canv.setWidth(canvas.getWidth());
-         canv.setHeight(canvas.getHeight());
-         canv.setZoom(canvas.getZoom());
-
-         canv.loadFromJSON(canvas.toDatalessJSON(), () => {
-             //canv.renderAll();
-         });
-
-
-         fabric.Image.fromURL(this.productPicture, function(img){
-
-             canvas.add(img);
-             canvas.renderAll();
-
-             let rect = new fabric.Rect({
-                 left: 100,
-                 top: 100,
-                 width: 100,
-                 height: 75,
-                 fill: 'rgba(255,0,0,0.5)',
-             });
-             canvas.add(rect);
-             console.log(canvas.toJSON())
-             // загружаем в новый канвас сериализированный первый канвас
-             canv.loadFromJSON(canvas.toJSON(), () => {
-                 canv.renderAll();
-
-                 let data =  canv.toDataURL({
-                     format: 'image/jpeg',
-                     multiplier: multiplier,
-                     quality: 0.5
-                 });
-
-                 window.open(data, '_blank');
-             })
-
-         });*!/
-
-
-        let data =  canvas.toDataURL({
-            format: 'image/jpeg',
-            multiplier: multiplier,
-            quality: 0.5
+            let border = canvas.getObjects().filter(obj => obj.fill === 'transparent' && obj.stroke === 'white');
+            let group = new fabric.Group(canvas.getObjects());
+            //console.log(group);
+            group.remove(border[0]);
+            group.set({
+                clipPath: border[0]
+            });
+            canvas.clipPath = null;
+            canvas.clear();
+            canvas.add(group);
+            group.bringToFront();
+            canvas.getObjects().map(object => canvas.add(object))
+           // canvas.setBackgroundColor(this.getProductColor(), () => {});
+            canvas.renderAll();
+        }, () => {
+            console.log((canvas.getObjects()));
+            canvas.renderAll();
         });
 
-        window.open(data, '_blank');
-        return data;
-    }*/
+        let bgImage = new fabric.Image(this.image, {
+            left: 0,
+            top: 0,
+        });
+        //canvas.add(bgImage);
+        canvas.add(objects[2]);
+        bgImage.sendToBack();
 
-    generatePreview(maxSize){
-        if(!Constructor.instance.is2dEditorMode()){
-             return '';
+     /!*   let canv = new fabric.Canvas(null);
+        canv.setWidth(canvas.getWidth());
+        canv.setHeight(canvas.getHeight());
+        canv.setZoom(canvas.getZoom());
+
+        canv.loadFromJSON(canvas.toDatalessJSON(), () => {
+            //canv.renderAll();
+        });
+
+
+        fabric.Image.fromURL(this.productPicture, function(img){
+
+            canvas.add(img);
+            canvas.renderAll();
+
+            let rect = new fabric.Rect({
+                left: 100,
+                top: 100,
+                width: 100,
+                height: 75,
+                fill: 'rgba(255,0,0,0.5)',
+            });
+            canvas.add(rect);
+            console.log(canvas.toJSON())
+            // загружаем в новый канвас сериализированный первый канвас
+            canv.loadFromJSON(canvas.toJSON(), () => {
+                canv.renderAll();
+
+                let data =  canv.toDataURL({
+                    format: 'image/jpeg',
+                    multiplier: multiplier,
+                    quality: 0.5
+                });
+
+                window.open(data, '_blank');
+            })
+
+        });*!/
+
+
+       let data =  canvas.toDataURL({
+           format: 'image/jpeg',
+           multiplier: multiplier,
+           quality: 0.5
+       });
+
+       window.open(data, '_blank');
+       return data;
+   }*/
+
+    generatePreview(maxSize) {
+        if (!Constructor.instance.is2dEditorMode()) {
+            return '';
         }
         let w = this.canvas.getWidth();
         let h = this.canvas.getHeight();
@@ -764,7 +780,7 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
         // @ts-ignore
         let border = this.canvas.getObjects().filter(obj => obj.id === Constants.OBJECT_2D_BORDER);
         this.toggleBorderVisibility(border[0]);
-        if(Constructor.instance.is2dEditorMode()){
+        if (Constructor.instance.is2dEditorMode()) {
             this.canvas.setZoom(1);
             bound = this.canvas.clipPath.getBoundingRect();
         }
@@ -779,7 +795,7 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
             background.object.height = h;
             background.object.left = w / 2;
             background.object.top = h / 2;
-            if(bound.left){
+            if (bound.left) {
                 background.object.set({
                     left: bound.left,
                     top: bound.top,
@@ -816,8 +832,8 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
         return data;
     }
 
-    toggleBorderVisibility(border){
-        if(border){
+    toggleBorderVisibility(border) {
+        if (border) {
             border.set({
                 opacity: border.opacity == 1 ? 0 : 1
             })
