@@ -12,6 +12,53 @@ class BottomBar extends ToolBar {
 
     update() {
         this.clear();
+        let previewButtons = [];
+        if (!Constructor.instance.is2dEditorMode()) {
+            previewButtons.push(
+                new ToggleButton(
+                    () => {
+                        if (this.c.is2D()) {
+                            ConstructorUI.instance.show3D();
+                        } else {
+                            ConstructorUI.instance.show2D();
+                        }
+                        setTimeout(() => window.dispatchEvent(new Event('resize')), 100)
+                    },
+                    () => this.c.is3D(),
+                    Icon.DICE_D6,
+                    null,
+                    null,
+                    null
+                ).addClass('mobile')
+            )
+            previewButtons.push(
+                new Button(
+                    () => {
+                        ConstructorUI.instance.show3D();
+                        setTimeout(() => window.dispatchEvent(new Event('resize')), 100)
+                    },
+                    Icon.DICE_D6,
+                    Utils.isCompact() ? null : "3D-Preview",
+                ).showWhen(Constructor.instance, () => this.c.is2D())
+                    .addClass('desktop')
+                    .addClass('preview-3d')
+            );
+
+            previewButtons.push(
+                new Button(
+                    () => {
+                        ConstructorUI.instance.show2D();
+                        setTimeout(() => window.dispatchEvent(new Event('resize')), 100)
+                    },
+                    Icon.DICE_D6,
+                    Utils.isCompact() ? null : "Exit 3D-Preview"
+                ).showWhen(Constructor.instance, () => this.c.is3D())
+                    .addClass('desktop')
+                    .addClass('preview-3d')
+                    .addClass('preview-3d-exit')
+            );
+        }
+
         this.append(
             new Button(
                 () => {
@@ -36,47 +83,7 @@ class BottomBar extends ToolBar {
                 Icon.SEARCH
             ).tooltip('Zoom to Fit'),
 
-            new ToggleButton(
-                () => {
-                    if (this.c.is2D()) {
-                        ConstructorUI.instance.show3D();
-                    } else {
-                        ConstructorUI.instance.show2D();
-                    }
-                    setTimeout(() => window.dispatchEvent(new Event('resize')), 100)
-                },
-                () => this.c.is3D(),
-                Icon.DICE_D6,
-                null,
-                null,
-                null
-            ).addClass('mobile'),
-
-            new Button(
-                () => {
-                    ConstructorUI.instance.show3D();
-                    setTimeout(() => window.dispatchEvent(new Event('resize')), 100)
-                },
-                Icon.DICE_D6,
-                Utils.isCompact() ? null : "3D-Preview",
-            ).showWhen(Constructor.instance, () => this.c.is2D())
-                .addClass('desktop')
-                .addClass('preview-3d'),
-
-            new Button(
-                () => {
-                    ConstructorUI.instance.show2D();
-                    setTimeout(() => window.dispatchEvent(new Event('resize')), 100)
-                },
-                Icon.DICE_D6,
-                Utils.isCompact() ? null : "Exit 3D-Preview"
-            ).showWhen(Constructor.instance, () => this.c.is3D())
-                .addClass('desktop')
-                .addClass('preview-3d')
-                .addClass('preview-3d-exit'),
-
-
-            //.tooltip('Toggle 3D Mode'),
+            ...previewButtons,
 
             new Spacer(),
 

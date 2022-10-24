@@ -12,8 +12,6 @@ class StickerControl extends UIControl{
         this.container.onclick = () => {
             Constructor.instance.addImage(this.container.src);
         };
-
-
     }
 
     setValue(value: string){

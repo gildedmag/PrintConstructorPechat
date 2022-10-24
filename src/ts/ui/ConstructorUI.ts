@@ -260,10 +260,11 @@ class ConstructorUI extends UIControl {
 
                 if (!modelLoaded) {
                     active = true;
-                    this.loadModelOptions(model, options);
+
                     try {
                         c.loadModel(
                             model.file_main,
+                            model.mode,
                             () => {
                                 if (constructorConfiguration && constructorConfiguration.sharedState) {
                                     c.setMode(Mode.Mode3D);
@@ -276,6 +277,7 @@ class ConstructorUI extends UIControl {
                     } catch (e) {
                         alert(e.message);
                     }
+                    this.loadModelOptions(model, options);
                 } else if (!this.order.model && c.preview.modelName == model.file_main) {
                     this.loadModelOptions(model, options);
                     this.show3D();
@@ -284,7 +286,7 @@ class ConstructorUI extends UIControl {
                 let url = model.thumb;
                 let button = new ToggleButton(
                     () => {
-                        c.loadModel(model.file_main, () => {
+                        c.loadModel(model.file_main, model.mode, () => {
                             if (constructorConfiguration && constructorConfiguration.sharedState) {
                                 this.show3D();
                             }
@@ -310,11 +312,13 @@ class ConstructorUI extends UIControl {
     }
 
     show3D() {
-        Constructor.instance.setMode(Mode.Mode3D);
-        if (!this.order.model || !this.order.model.constructor_model_option || !this.order.model.constructor_model_option.length) {
-            ConstructorUI.instance.sidePanel.modelsPanel.show();
-        } else {
-            ConstructorUI.instance.sidePanel.optionsPanel.show();
+        if(!Constructor.instance.is2dEditorMode()){
+            Constructor.instance.setMode(Mode.Mode3D);
+            if (!this.order.model || !this.order.model.constructor_model_option || !this.order.model.constructor_model_option.length) {
+                ConstructorUI.instance.sidePanel.modelsPanel.show();
+            } else {
+                ConstructorUI.instance.sidePanel.optionsPanel.show();
+            }
         }
     }
 
@@ -335,11 +339,14 @@ class ConstructorUI extends UIControl {
                 area.height,
                 parseInt(area.roundCorners),
                 area.name,
-                area.price
+                parseFloat(area.price),
+                area.productImage,
+                area.mask,
             );
             Constructor.instance.zoomToFit();
         });
         Constructor.instance.sides.forEach(side => side.changed());
+        this.bottomBar.update();
     }
 
     loadModelOptions(model: ConstructorModel, options: Options) {
@@ -421,7 +428,6 @@ class ConstructorUI extends UIControl {
 
     bindDoubleClick() {
         Constructor.onTextEditingEntered(() => {
-            console.log("onTextEditingEntered");
             setTimeout(() => {
                 ConstructorUI.instance.sidePanel.selectionPanel.show();
             }, 100);
@@ -441,7 +447,7 @@ class ConstructorUI extends UIControl {
 
 
     getCategoryOptions(categoryId: number, callback: (options: Options) => any) {
-        let url = 'index.php?route=product/category/category&category_id=' + categoryId;
+        let url = '/index.php?route=product/category/category&category_id=' + categoryId;
         //let url = this.domain + 'index.php?route=product/category/category&category_id=' + categoryId;
         let xhr = new XMLHttpRequest();
 

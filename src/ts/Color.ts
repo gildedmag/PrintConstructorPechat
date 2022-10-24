@@ -12,11 +12,14 @@ class Color extends fabric.Color implements Equalable<Color> {
 
     /** @hidden */
     constructor(...args: any[]) {
-        if (args.length === 1) {
-            if (typeof args[0] === Constants.STRING) super(...args);
-            else super(args[0].toRgba());
+        try {
+            if (args.length === 1) {
+                if (typeof args[0] === Constants.STRING) super(...args);
+                else super(args[0].toRgba());
+            } else super(Color.componentsToRgbaString(...args));
+        } catch (e) {
+            return Color.BLACK
         }
-        else super(Color.componentsToRgbaString(...args));
     }
 
     toHex(): string {

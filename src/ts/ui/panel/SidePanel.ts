@@ -4,6 +4,8 @@ class SidePanel extends ToolBar {
     layersPanel: LayersPanelUIControl;
     stickersPanel: StickersPanel;
     newElementPanel: NewElementPanel;
+    framesPanel: FramesPanel;
+    galleryPanel: GalleryPanel;
     selectionPanel: SelectionPanel;
     fontFamilyPanel: FontFamilyPanel;
     modelsPanel: ModelsPanel = new ModelsPanel();   //TODO: initialize all panels same way
@@ -23,6 +25,8 @@ class SidePanel extends ToolBar {
         this.stickersPanel = new StickersPanel();
         this.selectionPanel = new SelectionPanel();
         this.newElementPanel = new NewElementPanel();
+        this.framesPanel = new FramesPanel();
+        this.galleryPanel = new GalleryPanel();
         this.fontFamilyPanel = new FontFamilyPanel();
         this.samplesPanel = new SamplesPanel();
         this.optionsPanel = new OptionsPanel();
@@ -31,6 +35,8 @@ class SidePanel extends ToolBar {
 
         this.append(
             this.newElementPanel,
+            this.framesPanel,
+            this.galleryPanel,
             this.layersPanel,
             this.stickersPanel,
             this.selectionPanel,

@@ -26,7 +26,7 @@ class ExportPanel extends UIControl {
             new Row(
                 new ConditionalButton(
                     () => this.download(ImageType.SVG),
-                    () => Constructor.instance.is2D(),
+                    () => Constructor.instance.is2D() && !Constructor.instance.is2dEditorMode(),
                     "Export SVG"
                 )
             ),

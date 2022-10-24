@@ -1,9 +1,9 @@
 /** @hidden */
-class Side2DStateObjects implements Equalable<Side2DStateObjects> {
+class Side2DStateObjects<T> implements Equalable<Side2DStateObjects<T>> {
 
     objects: ObjectOptions[];
 
-    constructor(side?: Side2D) {
+    constructor(side?: View<T>) {
         this.objects = [];
         if (side) {
             for (let element of side.elements) {
@@ -12,7 +12,7 @@ class Side2DStateObjects implements Equalable<Side2DStateObjects> {
         }
     }
 
-    static parse(json: string): Side2DStateObjects {
+    static parse(json: string): Side2DStateObjects<any> {
         let objects = new Side2DStateObjects();
         let rawObjects: object[] = JSON.parse(json).objects;
         for (let rawObject of rawObjects) {
@@ -22,8 +22,8 @@ class Side2DStateObjects implements Equalable<Side2DStateObjects> {
         return objects;
     }
 
-    equals(state: Side2DStateObjects): boolean {
-        if (!state){
+    equals(state: Side2DStateObjects<T>): boolean {
+        if (!state) {
             return false;
         }
         if (state.objects.length != this.objects.length) {

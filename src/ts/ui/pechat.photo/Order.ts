@@ -83,6 +83,12 @@ class Order extends Trigger<Constructor> {
     }
 
     addSelectedOption(value: pechat.ConstructorModelOption) {
+        if(value.type == 'color' && Constructor.instance.is2dEditorMode()){
+            //Constructor.instance.getActiveSide().setProductColor(value.constructor_value)
+            Constructor.instance.sides.map(side => {
+                side.setProductColor(value.constructor_value);
+            })
+        }
         for (let i = 0; i < this.selectedOptions.length; i++) {
             let selectedOption = this.selectedOptions[i];
             if (selectedOption.id == value.id){
@@ -106,6 +112,12 @@ class Order extends Trigger<Constructor> {
     }
 
     removeSelectedOption(option: pechat.ConstructorModelOption) {
+        if(option.type == 'color' && Constructor.instance.is2dEditorMode()){
+            Constructor.instance.getActiveSide().setProductColor(Constructor.instance.background)
+            Constructor.instance.sides.map(side => {
+                side.setProductColor(Constructor.instance.background);
+            })
+        }
         this.removeSelectedOptionId(option.id);
     }
 
@@ -238,7 +250,7 @@ class Order extends Trigger<Constructor> {
             holst_2: holst_2,
             holst_3: holst_3,
             holst_4: holst_4,
-            preview: preview,
+            preview:  preview,
             option: optionsEncoded,
             selectedOptions: JSON.stringify(selectedOptionsIds),
             selectedSides: JSON.stringify(selectedSides),
@@ -265,7 +277,8 @@ class Order extends Trigger<Constructor> {
                     method: post,
                     headers: headers,
                     body: Utils.toUrlParameters({
-                        product_id: productId
+                        product_id: productId,
+                        preview: Constructor.instance.sides[0].generatePreview(Constants.PREVIEW_SIZE)
                     })
                 });
 

@@ -97,6 +97,7 @@ class ObjectOptions implements Equalable<ObjectOptions> {
         for (let property of ObjectOptions.nativeOptions) {
             if (this[property] !== undefined) options[property] = this[property];
         }
+        console.error(options["fill"]);
         if (this.filters) options.filters = this.filters;
         return options
     }

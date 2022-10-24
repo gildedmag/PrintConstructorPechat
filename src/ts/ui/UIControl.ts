@@ -217,4 +217,16 @@ abstract class UIControl extends View<UIControl> implements Identifiable {
         this.children.forEach(child => child.showed());
     }
 
+    isSelected(): boolean {
+        return this.container.classList.contains("selected");
+    }
+
+    select() {
+        this.container.classList.add("selected");
+    }
+
+    deselect() {
+        this.container.classList.remove("selected");
+    }
+
 }
