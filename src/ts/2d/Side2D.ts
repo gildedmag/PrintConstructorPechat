@@ -751,7 +751,8 @@ class Side2D extends View<Side2D> implements  Indexed, Serializable<Side2D, Side
             bound = this.canvas.clipPath.getBoundingRect();
         }
 
-        let multiplier = maxSize ? maxSize / Math.max(w, h) : 1;
+        //let multiplier = maxSize ? maxSize / Math.max(w, h) : 1;
+        let multiplier = 1.5;
         if (!format) format = ImageType.PNG;
         if (format == ImageType.JPG) {
             this.history.lock();

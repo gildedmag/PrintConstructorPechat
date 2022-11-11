@@ -211,15 +211,12 @@ class Order extends Trigger<Constructor> {
 
         let stateJson = c.getState();
         let preview = "";
+        let renders = ["", "", "", ""];
 
-        c.setActiveSide(0);
-        let holst_1 = c.getActiveSide().exportImage(Constructor.settings.printWidth);
-        c.setActiveSide(1);
-        let holst_2 = c.getActiveSide().exportImage(Constructor.settings.printWidth);
-        c.setActiveSide(2);
-        let holst_3 = c.getActiveSide().exportImage(Constructor.settings.printWidth);
-        c.setActiveSide(3);
-        let holst_4 = c.getActiveSide().exportImage(Constructor.settings.printWidth);
+        c.sides.forEach((side, i) => {
+            c.setActiveSide(i);
+            renders[i] = c.getActiveSide().exportImage(Constructor.settings.printWidth);
+        })
 
 
         let optionsEncoded = "";
@@ -246,10 +243,10 @@ class Order extends Trigger<Constructor> {
             category: this.model.category_id,
             constructor_model_id: this.model.constructor_model_id,
             text_type: this.model.name,
-            holst_1: holst_1,
-            holst_2: holst_2,
-            holst_3: holst_3,
-            holst_4: holst_4,
+            holst_1: renders[0],
+            holst_2: renders[1],
+            holst_3: renders[2],
+            holst_4: renders[3],
             preview:  preview,
             option: optionsEncoded,
             selectedOptions: JSON.stringify(selectedOptionsIds),

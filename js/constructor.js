@@ -187,7 +187,7 @@ var Constants;
 var Version = (function () {
     function Version() {
     }
-    Version.version = "26.05.2021 18:28";
+    Version.version = "24.10.2022 18:28";
     return Version;
 }());
 var Trigger = (function () {
@@ -4372,7 +4372,7 @@ var Side2D = (function (_super) {
             this.canvas.setZoom(1);
             bound = this.canvas.clipPath.getBoundingRect();
         }
-        var multiplier = maxSize ? maxSize / Math.max(w, h) : 1;
+        var multiplier = 1.5;
         if (!format)
             format = ImageType.PNG;
         if (format == ImageType.JPG) {
@@ -7653,14 +7653,11 @@ var Order = (function (_super) {
         var c = Constructor.instance;
         var stateJson = c.getState();
         var preview = "";
-        c.setActiveSide(0);
-        var holst_1 = c.getActiveSide().exportImage(Constructor.settings.printWidth);
-        c.setActiveSide(1);
-        var holst_2 = c.getActiveSide().exportImage(Constructor.settings.printWidth);
-        c.setActiveSide(2);
-        var holst_3 = c.getActiveSide().exportImage(Constructor.settings.printWidth);
-        c.setActiveSide(3);
-        var holst_4 = c.getActiveSide().exportImage(Constructor.settings.printWidth);
+        var renders = ["", "", "", ""];
+        c.sides.forEach(function (side, i) {
+            c.setActiveSide(i);
+            renders[i] = c.getActiveSide().exportImage(Constructor.settings.printWidth);
+        });
         var optionsEncoded = "";
         var selectedOptionsIds = [];
         var selectedSides = [];
@@ -7680,10 +7677,10 @@ var Order = (function (_super) {
             category: this.model.category_id,
             constructor_model_id: this.model.constructor_model_id,
             text_type: this.model.name,
-            holst_1: holst_1,
-            holst_2: holst_2,
-            holst_3: holst_3,
-            holst_4: holst_4,
+            holst_1: renders[0],
+            holst_2: renders[1],
+            holst_3: renders[2],
+            holst_4: renders[3],
             preview: preview,
             option: optionsEncoded,
             selectedOptions: JSON.stringify(selectedOptionsIds),
