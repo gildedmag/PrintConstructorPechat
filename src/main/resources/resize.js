@@ -1,3 +1,3 @@
 c.container.style.width = '$px';
-c.container.style.height = '$px';
-c.autoSize();
+Constructor.instance.container.style.height = '$px';
+Constructor.instance.preview.autoSize()

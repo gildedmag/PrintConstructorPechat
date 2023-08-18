@@ -1,3 +1,5 @@
+import ru.pechat55.constructor.render.Constructor;
+
 public class ConstructorTest extends BaseTest {
 
     Constructor constructor;

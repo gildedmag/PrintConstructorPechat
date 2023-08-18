@@ -1,4 +1,7 @@
 import org.junit.Test;
+import ru.pechat55.constructor.render.Constructor;
+import ru.pechat55.constructor.render.Parameters;
+import ru.pechat55.constructor.render.Utils;
 
 public class DesignTest extends BaseTest {
 

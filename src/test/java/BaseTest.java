@@ -4,6 +4,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.After;
 import org.junit.Before;
+import ru.pechat55.constructor.render.*;
 
 import java.awt.*;
 import java.io.File;

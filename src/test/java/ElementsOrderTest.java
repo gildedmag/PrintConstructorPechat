@@ -1,5 +1,6 @@
 import org.junit.Assert;
 import org.junit.Test;
+import ru.pechat55.constructor.render.Element2D;
 
 import java.util.concurrent.TimeUnit;
 

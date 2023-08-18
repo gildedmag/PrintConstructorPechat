@@ -1,4 +1,6 @@
 import org.junit.Test;
+import ru.pechat55.constructor.render.App;
+import ru.pechat55.constructor.render.Settings;
 
 import java.io.File;
 
