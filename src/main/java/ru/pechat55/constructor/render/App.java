@@ -27,12 +27,12 @@ public class App {
     Executor executor = Executors.newFixedThreadPool(Settings.POOL_SIZE * 2);
 
     public HttpServer server;
-    Endpoint statusEndpoint;
-    Endpoint logEndpoint;
-    Endpoint previewEndpoint;
-    Endpoint animationEndpoint;
-    Endpoint quitEndpoint;
-    Endpoint reloadEndpoint;
+    public Endpoint statusEndpoint;
+    public Endpoint logEndpoint;
+    public Endpoint previewEndpoint;
+    public Endpoint animationEndpoint;
+    public Endpoint quitEndpoint;
+    public Endpoint reloadEndpoint;
 
     public App() {
         killChromeProcesses();

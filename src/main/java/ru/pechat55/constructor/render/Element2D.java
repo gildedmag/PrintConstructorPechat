@@ -14,7 +14,7 @@ public class Element2D {
         this.constructor = constructor;
     }
 
-    void toFront() {
+    public void toFront() {
         constructor.driver.executeScript(id + ".toFront()");
     }
 
@@ -22,7 +22,7 @@ public class Element2D {
         constructor.driver.executeScript(id + ".toBack()");
     }
 
-    long getIndex() {
+    public long getIndex() {
         return (long) constructor.driver.executeScript("return " + id + ".getIndex()");
     }
 

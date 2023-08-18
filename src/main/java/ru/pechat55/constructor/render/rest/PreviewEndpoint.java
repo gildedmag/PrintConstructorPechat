@@ -22,6 +22,7 @@ public class PreviewEndpoint extends Endpoint {
         try {
             image = app.render(parameters);
         } catch (Exception e) {
+            e.printStackTrace();
             StringBuilder error = new StringBuilder(ERROR_PREFIX + "\n");
             for (StackTraceElement stackTraceElement : e.getStackTrace()) {
                 error

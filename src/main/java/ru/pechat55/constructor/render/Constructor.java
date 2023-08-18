@@ -8,6 +8,8 @@ import org.openqa.selenium.logging.LogType;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.apache.http.util.TextUtils.isEmpty;
 
@@ -26,11 +28,13 @@ public class Constructor {
     public volatile long start = 0;
 
     public static final String RENDERER_PATH = "file://" + Settings.CONSTRUCTOR_DIR + "/renderer.html";
+    public static final Pattern IMG_SRC_PATTERN = Pattern.compile("(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]\\.(jpg|jpeg|png|gif|svg|bmp|JPG|JPEG|PNG|GIF|SVG|BMP)");
     public static final String $ = "\\$";
 
     private final String setStateScript = Utils.readResource("set_state.js");
     private final String loadModelScript = Utils.readResource("load_model.js");
     private final String resizeScript = Utils.readResource("resize.js");
+    private final String preloadImageScript = Utils.readResource("preload_image.js");
 
     public boolean isBusy() {
         return System.currentTimeMillis() - start < Settings.REQUEST_TIMEOUT_SECONDS * 1000L;
@@ -79,6 +83,16 @@ public class Constructor {
         for (String domain : Settings.DOMAINS) {
             if (!isEmpty(domain)) {
                 state = json.replaceAll(domain, "file://" + Settings.WEB_DIR);
+            }
+        }
+
+        Matcher matcher = Constructor.IMG_SRC_PATTERN.matcher(json);
+        while (matcher.find()) {
+            String url = matcher.group();
+            Utils.log("Preloading image:", url);
+            String preloadScript = preloadImageScript.replaceFirst($, url);
+            for (int i = 0; i < 2; i++) {
+                driver.executeScript(preloadScript);
             }
         }
 
