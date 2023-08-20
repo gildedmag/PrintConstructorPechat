@@ -41,10 +41,10 @@ public class Constructor {
     }
 
     public Constructor(ChromeDriver driver) {
-        Utils.log("Creating Constructor instance", RENDERER_PATH);
+        Utils.log("Creating Constructor instance", driver.getCurrentUrl(), RENDERER_PATH);
         this.driver = driver;
         this.driver.get(RENDERER_PATH);
-        driver.manage().timeouts().setScriptTimeout(5, TimeUnit.SECONDS);
+        driver.manage().timeouts().setScriptTimeout(Settings.REQUEST_TIMEOUT_SECONDS - 1, TimeUnit.SECONDS);
         updateVersion();
     }
 
@@ -52,11 +52,22 @@ public class Constructor {
         if (width != this.width || height != this.height) {
             this.width = width;
             this.height = height;
+            String widthValue = String.valueOf(width);
+            String heightValue = String.valueOf(height);
             driver.manage().window().setSize(new Dimension(width, height));
             String script = resizeScript
-                    .replaceFirst($, String.valueOf(width))
-                    .replaceFirst($, String.valueOf(height));
+                    .replaceFirst($, widthValue)
+                    .replaceFirst($, heightValue);
             driver.executeScript(script);
+            for (int i = 0; i < 5; i++) {
+                String previewWidth = driver.executeScript("return Constructor.instance.preview.container.clientWidth").toString();
+                String previewHeight = driver.executeScript("return Constructor.instance.preview.container.clientHeight").toString();
+                Utils.log("Preview container size = ", previewWidth, "x", previewHeight);
+                if (previewWidth.equals(widthValue) && previewHeight.equals(heightValue)) {
+                    return;
+                }
+                Utils.sleep(10);
+            }
         }
     }
 
@@ -86,18 +97,17 @@ public class Constructor {
             }
         }
 
-        Matcher matcher = Constructor.IMG_SRC_PATTERN.matcher(json);
-        while (matcher.find()) {
-            String url = matcher.group();
-            Utils.log("Preloading image:", url);
-            String preloadScript = preloadImageScript.replaceFirst($, url);
-            for (int i = 0; i < 2; i++) {
-                driver.executeScript(preloadScript);
-            }
-        }
+//        Matcher matcher = Constructor.IMG_SRC_PATTERN.matcher(json);
+//        while (matcher.find()) {
+//            String url = matcher.group();
+//            Utils.log("Preloading image:", url);
+//            String preloadScript = preloadImageScript.replaceFirst($, url);
+//            driver.executeAsyncScript(preloadScript);
+//        }
 
         String script = setStateScript.replaceFirst($, state);
         driver.executeAsyncScript(script);
+        driver.executeAsyncScript("var callback = arguments[arguments.length - 1];Constructor.instance.preview.updateSideMaterials(() => callback());");
         this.modelName = modelName;
     }
 

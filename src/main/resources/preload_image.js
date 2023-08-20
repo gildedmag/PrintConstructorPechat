@@ -1,4 +1,7 @@
-let image = new Image();
+let callback = arguments[arguments.length - 1];
+var image = new Image();
+image.onload = function() {
+    callback();
+}
 image.src = "$";
-document.body.appendChild(image);
-document.body.removeChild(image)
+

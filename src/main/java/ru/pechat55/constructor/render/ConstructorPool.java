@@ -97,7 +97,7 @@ public class ConstructorPool {
             winner.start = System.currentTimeMillis();
             return winner;
         }
-        //All constructors are busy, waiting
+        Utils.log("Waiting for an idle Constructor");
         Utils.sleep(100);
         return get(modelName);
     }
